@@ -6,6 +6,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import {colors, radius, space, type} from '../theme';
+import ElevatedDistressScreen from './ElevatedDistressScreen';
 
 type Props = {
   onContinue: () => void;
@@ -17,6 +18,7 @@ export default function DistressScreen({onContinue}: Props) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showElevated, setShowElevated] = useState(false); // FR-ONB-007
 
   useEffect(() => {
     apiRequest('/onboarding/distress-scale')
@@ -41,12 +43,24 @@ export default function DistressScreen({onContinue}: Props) {
         body: {value},
         token: token ?? undefined,
       });
-      onContinue();
+
+      // FR-ONB-007: 9 or 10 routes to the acknowledgement screen instead of
+      // straight to the next onboarding step. Continuing from that screen
+      // still advances onboarding via the same onContinue passed in here.
+      if (value >= 9) {
+        setShowElevated(true);
+      } else {
+        onContinue();
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
+  }
+
+  if (showElevated) {
+    return <ElevatedDistressScreen onContinue={onContinue} />;
   }
 
   return (
