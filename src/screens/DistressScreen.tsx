@@ -1,0 +1,128 @@
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+
+import PrimaryButton from '../components/PrimaryButton';
+import {apiRequest} from '../api/client';
+import {getAccessToken} from '../storage/tokens';
+import {colors, radius, space, type} from '../theme';
+
+type Props = {
+  onContinue: () => void;
+};
+
+export default function DistressScreen({onContinue}: Props) {
+  const [scale, setScale] = useState<Record<string, string>>({});
+  const [value, setValue] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiRequest('/onboarding/distress-scale')
+      .then(setScale)
+      .catch(e => setError((e as Error).message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleContinue() {
+    if (value === null) {
+      setError('Choose the option that fits best.');
+      return;
+    }
+
+    setError('');
+    setBusy(true);
+
+    try {
+      const token = await getAccessToken();
+      await apiRequest('/onboarding/distress-baseline', {
+        method: 'POST',
+        body: {value},
+        token: token ?? undefined,
+      });
+      onContinue();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: space.screen,
+          paddingTop: 40,
+          paddingBottom: 32,
+        }}>
+        <Text style={type.title}>
+          How would you describe your current distress level?
+        </Text>
+        <Text style={{...type.body, marginTop: 10, marginBottom: 24}}>
+          This helps us tailor your experience.
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator color={colors.sage} />
+        ) : (
+          Object.entries(scale).map(([key, description]) => {
+            const number = Number(key);
+            const isOn = value === number;
+
+            return (
+              <Pressable
+                key={key}
+                onPress={() => setValue(number)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isOn ? colors.sageWash : colors.surface,
+                  borderWidth: 1,
+                  borderColor: isOn ? colors.sage : colors.line,
+                  borderRadius: radius.card,
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  marginBottom: 8,
+                }}>
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: isOn ? colors.forest : colors.sageWash,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 14,
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: isOn ? colors.surface : colors.inkSoft,
+                    }}>
+                    {key}
+                  </Text>
+                </View>
+
+                <Text style={{...type.body, color: colors.ink, flex: 1}}>
+                  {description}
+                </Text>
+              </Pressable>
+            );
+          })
+        )}
+
+        {error ? (
+          <Text style={{...type.small, color: colors.alert, marginTop: 12}}>
+            {error}
+          </Text>
+        ) : null}
+
+        <View style={{marginTop: 20}}>
+          <PrimaryButton label="Continue" onPress={handleContinue} busy={busy} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
