@@ -4,26 +4,49 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
-import {forgotPassword} from '../api/auth';
+import {signupEmail, verifySignupCode} from '../api/auth';
 import {colors, space, type} from '../theme';
 
 type Props = {
-  onCodeSent: (email: string) => void;
+  email: string;
+  onVerified: (setupToken: string) => void;
   onBack: () => void;
 };
 
-export default function ForgotPasswordScreen({onCodeSent, onBack}: Props) {
-  const [email, setEmail] = useState('');
+export default function VerifySignupCodeScreen({email, onVerified, onBack}: Props) {
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resent, setResent] = useState(false);
 
-  async function handleSend() {
+  async function handleVerify() {
     setError('');
+
+    if (code.trim().length !== 6) {
+      setError('Enter the 6-digit code from your email.');
+      return;
+    }
+
     setBusy(true);
 
     try {
-      await forgotPassword(email.trim());
-      onCodeSent(email.trim());
+      const data = await verifySignupCode(email, code.trim());
+      onVerified(data.setup_token);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleResend() {
+    setError('');
+    setResent(false);
+    setBusy(true);
+
+    try {
+      await signupEmail(email);
+      setResent(true);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -42,17 +65,16 @@ export default function ForgotPasswordScreen({onCodeSent, onBack}: Props) {
             paddingBottom: 32,
           }}
           keyboardShouldPersistTaps="handled">
-          <Text style={type.title}>Reset your password</Text>
+          <Text style={type.title}>Check your email</Text>
           <Text style={{...type.body, marginTop: 10, marginBottom: 36}}>
-            Enter your email and we will send you a code.
+            Enter the 6-digit code we sent to {email}.
           </Text>
 
           <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            email
+            label="Verification code"
+            value={code}
+            onChangeText={setCode}
+            placeholder="000000"
           />
 
           {error ? (
@@ -61,15 +83,27 @@ export default function ForgotPasswordScreen({onCodeSent, onBack}: Props) {
             </Text>
           ) : null}
 
+          {resent ? (
+            <Text style={{...type.small, marginBottom: 16}}>
+              A new code has been sent.
+            </Text>
+          ) : null}
+
           <View style={{marginTop: 8}}>
-            <PrimaryButton label="Send code" onPress={handleSend} busy={busy} />
+            <PrimaryButton label="Verify" onPress={handleVerify} busy={busy} />
           </View>
+
+          <Pressable onPress={handleResend} style={{paddingVertical: 16}}>
+            <Text style={{...type.small, textAlign: 'center'}}>
+              Didn't get a code? Resend
+            </Text>
+          </Pressable>
 
           <View style={{flex: 1}} />
 
           <Pressable onPress={onBack} style={{paddingVertical: 16}}>
             <Text style={{...type.small, textAlign: 'center'}}>
-              Back to sign in
+              Use a different email
             </Text>
           </Pressable>
         </ScrollView>

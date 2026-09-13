@@ -1,92 +1,64 @@
-# Echo
+# Emotional Support Companion — Backend
 
-> A quiet companion for your loudest thoughts.
+REST API for a mobile journalling application providing structured emotional support through guided journal entries, crisis-aware safeguards, and an AI reflection layer.
 
-A mobile journalling application providing structured emotional support through
-guided journal entries, crisis-aware safeguards, and an AI reflection layer.
-Built as a final year project against SRS-ESC-001 v0.9.
-
-* [Status](#status)
-* [Quick start](#quick-start)
-* [Safety constraints](#safety-constraints)
-* [Architecture](#architecture)
-* [Project layout](#project-layout)
-* [Testing](#testing)
-* [Database migrations](#database-migrations)
-* [Known gaps](#known-gaps)
+Implements **SRS-ESC-001 v0.9**. Detailed progress, decisions, and deviations are recorded in `DEVELOPMENT-LOG.md`.
 
 ---
 
-## Status
+## Stack
 
-| # | Module | SRS | Backend | Frontend |
-| --- | --- | --- | --- | --- |
-| 1 | Authentication (account layer) | 4.2 | Complete | Complete |
-| 2 | Application lock (device layer) | 4.2 | Not applicable | Not started |
-| 3 | Onboarding | 4.3 | Complete | Mostly complete |
-| 4 | Dashboard and engagement | 4.4 | Not started | Not started |
-| 5 | Entry engine | 4.5 | Not started | Not started |
-| 6 | Journal types | 4.6 | Not started | Not started |
-| 7 | Selection libraries | 4.7 | Not started | Not started |
-| 8 | Crisis detection and response | 4.8 | Not started | Not started |
-| 9 | AI reflection module | 4.9 | Not started | Not started |
-| 10 | Insights | 4.10 | Not started | Not started |
-| 11 | Learning library | 4.11 | Not started | Not started |
-| 12 | User data control | 4.12 | Not started | Not started |
+- Python 3.13 with FastAPI and Uvicorn
+- PostgreSQL 17, hosted on Supabase (`ap-south-1`)
+- SQLAlchemy ORM with Alembic migrations
+- bcrypt password hashing, JWT (HS256) sessions
 
-The application lock has no backend component by design: FR-AUTH-009 requires the
-lock secret never to be transmitted, so it is device-resident.
-
-### What works today
-
-**Authentication.** Registration, sign-in, short-lived access tokens with
-rotating refresh tokens and family revocation on reuse, rate limiting, email
-verification, password reset, and new-device notification. Fifteen endpoints, all
-exercised by an automated Postman collection.
-
-**Onboarding.** Consent with version tracking, focus area selection validated
-against a content set, distress baseline, weekly goal, and a status endpoint that
-lets an interrupted sequence resume at the right step.
-
-**Client.** Welcome, sign-up, sign-in, forgot-password, consent, focus areas,
-distress, weekly goal, and a placeholder home screen — all talking to the live
-API.
+> The mobile client is React Native and lives in a separate repository.
 
 ---
 
-## Quick start
+## Getting Started
 
-Three processes run during development: the API, the Metro bundler, and an
-Android emulator or device.
+### Prerequisites
 
-### Backend
+- Python 3.11 or above
+- Access to a PostgreSQL 15+ instance
+
+### Setup
 
 ```bash
-cd emotional-support-backend
-
+# 1. Create and activate a virtual environment
 python -m venv venv
 venv\Scripts\activate          # Windows
 source venv/bin/activate       # macOS / Linux
 
+# 2. Install dependencies
 pip install -r requirements.txt
-# create .env — see below
+
+# 3. Create a .env file in the project root (see below)
+
+# 4. Apply database migrations
 alembic upgrade head
+
+# 5. Run the server
 uvicorn app.main:app --reload
 ```
 
-API at `http://127.0.0.1:8000`, interactive docs at `/docs`.
+The API is then available at `http://127.0.0.1:8000`, with interactive documentation at `http://127.0.0.1:8000/docs`.
 
-**`.env`** (git-ignored, never commit):
+### Environment Variables
 
-```
+Create a `.env` file in the project root. It is git-ignored and must **never** be committed.
+
+```env
 DATABASE_URL=postgresql://user:password@host:5432/database
-JWT_SECRET=<python -c "import secrets; print(secrets.token_urlsafe(32))">
+JWT_SECRET=<generate with: python -c "import secrets; print(secrets.token_urlsafe(32))">
 RESEND_API_KEY=re_...
 ```
 
-Optional, defaults shown:
+Optional, with defaults shown:
 
-```
+```env
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=30
@@ -95,355 +67,155 @@ EMAIL_FROM=onboarding@resend.dev
 APP_BASE_URL=http://127.0.0.1:8000
 ```
 
-### Client
+---
 
-```bash
-cd EmotionalSupportApp
+## Project Structure
 
-npm install
-npx react-native start        # leave running
+```
+app/
+├── content/     Clinical content sets (JSON) — reviewable without reading code
+├── core/        Config, database engine, security, auth dependency, verification, rate limiting
+├── models/      SQLAlchemy models — what the database stores
+├── routers/     API endpoints, one file per feature area
+├── schemas/     Pydantic schemas — what the API accepts and returns
+└── main.py      Application entry point
 
-# in a second terminal
-npx react-native run-android
+alembic/versions/   Migration scripts, applied in sequence
 ```
 
-The client reaches the API at `http://10.0.2.2:8000` — the Android emulator's
-alias for the host machine. `127.0.0.1` inside an emulator means the emulator
-itself. The address is set in one place, `src/api/client.ts`.
-
-### Environment requirements
-
-Worth stating explicitly, because these caused most of the setup time on this
-project:
-
-- **64-bit JDK 17.** A 32-bit JVM cannot reserve the heap Gradle requests, and
-  the Kotlin plugin refuses to run at all, reporting `Unknown hardware platform:
-  x86`. Check with `java -XshowSettings:properties -version`; `os.arch` must read
-  `amd64`.
-- **Android NDK 27.1.12297006**, installed through Android Studio's SDK Manager.
-- **Node must be allowed through the firewall.** Windows Defender blocks Node
-  from accepting connections by default, which leaves the client unable to reach
-  Metro with no useful error.
-- `android/gradle.properties` sets `reactNativeArchitectures=x86_64` to shorten
-  emulator builds. **Restore the full list before building for a device or for
-  release.**
+> Models and schemas are deliberately separate: `password_hash` exists in the `Account` model but appears in no response schema, so it cannot leak through the API.
 
 ---
 
-## Safety constraints
+## Module Status
 
-These are requirements of the product, not implementation details, and they
-constrain how features may be built.
+| # | Module | SRS Section | Backend | Frontend |
+|---|--------|:---:|---|---|
+| 1 | Authentication (account layer) | 4.2 | ✅ Complete | ✅ Complete |
+| 2 | Application lock (device layer) | 4.2 | — Not applicable | ⬜ Not started |
+| 3 | Onboarding | 4.3 | ✅ Complete | ✅ Complete |
+| 4 | Dashboard and engagement | 4.4 | ⬜ Not started | ⬜ Not started |
+| 5 | Entry engine | 4.5 | ⬜ Not started | ⬜ Not started |
+| 6 | Journal types | 4.6 | ⬜ Not started | ⬜ Not started |
+| 7 | Selection libraries | 4.7 | ⬜ Not started | ⬜ Not started |
+| 8 | Crisis detection and response | 4.8 | 🟡 Partial (resource list only) | 🟡 Partial |
+| 9 | AI reflection module | 4.9 | ⬜ Not started | ⬜ Not started |
+| 10 | Insights | 4.10 | ⬜ Not started | ⬜ Not started |
+| 11 | Learning library | 4.11 | ⬜ Not started | ⬜ Not started |
+| 12 | User data control | 4.12 | ⬜ Not started | ⬜ Not started |
 
-**Emails reveal nothing about the application's purpose.** Verification, reset
-and new-device messages mention no journalling, mental health, or app name.
-Someone else seeing the recipient's inbox learns only that an account exists.
-This is FR-AUTH-016's explicit requirement and is applied to every message.
-
-**Sign-in failures are indistinguishable.** An unregistered email and a wrong
-password return identical bodies, status codes and content lengths. Without this,
-anyone could probe addresses to discover who uses the application. The same
-discretion applies to `/auth/forgot-password`, which responds identically whether
-or not the address is registered — and the client's wording preserves it.
-
-**The device lock secret never leaves the device.** FR-AUTH-009. No endpoint
-accepts a PIN or pattern; building one would violate the requirement.
-
-**Identifiers are not enumerable.** UUID primary keys throughout, so no record ID
-reveals how many users exist or allows guessing at a neighbour's.
-
-**Only what is needed is collected.** `known_devices` stores a fingerprint and
-timestamps — no IP address, user agent or location. Email send failures are
-swallowed rather than logged, because a recipient address in an error log is
-itself a record that someone uses a mental health application.
-
-**Credentials are stored as hashes, never plaintext.** Passwords with bcrypt;
-refresh and verification tokens with SHA-256. A leaked database yields no usable
-credentials.
-
-**Clinical wording is reviewable without reading code.** Distress descriptions and
-focus area labels live in `app/content/*.json`, loaded at startup, so a clinical
-advisor can review and revise them directly.
-
-**Focus areas are labelled non-clinically.** FR-ONB-005. Codes are neutral
-identifiers; display wording avoids diagnostic terms. This remains a judgement
-call worth reviewing — see Known gaps.
-
-**Verification never blocks use.** FR-AUTH-003. An unverified account has full
-access. Requiring verification would lock out anyone who mistyped an address or
-whose mail was delayed.
+> The application lock is device-resident by design (**FR-AUTH-009**: the lock secret is never transmitted), so it has no backend component.
 
 ---
 
-## Architecture
+## Features Implemented
 
-```
-React Native client
-        │  HTTPS, Authorization: Bearer <access token>
-        ▼
-FastAPI  ──  routers → schemas (validate) → models → SQLAlchemy
-        │                    │
-        │                    └── core: config, security, tokens, email, rate limit
-        ▼
-PostgreSQL 17 on Supabase (ap-south-1, session pooler)
-```
+### Authentication
 
-| Layer | Choice | Notes |
-| --- | --- | --- |
-| Client | React Native 0.87 (CLI) | TypeScript; not Expo |
-| API | FastAPI on Uvicorn | OpenAPI docs generated at `/docs` |
-| ORM | SQLAlchemy 2.0 | |
-| Migrations | Alembic | |
-| Database | PostgreSQL 17, Supabase-hosted | Data API disabled |
-| Password hashing | bcrypt | Used directly, not through passlib |
-| Tokens | python-jose, HS256 | |
-| Email | Resend | |
+- Signup is **email-first** rather than email-and-password together. The client submits only an email; the account is created in a pending state (no password set) and a 6-digit verification code is emailed. The code is exchanged for a short-lived setup token, which is then used to set the password and receive the account's first session.
+- Signup on an already fully registered email is rejected immediately with a `409` and guidance to sign in instead. A signup on a still-pending account is treated as a resend and issues a fresh code.
+- Passwords stored only as salted bcrypt hashes, never in recoverable form.
+- Password hash excluded from every API response by schema design.
+- Login failures are indistinguishable between an unknown email, a wrong password, and a pending (password-not-yet-set) account — identical body, status code, and content length.
+- Rate limiting: five failed attempts per email within fifteen minutes, applied to both login and code verification, then refused for the remainder of the window; counter clears on success.
+- Refresh token rotation with family revocation: each refresh token works once, and presenting a consumed token revokes every token descended from that sign-in.
+- Password reset is **code-based** rather than link-based: the client requests a code by email, submits it in-app, and sets a new password without leaving the app. All sessions are revoked on a successful reset.
+- New-device notification via fingerprint, revealing nothing about the app in the notification itself.
+- Reusable authentication dependency protecting any endpoint in one line.
 
-**Supabase provides hosted PostgreSQL only.** Authentication is implemented in
-FastAPI as the SRS specifies. Supabase Auth is not used, and the Supabase Data
-API is switched off, so the database is reachable only through this backend and
-never directly from a client.
+### Onboarding
 
-**Authentication is a dependency, not per-endpoint code.** `get_current_user`
-extracts and verifies the bearer token and returns the account. Every protected
-endpoint declares it as a parameter, so the check cannot be forgotten on a new
-endpoint.
-
-**Models and schemas are separate on purpose.** Models describe what the database
-stores; schemas describe what the API accepts and returns. `password_hash` exists
-on the `Account` model and in no response schema, so it cannot reach a client even
-by mistake.
-
-**Refresh token rotation with family revocation.** Each refresh token works once.
-Presenting a consumed token means two parties hold it, so the entire family
-descended from that sign-in is revoked. Theft announces itself instead of
-granting a month of silent access.
-
-**Connection pooling.** `pool_pre_ping` and `pool_recycle` are set on the engine.
-Supabase's pooler closes idle connections, and without pre-ping SQLAlchemy hands
-out a dead one after a quiet period — surfacing as
-`server closed the connection unexpectedly` at exactly the wrong moment.
+- Consent acknowledgement recorded with document version and timestamp.
+- Current consent version served to the client so it can detect a version change and request re-acknowledgement.
+- Focus areas recorded as neutral codes, zero or more per account.
+- Distress baseline captured as an integer 0–10 with timestamp, range enforced.
+- Written descriptions for all eleven distress values served from the clinical content set.
+- Weekly entry goal restricted to 2, 3, 5, or 7, defaulting to 3.
+- Onboarding status endpoint reporting which steps remain, supporting resumption of an interrupted sequence.
 
 ---
 
-## Project layout
+## API Endpoints
 
-```
-EmotionalSupport/
-├── emotional-support-backend/
-│   ├── app/
-│   │   ├── content/          Clinical and configurable content as JSON
-│   │   │   ├── distress_scale.json     Descriptions for values 0–10
-│   │   │   └── focus_areas.json        Codes and display labels
-│   │   ├── core/
-│   │   │   ├── config.py               Settings from .env
-│   │   │   ├── database.py             Engine, session, get_db dependency
-│   │   │   ├── dependencies.py         get_current_user
-│   │   │   ├── security.py             Hashing, JWT, token generation
-│   │   │   ├── tokens.py               Issue, rotate, revoke refresh tokens
-│   │   │   ├── verification.py         Email verification and reset tokens
-│   │   │   ├── devices.py              New-device detection and notification
-│   │   │   ├── email.py                Resend wrapper
-│   │   │   └── rate_limit.py           Failed sign-in counting
-│   │   ├── models/           accounts, focus_areas, refresh_tokens,
-│   │   │                     verification_tokens, known_devices
-│   │   ├── routers/          auth.py, onboarding.py, health.py
-│   │   ├── schemas/          account.py, onboarding.py
-│   │   └── main.py
-│   ├── alembic/versions/     Seven migrations, applied in sequence
-│   ├── .env                  Secrets — git-ignored
-│   └── requirements.txt
-│
-└── EmotionalSupportApp/
-    ├── App.tsx               Screen routing and resume logic
-    └── src/
-        ├── api/
-        │   ├── client.ts     Single request helper; API base URL lives here
-        │   └── auth.ts       signup, login, getMe
-        ├── components/
-        │   ├── PrimaryButton.tsx
-        │   └── Field.tsx
-        ├── screens/          Welcome, Signup, Login, ForgotPassword,
-        │                     Consent, FocusAreas, Distress, Goal, Home
-        ├── storage/
-        │   └── tokens.ts     Token persistence
-        └── theme.ts          Colours, type scale, spacing, radii
-```
+Authenticated endpoints require an `Authorization: Bearer <token>` header.
 
-### Design system
+| Method | Path | Auth | Description |
+|---|---|:---:|---|
+| GET | `/health` | No | Liveness check |
+| POST | `/auth/signup` | No | Begin signup with an email; sends a verification code, or returns `409` if already registered |
+| POST | `/auth/verify-signup-code` | No | Redeem a signup code; returns a setup token |
+| POST | `/auth/set-password` | No | Redeem a setup token, set a password, receive the first session |
+| POST | `/auth/login` | No | Authenticate; returns a token pair |
+| POST | `/auth/refresh` | No | Rotate a refresh token |
+| GET | `/auth/me` | Yes | Current account details |
+| GET | `/auth/verify-email` | No | Legacy link-based email verification; not called by the current flow |
+| POST | `/auth/forgot-password` | No | Begin a password reset; sends a reset code |
+| POST | `/auth/verify-reset-code` | No | Redeem a reset code; returns a reset token |
+| POST | `/auth/reset-password-code` | No | Redeem a reset token, set a new password |
+| POST | `/auth/reset-password` | No | Legacy link-based password reset; not called by the current flow |
+| GET | `/onboarding/status` | Yes | Onboarding progress and current consent version |
+| GET | `/onboarding/distress-scale` | No | Written descriptions for values 0–10 |
+| GET | `/onboarding/focus-areas/options` | No | Valid focus area codes |
+| POST | `/onboarding/consent` | Yes | Record consent acknowledgement |
+| PUT | `/onboarding/focus-areas` | Yes | Replace focus area selections |
+| POST | `/onboarding/distress-baseline` | Yes | Record distress baseline |
+| PUT | `/onboarding/goal` | Yes | Set weekly entry goal |
+| GET | `/crisis/resources` | No | Crisis helpline resource list |
 
-The client's visual direction is sage and eucalyptus greens on a warm off-white,
-with botanical line art, generous spacing and sentence-case copy that avoids
-clinical language. Every colour and size lives in `src/theme.ts`, so the palette
-changes in one place.
-
-Headings currently use the platform serif. A custom typeface would need native
-font linking and a rebuild; because typography is confined to `theme.ts`, that
-remains a contained change.
+> Full request and response schemas are generated automatically at `/docs`.
 
 ---
 
-## Testing
-
-### API
-
-`emotional-support-api-full.postman_collection.json` covers every endpoint,
-each failure mode, boundary values, and account isolation between users.
-
-Import it into Postman, then **Run collection**. Tokens are captured
-automatically into collection variables and a fresh test email is generated each
-run, so the suite is repeatable.
-
-Two things to know:
-
-- Requests marked **MANUAL** cannot be asserted automatically — they depend on an
-  email arriving or a link being opened. Their assertions check the API response
-  only; the manual steps are listed in each request's test script.
-- The **rate-limiting folder locks its account for fifteen minutes.** Run it last,
-  or restart the server afterwards to clear the in-memory counter.
-
-Coverage includes: registration and duplicate rejection, password length
-boundaries, malformed input, sign-in success and both failure modes with
-byte-identical responses, missing and tampered tokens, refresh rotation and
-family revocation, invented and replayed tokens, all onboarding endpoints with
-boundary and out-of-range values, focus area validation, and a check that a second
-account sees none of the first account's data.
-
-### Client
-
-Manual, on the emulator. The flow worth walking end to end:
-
-1. Welcome → create an account with a fresh address
-2. Consent → focus areas → distress → weekly goal → home
-3. Sign out, sign back in — should land on home, not onboarding
-4. Wrong password — should show the backend's message, unchanged
-5. Duplicate email — should show the 409 message
-6. Force-quit and reopen — should go straight to home, proving token persistence
-7. Quit midway through onboarding and reopen — should resume at the step reached
-
-Step 7 exercises FR-ONB-010 and is easy to break when routing changes.
-
-No automated test suite runs in CI.
-
----
-
-## Database migrations
-
-```bash
-# after changing a model
-alembic revision --autogenerate -m "description of the change"
-
-# read the generated file in alembic/versions/, then
-alembic upgrade head
-
-# roll back one migration
-alembic downgrade -1
-```
-
-**Read a generated migration before applying it.** Autogenerate is reliable but
-not infallible, and a migration that drops a table is not recoverable.
-
-Every new model needs a line in `app/models/__init__.py`. Alembic discovers
-tables through `Base.metadata`, and a model only registers there once Python has
-imported it — a missing import produces a silently empty migration.
-
-### Tables
+## Database
 
 | Table | Purpose |
-| --- | --- |
-| `accounts` | Credentials, onboarding responses, preferences |
+|---|---|
+| `accounts` | Credentials (nullable until signup completes), onboarding responses, preferences |
 | `focus_areas` | Focus area selections, one row per selection |
 | `refresh_tokens` | Hashed refresh tokens with family and revocation state |
-| `verification_tokens` | Hashed single-use tokens for verification and reset |
+| `verification_tokens` | Hashed single-use tokens and 6-digit codes for signup verification, setup, password reset, and reset codes, distinguished by purpose |
 | `known_devices` | Device fingerprints seen per account |
 | `alembic_version` | Current migration state |
 
-Foreign keys to `accounts` cascade on delete, so removing an account removes its
-dependent rows — required for the data control module in SRS 4.12.
+- UUID primary keys are used throughout rather than sequential integers, so record identifiers cannot be enumerated or used to infer user counts — a relevant consideration for an application holding mental health data.
+- `password_hash` on `accounts` is nullable. A row with no password represents a pending signup: the email has been confirmed as reachable, or a code has been redeemed, but a password has not yet been set. An account only becomes fully usable — able to log in, able to request a password reset — once `password_hash` is set.
 
 ---
 
-## Known gaps
+## Migrations
 
-Ordered roughly by how much they matter. Reasoning for each is in
-[DEVELOPMENT-LOG.md](DEVELOPMENT-LOG.md).
+```bash
+# After changing a model, generate a migration
+alembic revision --autogenerate -m "description of the change"
 
-### Needs attention before a demo
+# Review the generated file in alembic/versions/, then apply it
+alembic upgrade head
 
-**Elevated distress is not handled.** FR-ONB-007 requires a support screen when
-someone selects 9 or 10 on the distress scale. Those values currently save like
-any other and the flow continues to the next step. This is the most significant
-gap in the application: someone reporting severe distress before writing anything
-should see crisis resources, not a Continue button. Implementing it requires
-verified helpline numbers for Pakistan.
+# Roll back the most recent migration
+alembic downgrade -1
+```
 
-**Distress scale wording is provisional.** FR-ONB-006 names the Clinical Advisor
-as the source for the eleven descriptions. The current text is placeholder and
-requires review.
-
-**Tokens are stored unencrypted on the device.** `src/storage/tokens.ts` uses
-AsyncStorage, which is plain text. Tokens are credentials, and this application
-holds mental health data; secure device storage (Android Keystore, via
-`react-native-keychain` or equivalent) is required before real use.
-
-**Email delivery is restricted to one address.** Without a verified sending
-domain, Resend delivers only to the account holder's own address. Nobody else can
-register and receive a verification or reset email until a domain is verified.
-
-**Focus area labels remain a judgement call.** FR-ONB-005 requires non-clinical
-labelling. The current labels are gentler than diagnostic terms but some sit close
-to clinical language, and the design and backend content sets have diverged. Both
-need reconciling and reviewing.
-
-### Functional gaps
-
-**Password reset cannot be completed in the app.** Both endpoints work and are
-tested, but the reset link opens a browser and hits a POST-only endpoint. Two
-routes forward: deep linking so the link opens the app with its token, or
-switching both flows to typed codes. Codes suit a mobile-only application better
-and remove the deep-linking work; links are what the SRS specifies.
-
-**No resend option for verification.** If an address was mistyped, there is no
-way to correct it and request a new link.
-
-**Application lock not built.** Nine requirements, entirely client-side. The SRS
-schedules enrolment after the first completed journal entry, so it depends on the
-entry engine.
-
-**Logout is client-side only.** The client discards its tokens; the access token
-remains valid until it expires. Refresh tokens are revocable server-side.
-
-### Infrastructure and hygiene
-
-**Rate limiting is per-process.** Failure counts live in application memory and
-reset on restart. A production deployment needs a shared store such as Redis.
-
-**Placeholder icons.** The circular sage shapes in the client stand in for the
-icons in the design. An icon library is needed.
-
-**Unused permission in the manifest.** `AndroidManifest.xml` requests nearby
-devices, inherited from the React Native template. It should be removed: for an
-application holding mental health data, requesting permissions that are never used
-is both a privacy problem and something a reviewer will ask about.
-
-**Build architecture is narrowed for the emulator.**
-`reactNativeArchitectures=x86_64` in `android/gradle.properties` must be restored
-to the full list before building for a device or for release.
-
-**No automated tests in CI.** All verification is manual or through the Postman
-collection.
+> **Always** read a generated migration before applying it. Autogenerate is reliable but not infallible, and a migration that drops a table is not recoverable.
 
 ---
 
-## Not production-ready
+## Known Limitations
 
-Stated plainly, because the distinction matters for an application in this domain.
+Recorded in full, with reasoning, in `DEVELOPMENT-LOG.md`.
 
-What exists is a working, demonstrable application. Real users would additionally
-require: encryption at rest, automated backups, monitoring and error tracking
-that never captures journal text, a privacy policy and a lawful basis for
-processing health-adjacent data, verified crisis resources for every region
-served, and clinical review of the AI prompts and all clinical wording.
+- **No email delivery beyond the account holder's own address.** Without a verified sending domain, Resend delivers only to the address the Resend account itself was created with. Multi-user testing and production use both require domain verification.
+- **Rate limiting is per-process.** Failure counts live in application memory and reset on restart. A production deployment requires a shared store.
+- **Distress scale wording is provisional** and requires clinical review before demonstration.
+- **Elevated distress (FR-ONB-007) has no support response yet.** Selecting 9 or 10 on the distress scale currently saves like any other value. This remains the highest-priority safety gap.
+- Legacy link-based `verify-email` and `reset-password` endpoints are unused under the current flow and are candidates for removal.
+- **Signup enumeration-safety trade-off:** unlike login and forgot-password, `/auth/signup` now reveals whether an email is already fully registered, via an immediate `409`. This was a deliberate product decision, made to improve the signup experience, not an oversight.
+- No automated tests run in CI. All verification to date has been manual, through `/docs` and a Postman collection.
 
-Several of those are not engineering work. They are named here rather than
-implied.
+---
+
+## Security Notes
+
+- `.env` is git-ignored. Database credentials and the JWT secret must never be committed.
+- The Supabase Data API is disabled for this project. The database is reachable only through this backend, not directly from any client.
+- Access tokens are bearer credentials and should be treated with the same care as passwords.
+- ⚠️ A temporary debug print statement in `app/core/verification.py` (inside `create_code`) currently logs generated codes to the server console, as a workaround for the email delivery limitation above. **It must be removed before any deployment beyond local development**, since logging a live authentication code is a genuine credential leak once real users are involved.

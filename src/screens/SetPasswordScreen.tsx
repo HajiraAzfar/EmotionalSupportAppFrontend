@@ -1,43 +1,39 @@
 import React, {useState} from 'react';
-import {KeyboardAvoidingView, Pressable, ScrollView, Text, View} from 'react-native';
+import {KeyboardAvoidingView, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
-import {signupEmail} from '../api/auth';
+import {saveTokens} from '../storage/tokens';
 import {colors, space, type} from '../theme';
 
 type Props = {
-  onCodeSent: (email: string) => void;
-  onGoToLogin: () => void;
+  title: string;
+  submit: (password: string) => Promise<{access_token: string; refresh_token: string}>;
+  onDone: () => void;
 };
 
-export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
-  const [email, setEmail] = useState('');
+export default function SetPasswordScreen({title, submit, onDone}: Props) {
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function handleContinue() {
+  async function handleSubmit() {
     setError('');
 
-    if (!email.trim()) {
-      setError('Please enter your email address.');
+    if (password.length < 8) {
+      setError('Your password needs to be at least 8 characters.');
       return;
     }
 
     setBusy(true);
 
     try {
-      await signupEmail(email.trim());
-      onCodeSent(email.trim());
+      const data = await submit(password);
+      await saveTokens(data.access_token, data.refresh_token);
+      onDone();
     } catch (e) {
-      const message = (e as Error).message;
-      setError(message);
-
-      if (message.includes('already exists')) {
-        // Account already registered — nudge toward sign in instead of
-        // pretending a code was sent.
-      }
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -54,17 +50,17 @@ export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
             paddingBottom: 32,
           }}
           keyboardShouldPersistTaps="handled">
-          <Text style={type.title}>Create your account</Text>
+          <Text style={type.title}>{title}</Text>
           <Text style={{...type.body, marginTop: 10, marginBottom: 36}}>
-            We will send a verification code to your email.
+            Choose a password with at least 8 characters.
           </Text>
 
           <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            email
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="At least 8 characters"
+            secure
           />
 
           {error ? (
@@ -74,16 +70,10 @@ export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
           ) : null}
 
           <View style={{marginTop: 8}}>
-            <PrimaryButton label="Send code" onPress={handleContinue} busy={busy} />
+            <PrimaryButton label="Continue" onPress={handleSubmit} busy={busy} />
           </View>
 
           <View style={{flex: 1}} />
-
-          <Pressable onPress={onGoToLogin} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
-              I already have an account
-            </Text>
-          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

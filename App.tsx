@@ -9,8 +9,12 @@ import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import GoalScreen from './src/screens/GoalScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import SetPasswordScreen from './src/screens/SetPasswordScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import VerifyResetCodeScreen from './src/screens/VerifyResetCodeScreen';
+import VerifySignupCodeScreen from './src/screens/VerifySignupCodeScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import {resetPasswordWithCode, setPassword as setPasswordApi} from './src/api/auth';
 import {apiRequest} from './src/api/client';
 import {getAccessToken} from './src/storage/tokens';
 import {colors} from './src/theme';
@@ -20,7 +24,11 @@ type Screen =
   | 'welcome'
   | 'login'
   | 'signup'
+  | 'verifySignupCode'
+  | 'setPassword'
   | 'forgot'
+  | 'verifyResetCode'
+  | 'resetPassword'
   | 'consent'
   | 'focus'
   | 'distress'
@@ -29,6 +37,11 @@ type Screen =
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
+
+  // Transient state carried between steps of the signup and reset flows.
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [setupToken, setSetupToken] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
   async function routeSignedInUser() {
     try {
@@ -81,8 +94,30 @@ function App(): React.JSX.Element {
 
       {screen === 'signup' && (
         <SignupScreen
-          onSignedIn={() => setScreen('consent')}
+          onCodeSent={email => {
+            setPendingEmail(email);
+            setScreen('verifySignupCode');
+          }}
           onGoToLogin={() => setScreen('login')}
+        />
+      )}
+
+      {screen === 'verifySignupCode' && (
+        <VerifySignupCodeScreen
+          email={pendingEmail}
+          onVerified={token => {
+            setSetupToken(token);
+            setScreen('setPassword');
+          }}
+          onBack={() => setScreen('signup')}
+        />
+      )}
+
+      {screen === 'setPassword' && (
+        <SetPasswordScreen
+          title="Set your password"
+          submit={password => setPasswordApi(setupToken, password)}
+          onDone={() => setScreen('consent')}
         />
       )}
 
@@ -95,7 +130,31 @@ function App(): React.JSX.Element {
       )}
 
       {screen === 'forgot' && (
-        <ForgotPasswordScreen onBack={() => setScreen('login')} />
+        <ForgotPasswordScreen
+          onCodeSent={email => {
+            setPendingEmail(email);
+            setScreen('verifyResetCode');
+          }}
+          onBack={() => setScreen('login')}
+        />
+      )}
+
+      {screen === 'verifyResetCode' && (
+        <VerifyResetCodeScreen
+          email={pendingEmail}
+          onVerified={token => {
+            setResetToken(token);
+            setScreen('resetPassword');
+          }}
+        />
+      )}
+
+      {screen === 'resetPassword' && (
+        <SetPasswordScreen
+          title="Choose a new password"
+          submit={password => resetPasswordWithCode(resetToken, password)}
+          onDone={() => setScreen('home')}
+        />
       )}
 
       {screen === 'consent' && (

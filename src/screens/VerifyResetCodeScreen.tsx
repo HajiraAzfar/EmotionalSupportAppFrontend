@@ -1,43 +1,37 @@
 import React, {useState} from 'react';
-import {KeyboardAvoidingView, Pressable, ScrollView, Text, View} from 'react-native';
+import {KeyboardAvoidingView, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
-import {signupEmail} from '../api/auth';
+import {verifyResetCode} from '../api/auth';
 import {colors, space, type} from '../theme';
 
 type Props = {
-  onCodeSent: (email: string) => void;
-  onGoToLogin: () => void;
+  email: string;
+  onVerified: (resetToken: string) => void;
 };
 
-export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
-  const [email, setEmail] = useState('');
+export default function VerifyResetCodeScreen({email, onVerified}: Props) {
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function handleContinue() {
+  async function handleVerify() {
     setError('');
 
-    if (!email.trim()) {
-      setError('Please enter your email address.');
+    if (code.trim().length !== 6) {
+      setError('Enter the 6-digit code from your email.');
       return;
     }
 
     setBusy(true);
 
     try {
-      await signupEmail(email.trim());
-      onCodeSent(email.trim());
+      const data = await verifyResetCode(email, code.trim());
+      onVerified(data.reset_token);
     } catch (e) {
-      const message = (e as Error).message;
-      setError(message);
-
-      if (message.includes('already exists')) {
-        // Account already registered — nudge toward sign in instead of
-        // pretending a code was sent.
-      }
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -54,17 +48,16 @@ export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
             paddingBottom: 32,
           }}
           keyboardShouldPersistTaps="handled">
-          <Text style={type.title}>Create your account</Text>
+          <Text style={type.title}>Check your email</Text>
           <Text style={{...type.body, marginTop: 10, marginBottom: 36}}>
-            We will send a verification code to your email.
+            Enter the 6-digit code we sent to {email}.
           </Text>
 
           <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            email
+            label="Reset code"
+            value={code}
+            onChangeText={setCode}
+            placeholder="000000"
           />
 
           {error ? (
@@ -74,16 +67,10 @@ export default function SignupScreen({onCodeSent, onGoToLogin}: Props) {
           ) : null}
 
           <View style={{marginTop: 8}}>
-            <PrimaryButton label="Send code" onPress={handleContinue} busy={busy} />
+            <PrimaryButton label="Verify" onPress={handleVerify} busy={busy} />
           </View>
 
           <View style={{flex: 1}} />
-
-          <Pressable onPress={onGoToLogin} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
-              I already have an account
-            </Text>
-          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
