@@ -12,6 +12,10 @@ export async function getAccessToken() {
   return AsyncStorage.getItem(ACCESS_KEY);
 }
 
+export async function getRefreshToken() {
+  return AsyncStorage.getItem(REFRESH_KEY);
+}
+
 export async function clearTokens() {
   await AsyncStorage.removeItem(ACCESS_KEY);
   await AsyncStorage.removeItem(REFRESH_KEY);

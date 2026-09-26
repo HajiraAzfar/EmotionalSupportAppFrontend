@@ -1,0 +1,250 @@
+import React, {useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native';
+
+import PrimaryButton from '../PrimaryButton';
+import {CrisisEvent} from '../../api/entries';
+import {addTerm, getLibrary, Library, LibraryItem, TERM_MAX_LENGTH} from '../../api/libraries';
+import {colors, radius, type} from '../../theme';
+
+// FR-PICK-010: how many items each category shows before it is expanded.
+const INITIAL_PER_CATEGORY = 4;
+// FR-PICK-011: libraries larger than this get a search box.
+const SEARCH_THRESHOLD = 20;
+
+type Props = {
+  library: string;
+  preferValence?: string | null;
+  entryId: string;
+  busy: boolean;
+  onSubmit: (ids: string[]) => void;
+  // FR-PICK-007: a user's own term is screened like any other text.
+  onCrisisEvent: (event: CrisisEvent) => void;
+};
+
+export default function LibraryPicker({library, preferValence, entryId, busy, onSubmit, onCrisisEvent}: Props) {
+  const [data, setData] = useState<Library | null>(null);
+  const [error, setError] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const [query, setQuery] = useState('');
+  const [openInfo, setOpenInfo] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [newTerm, setNewTerm] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getLibrary(library, preferValence)
+      .then(setData)
+      .catch(e => setError((e as Error).message));
+  }, [library, preferValence]);
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!data || !q) {
+      return null;
+    }
+    return data.categories
+      .flatMap(c => c.items)
+      .filter(item => item.name.toLowerCase().includes(q));
+  }, [data, query]);
+
+  async function saveTerm() {
+    const name = newTerm.trim();
+    if (!name) {
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const result = await addTerm(library, name, entryId);
+      setData(await getLibrary(library, preferValence));
+      setSelected(current =>
+        current.includes(result.term.id) ? current : [...current, result.term.id],
+      );
+      setNewTerm('');
+      setAdding(false);
+      if (result.crisis_event) {
+        onCrisisEvent(result.crisis_event);
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function toggle(id: string) {
+    setSelected(current =>
+      current.includes(id) ? current.filter(x => x !== id) : [...current, id],
+    );
+  }
+
+  function chip(item: LibraryItem) {
+    const on = selected.includes(item.id);
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() => toggle(item.id)}
+        onLongPress={() => item.definition && setOpenInfo(item.id)}
+        style={{
+          paddingHorizontal: 14,
+          paddingVertical: 8,
+          borderRadius: radius.pill,
+          borderWidth: 1,
+          borderColor: on ? colors.forest : colors.line,
+          backgroundColor: on ? colors.forest : colors.surface,
+          marginRight: 8,
+          marginBottom: 8,
+        }}>
+        <Text style={{...type.label, fontSize: 14, color: on ? colors.surface : colors.ink}}>
+          {item.name}
+        </Text>
+      </Pressable>
+    );
+  }
+
+  if (error && !data) {
+    return <Text style={{...type.small, color: colors.alert}}>{error}</Text>;
+  }
+  if (!data) {
+    return <ActivityIndicator color={colors.sage} />;
+  }
+
+  const info = openInfo
+    ? data.categories.flatMap(c => c.items).find(i => i.id === openInfo)
+    : null;
+
+  return (
+    <View>
+      {data.total > SEARCH_THRESHOLD && (
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search"
+          placeholderTextColor={colors.inkFaint}
+          style={{
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.line,
+            borderRadius: radius.card,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            marginBottom: 10,
+            color: colors.ink,
+          }}
+        />
+      )}
+
+      {matches ? (
+        <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+          {matches.length ? matches.map(chip) : (
+            <Text style={type.small}>Nothing matches “{query}”.</Text>
+          )}
+        </View>
+      ) : (
+        data.categories.map(category => {
+          const isOpen = expanded.includes(category.id) || data.categories.length === 1;
+          const shown = isOpen ? category.items : category.items.slice(0, INITIAL_PER_CATEGORY);
+          // Selected items stay visible even when their category is collapsed.
+          const hiddenSelected = category.items.filter(
+            i => selected.includes(i.id) && !shown.includes(i),
+          );
+          const hiddenCount = category.items.length - shown.length;
+
+          return (
+            <View key={category.id} style={{marginBottom: 6}}>
+              {category.name ? (
+                <Text style={{...type.small, marginBottom: 6}}>{category.name}</Text>
+              ) : null}
+              <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+                {[...shown, ...hiddenSelected].map(chip)}
+                {hiddenCount > 0 && (
+                  <Pressable
+                    onPress={() => setExpanded(e => [...e, category.id])}
+                    style={{paddingHorizontal: 10, paddingVertical: 8}}>
+                    <Text style={{...type.small, color: colors.forest}}>
+                      +{hiddenCount} more
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          );
+        })
+      )}
+
+      {info ? (
+        <Pressable
+          onPress={() => setOpenInfo(null)}
+          style={{
+            backgroundColor: colors.sageWash,
+            borderRadius: radius.card,
+            padding: 12,
+            marginBottom: 10,
+          }}>
+          <Text style={{...type.label, fontWeight: '600'}}>{info.name}</Text>
+          <Text style={{...type.body, marginTop: 4}}>{info.definition}</Text>
+          {info.example ? (
+            <Text style={{...type.small, marginTop: 4, fontStyle: 'italic'}}>
+              “{info.example}”
+            </Text>
+          ) : null}
+        </Pressable>
+      ) : data.categories.some(c => c.items.some(i => i.definition)) ? (
+        <Text style={{...type.small, marginBottom: 10}}>
+          Press and hold an item to see what it means.
+        </Text>
+      ) : null}
+
+      {data.extendable &&
+        (adding ? (
+          <View style={{flexDirection: 'row', gap: 8, marginBottom: 10}}>
+            <TextInput
+              value={newTerm}
+              onChangeText={setNewTerm}
+              maxLength={TERM_MAX_LENGTH}
+              autoFocus
+              placeholder="Your own word"
+              placeholderTextColor={colors.inkFaint}
+              onSubmitEditing={saveTerm}
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+                borderRadius: radius.card,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                color: colors.ink,
+              }}
+            />
+            <Pressable
+              onPress={saveTerm}
+              disabled={saving || !newTerm.trim()}
+              style={{justifyContent: 'center', paddingHorizontal: 8}}>
+              {saving ? (
+                <ActivityIndicator color={colors.sage} />
+              ) : (
+                <Text style={{...type.label, color: colors.forest}}>Add</Text>
+              )}
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={() => setAdding(true)} style={{paddingBottom: 10}}>
+            <Text style={{...type.small, color: colors.forest}}>+ Add your own</Text>
+          </Pressable>
+        ))}
+
+      {error ? (
+        <Text style={{...type.small, color: colors.alert, marginBottom: 8}}>{error}</Text>
+      ) : null}
+
+      {/* FR-PICK-004: submitting with nothing selected records a skip. */}
+      <PrimaryButton
+        label={selected.length ? `Continue (${selected.length})` : 'None of these — skip'}
+        busy={busy}
+        onPress={() => onSubmit(selected)}
+      />
+    </View>
+  );
+}

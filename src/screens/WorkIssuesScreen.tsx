@@ -11,7 +11,7 @@ type Props = {
   onContinue: () => void;
 };
 
-export default function FocusAreasScreen({onContinue}: Props) {
+export default function WorkIssuesScreen({onContinue}: Props) {
   const [options, setOptions] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ export default function FocusAreasScreen({onContinue}: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiRequest('/onboarding/focus-areas/options')
+    apiRequest('/onboarding/work-issues/options')
       .then(setOptions)
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false));
@@ -39,7 +39,7 @@ export default function FocusAreasScreen({onContinue}: Props) {
 
     try {
       const token = await getAccessToken();
-      await apiRequest('/onboarding/focus-areas', {
+      await apiRequest('/onboarding/work-issues', {
         method: 'PUT',
         body: {codes: selected},
         token: token ?? undefined,
@@ -61,7 +61,7 @@ export default function FocusAreasScreen({onContinue}: Props) {
           paddingTop: 40,
           paddingBottom: 32,
         }}>
-        <Text style={type.title}>What brings you here?</Text>
+        <Text style={type.title}>What issues do you want to work on?</Text>
         <Text style={{...type.body, marginTop: 10, marginBottom: 28}}>
           Select all that apply.
         </Text>
@@ -122,6 +122,10 @@ export default function FocusAreasScreen({onContinue}: Props) {
         <View style={{flex: 1, minHeight: 24}} />
 
         <PrimaryButton label="Continue" onPress={handleContinue} busy={busy} />
+
+        <Pressable onPress={onContinue} style={{paddingVertical: 16}}>
+          <Text style={{...type.small, textAlign: 'center'}}>Skip for now</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

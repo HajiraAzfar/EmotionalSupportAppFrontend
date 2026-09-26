@@ -12,9 +12,12 @@ import {colors, radius, space, type} from '../theme';
 
 type Props = {
   onClose: () => void;
+  // Fixed crisis content to show above the list (FR-CRIS-008), e.g. the emergency message.
+  intro?: string;
+  closeLabel?: string;
 };
 
-export default function CrisisResourcesScreen({onClose}: Props) {
+export default function CrisisResourcesScreen({onClose, intro, closeLabel = 'Close'}: Props) {
   const [resources, setResources] = useState<CrisisResource[] | null>(null);
   const [error, setError] = useState('');
 
@@ -37,6 +40,9 @@ export default function CrisisResourcesScreen({onClose}: Props) {
           paddingBottom: 32,
         }}>
         <Text style={type.title}>Support is available</Text>
+        {intro ? (
+          <Text style={{...type.body, color: colors.ink, marginTop: 10}}>{intro}</Text>
+        ) : null}
         <Text style={{...type.body, marginTop: 10, marginBottom: 24}}>
           These services are free and separate from Echo. You can call any of
           them right now.
@@ -77,7 +83,7 @@ export default function CrisisResourcesScreen({onClose}: Props) {
         ))}
 
         <View style={{marginTop: 12}}>
-          <PrimaryButton label="Close" onPress={onClose} />
+          <PrimaryButton label={closeLabel} onPress={onClose} />
         </View>
       </ScrollView>
     </SafeAreaView>
