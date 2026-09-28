@@ -32,7 +32,7 @@ export default function MessageBubble({message}: Props) {
       <Text
         style={{
           ...type.body,
-          color: mine ? colors.surface : isNotice ? colors.inkFaint : colors.ink,
+          color: mine ? colors.onAccent : isNotice ? colors.inkFaint : colors.ink,
           fontStyle: isNotice ? 'italic' : 'normal',
         }}>
         {message.content}

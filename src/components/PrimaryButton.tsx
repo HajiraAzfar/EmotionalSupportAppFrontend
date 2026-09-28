@@ -25,9 +25,9 @@ export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
         alignItems: 'center',
       })}>
       {busy ? (
-        <ActivityIndicator color={colors.surface} />
+        <ActivityIndicator color={colors.onAccent} />
       ) : (
-        <Text style={{...type.label, color: colors.surface, fontSize: 16}}>
+        <Text style={{...type.label, color: colors.onAccent, fontSize: 16}}>
           {label}
         </Text>
       )}

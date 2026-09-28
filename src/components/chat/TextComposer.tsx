@@ -13,18 +13,34 @@ type Props = {
   // Free write: she can keep sending messages, then say she is done.
   onDone?: () => void;
   doneLabel?: string;
+  // Extended session: send this message but let her carry on before Echo replies.
+  onSendMore?: (text: string) => void;
 };
 
-export default function TextComposer({busy, placeholder, maxLength, onSend, onSkip, onDone, doneLabel}: Props) {
+export default function TextComposer({
+  busy,
+  placeholder,
+  maxLength,
+  onSend,
+  onSkip,
+  onDone,
+  doneLabel,
+  onSendMore,
+}: Props) {
   const [text, setText] = useState('');
   const canSend = text.trim().length > 0 && !busy;
 
-  function send() {
+  function send(keepWriting = false) {
     if (!canSend) {
       return;
     }
-    onSend(text.trim());
+    const written = text.trim();
     setText('');
+    if (keepWriting && onSendMore) {
+      onSendMore(written);
+    } else {
+      onSend(written);
+    }
   }
 
   return (
@@ -52,7 +68,7 @@ export default function TextComposer({busy, placeholder, maxLength, onSend, onSk
           }}
         />
         <Pressable
-          onPress={send}
+          onPress={() => send()}
           disabled={!canSend}
           style={{
             backgroundColor: canSend ? colors.forest : colors.sage,
@@ -61,12 +77,25 @@ export default function TextComposer({busy, placeholder, maxLength, onSend, onSk
             paddingVertical: 12,
           }}>
           {busy ? (
-            <ActivityIndicator color={colors.surface} />
+            <ActivityIndicator color={colors.onAccent} />
           ) : (
-            <Text style={{...type.label, color: colors.surface}}>Send</Text>
+            <Text style={{...type.label, color: colors.onAccent}}>Send</Text>
           )}
         </Pressable>
       </View>
+
+      {onSendMore && (
+        <Pressable onPress={() => send(true)} disabled={!canSend} style={{paddingTop: 10}}>
+          <Text
+            style={{
+              ...type.small,
+              textAlign: 'center',
+              color: canSend ? colors.forest : colors.inkFaint,
+            }}>
+            Send, I'm still writing
+          </Text>
+        </Pressable>
+      )}
 
       {onSkip && (
         <Pressable onPress={onSkip} disabled={busy} style={{paddingTop: 10}}>

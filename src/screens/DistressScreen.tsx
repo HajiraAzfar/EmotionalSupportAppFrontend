@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
+import OnboardingSteps from '../components/OnboardingSteps';
 import {colors, radius, space, type} from '../theme';
 import ElevatedDistressScreen from './ElevatedDistressScreen';
 
@@ -71,6 +72,7 @@ export default function DistressScreen({onContinue}: Props) {
           paddingTop: 40,
           paddingBottom: 32,
         }}>
+        <OnboardingSteps step={5} />
         <Text style={type.title}>
           How would you describe your current distress level?
         </Text>

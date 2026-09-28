@@ -28,6 +28,7 @@ import {
   EntryState,
   getEntry,
   JOURNAL_TITLES,
+  resumeEntry,
   JournalType,
   sendMessage,
   submitCapture,
@@ -43,6 +44,12 @@ type Props = {
   // FR-ENT-028: a retrieved entry is shown without any input or continue control.
   readOnly?: boolean;
   onExit: () => void;
+  // A mood tapped on the home card: recorded as soon as the entry opens, so
+  // she does not answer the same question twice.
+  startMood?: number;
+  // The AI Chat tab calls leaving "New chat", and offers its own second action.
+  exitLabel?: string;
+  secondaryAction?: {label: string; onPress: () => void};
 };
 
 // FR-ENT-002: the whole entry is one scrolling thread; every control sits
@@ -52,7 +59,10 @@ export default function ChatEntryScreen({
   entryId,
   parentEntryId,
   readOnly = false,
+  startMood,
   onExit,
+  exitLabel,
+  secondaryAction,
 }: Props) {
   const [entry, setEntry] = useState<EntryState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -63,6 +73,8 @@ export default function ChatEntryScreen({
   // FR-CRIS-007: emergency content stays until explicitly acknowledged.
   const [emergencyText, setEmergencyText] = useState<string | null>(null);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  // So the mood from the home card is submitted once, and not again on re-render.
+  const moodSent = useRef(false);
 
   const handleCrisisEvent = useCallback((event: CrisisEvent | null) => {
     if (event?.tier === 'emergency') {
@@ -101,6 +113,19 @@ export default function ChatEntryScreen({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (
+      startMood === undefined ||
+      moodSent.current ||
+      busy ||
+      entry?.next_capture?.value_id !== 'mood'
+    ) {
+      return;
+    }
+    moodSent.current = true;
+    run(() => submitCapture(entry.id, 'mood', startMood, false, false));
+  }, [entry, startMood, busy, run]);
 
   function capture(valueId: string, value: CaptureValue, skipped = false, more = false) {
     if (!entry) {
@@ -166,6 +191,17 @@ export default function ChatEntryScreen({
           label="I understand"
           busy={busy}
           onPress={() => run(() => acknowledgeNotice(entry.id))}
+        />
+      );
+    }
+
+    // FR-JRN-006: the plan is made; the rest waits until she has done it.
+    if (entry.pending_resume) {
+      return (
+        <PrimaryButton
+          label="I've done it — continue"
+          busy={busy}
+          onPress={() => run(() => resumeEntry(entry.id))}
         />
       );
     }
@@ -246,7 +282,17 @@ export default function ChatEntryScreen({
     if (entry.conversation_status === 'active') {
       return (
         <View>
-          <TextComposer busy={busy} onSend={text => run(() => sendMessage(entry.id, text))} />
+          <TextComposer
+            busy={busy}
+            onSend={text => run(() => sendMessage(entry.id, text))}
+            // The extended free-write session: she can finish her thought across
+            // several messages, and Echo answers all of it at once.
+            onSendMore={
+              entry.journal_type === 'free_write'
+                ? text => run(() => sendMessage(entry.id, text, true))
+                : undefined
+            }
+          />
           <Pressable
             onPress={() => run(() => chooseConversation(entry.id, 'end'))}
             disabled={busy}
@@ -299,12 +345,17 @@ export default function ChatEntryScreen({
         {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept. */}
         <Pressable onPress={onExit} hitSlop={12}>
           <Text style={{...type.small, color: colors.inkSoft}}>
-            {readOnly ? 'Back' : 'Leave'}
+            {exitLabel ?? (readOnly ? 'Back' : 'Leave')}
           </Text>
         </Pressable>
         <Text style={{...type.label, flex: 1, textAlign: 'center', fontFamily: 'serif'}}>
           {JOURNAL_TITLES[journalType]}
         </Text>
+        {secondaryAction ? (
+          <Pressable onPress={secondaryAction.onPress} hitSlop={12} style={{marginRight: 14}}>
+            <Text style={{...type.small, color: colors.accent}}>{secondaryAction.label}</Text>
+          </Pressable>
+        ) : null}
         {/* FR-CRIS-009: crisis resources are always one tap away. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.small, color: colors.alert}}>Get help</Text>

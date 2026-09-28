@@ -12,6 +12,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
+import OnboardingSteps from '../components/OnboardingSteps';
 import {colors, radius, space, type} from '../theme';
 
 const MAX_LENGTH = 160;
@@ -60,6 +61,7 @@ export default function LifeVisionScreen({onContinue}: Props) {
             paddingBottom: 32,
           }}
           keyboardShouldPersistTaps="handled">
+          <OnboardingSteps step={4} />
           <Text style={type.title}>
             How do you imagine your life would be different?
           </Text>

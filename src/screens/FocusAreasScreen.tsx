@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
+import OnboardingSteps from '../components/OnboardingSteps';
 import {colors, radius, space, type} from '../theme';
 
 type Props = {
@@ -61,6 +62,7 @@ export default function FocusAreasScreen({onContinue}: Props) {
           paddingTop: 40,
           paddingBottom: 32,
         }}>
+        <OnboardingSteps step={2} />
         <Text style={type.title}>What brings you here?</Text>
         <Text style={{...type.body, marginTop: 10, marginBottom: 28}}>
           Select all that apply.

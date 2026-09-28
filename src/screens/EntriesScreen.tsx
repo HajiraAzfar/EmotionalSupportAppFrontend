@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   Pressable,
@@ -11,7 +12,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
-import {EntrySummary, JOURNAL_TITLES, listEntries} from '../api/entries';
+import {deleteEntry, EntrySummary, JOURNAL_TITLES, listEntries} from '../api/entries';
 import {colors, radius, space, type} from '../theme';
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
@@ -53,6 +54,30 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
     const timer = setTimeout(() => load(query), query ? SEARCH_DELAY_MS : 0);
     return () => clearTimeout(timer);
   }, [load, query]);
+
+  // FR-ENT-008: deletion is permanent, so it is always confirmed first.
+  function confirmDelete(entry: EntrySummary) {
+    const title = entry.name ?? JOURNAL_TITLES[entry.journal_type] ?? entry.journal_type;
+    Alert.alert(
+      `Delete “${title}”?`,
+      'It will be permanently removed, including everything you recorded in it.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteEntry(entry.id);
+              setEntries(current => (current ?? []).filter(e => e.id !== entry.id));
+            } catch (e) {
+              setError((e as Error).message);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
@@ -119,6 +144,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
             return (
               <Pressable
                 onPress={() => onOpen(item)}
+                onLongPress={() => confirmDelete(item)}
                 style={({pressed}) => ({
                   backgroundColor: pressed ? colors.sageWash : colors.surface,
                   borderWidth: 1,
@@ -134,6 +160,9 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
                   {draft ? (
                     <Text style={{...type.small, color: colors.forest}}>Unfinished</Text>
                   ) : null}
+                  <Pressable onPress={() => confirmDelete(item)} hitSlop={12} style={{paddingLeft: 12}}>
+                    <Text style={{...type.small, color: colors.alert}}>Delete</Text>
+                  </Pressable>
                 </View>
 
                 {item.name ? (

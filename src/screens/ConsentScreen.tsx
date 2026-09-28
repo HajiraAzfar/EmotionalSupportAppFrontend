@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
+import OnboardingSteps from '../components/OnboardingSteps';
 import {colors, radius, space, type} from '../theme';
 
 type Props = {
@@ -58,6 +59,7 @@ export default function ConsentScreen({onAgreed}: Props) {
           paddingTop: 40,
           paddingBottom: 32,
         }}>
+        <OnboardingSteps step={1} />
         <Text style={type.title}>Your privacy matters</Text>
         <Text style={{...type.body, marginTop: 10, marginBottom: 32}}>
           Before we begin, here is how we protect your information and what to

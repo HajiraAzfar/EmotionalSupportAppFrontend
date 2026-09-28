@@ -69,6 +69,8 @@ export interface EntryState {
   support_note: string | null;
   // FR-JRN-007: scope notice to acknowledge before the first value is requested.
   pending_notice: string | null;
+  // FR-JRN-006: the entry is waiting for her to go and do what she planned.
+  pending_resume: boolean;
   // FR-JRN-006: the exposure cycle this one continues.
   parent_entry_id: string | null;
   next_capture: CaptureSpec | null;
@@ -115,6 +117,11 @@ export function acknowledgeNotice(entryId: string): Promise<EntryState> {
   return authed(`/entries/${entryId}/acknowledge`, 'POST', {});
 }
 
+// FR-JRN-006: she has done the thing she planned and is back to record how it went.
+export function resumeEntry(entryId: string): Promise<EntryState> {
+  return authed(`/entries/${entryId}/resume`, 'POST', {});
+}
+
 export function getEntry(entryId: string): Promise<EntryState> {
   return authed(`/entries/${entryId}`);
 }
@@ -158,8 +165,14 @@ export function chooseConversation(
   return authed(`/entries/${entryId}/conversation`, 'POST', {choice});
 }
 
-export function sendMessage(entryId: string, content: string): Promise<EntryState> {
-  return authed(`/entries/${entryId}/messages`, 'POST', {content});
+// `more` sends the message without asking for a reply yet: an extended free
+// write lets her finish her thought across several messages before Echo answers.
+export function sendMessage(
+  entryId: string,
+  content: string,
+  more = false,
+): Promise<EntryState> {
+  return authed(`/entries/${entryId}/messages`, 'POST', {content, more});
 }
 
 export const JOURNAL_TITLES: Record<JournalType, string> = {

@@ -1,5 +1,11 @@
 import {getRefreshToken, saveTokens} from '../storage/tokens';
 
+// Where the backend lives, as seen from the device running the app:
+//  - Android emulator: 10.0.2.2 is the emulator's alias for this computer.
+//  - Real phone over USB: 'http://localhost:8000', after running
+//      adb reverse tcp:8000 tcp:8000
+//  - Real phone over Wi-Fi: this computer's IP, e.g. 'http://192.168.10.8:8000'
+//    (both on the same network, and start uvicorn with --host 0.0.0.0).
 const API_URL = 'http://10.0.2.2:8000';
 
 type RequestOptions = {
