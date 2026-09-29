@@ -12,7 +12,7 @@ type Props = {
   // Called as soon as the last digit is entered — no confirm button.
   onComplete: (value: string) => void;
 };
-
+//abc
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 
 // The dots and the number pad, shared by unlocking and by setting a PIN so
