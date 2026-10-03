@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../components/ScreenBackground';
 
 import PinPad from '../components/PinPad';
+
 import {
   Attempts,
   PIN_LENGTH,

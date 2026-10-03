@@ -1,12 +1,13 @@
 import {getRefreshToken, saveTokens} from '../storage/tokens';
 
-// Where the backend lives, as seen from the device running the app:
-//  - Android emulator: 10.0.2.2 is the emulator's alias for this computer.
-//  - Real phone over USB: 'http://localhost:8000', after running
-//      adb reverse tcp:8000 tcp:8000
-//  - Real phone over Wi-Fi: this computer's IP, e.g. 'http://192.168.10.8:8000'
-//    (both on the same network, and start uvicorn with --host 0.0.0.0).
-const API_URL = 'http://10.0.2.2:8000';
+// Where the backend lives, as seen from the device running the app.
+// A debug build runs on the emulator against uvicorn on this computer, which
+// the emulator reaches at 10.0.2.2. A release build is the one that goes on a
+// phone, and it talks to the deployed server over HTTPS, so the phone needs
+// nothing but internet — no shared Wi-Fi, no firewall rule, no laptop awake.
+const API_URL = __DEV__
+  ? 'http://10.0.2.2:8000'
+  : 'https://emotional-support-backend-a0039c1a.fastapicloud.dev';
 
 type RequestOptions = {
   method?: string;
