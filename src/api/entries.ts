@@ -1,7 +1,8 @@
 import {apiRequest} from './client';
 import {getAccessToken} from '../storage/tokens';
 
-export type JournalType = 'check_in' | 'savouring' | 'thought' | 'exposure' | 'free_write';
+// 'chat' is the AI Chat tab: a conversation from the first message, with no journal before it.
+export type JournalType = 'check_in' | 'savouring' | 'thought' | 'exposure' | 'free_write' | 'chat';
 
 export type MessageKind =
   | 'capture_prompt'
@@ -93,6 +94,8 @@ export interface EntrySummary {
   cycle: number | null;
   // The opening of what she wrote, so an entry is recognisable in the list.
   preview: string | null;
+  // An AI Chat that is still 'active' can be carried on, not just read.
+  conversation_status: ConversationStatus;
 }
 
 export type CaptureValue = number | string[] | string | null;
@@ -124,6 +127,12 @@ export function resumeEntry(entryId: string): Promise<EntryState> {
 
 export function getEntry(entryId: string): Promise<EntryState> {
   return authed(`/entries/${entryId}`);
+}
+
+// The AI Chat tab opens on the most recent chat, so a conversation she left goes on.
+export async function latestChat(): Promise<EntrySummary | null> {
+  const chats: EntrySummary[] = await authed('/entries?journal_type=chat&limit=1');
+  return chats[0] ?? null;
 }
 
 // FR-ENT-006: everything she has written, drafts included, newest activity first.
@@ -181,4 +190,5 @@ export const JOURNAL_TITLES: Record<JournalType, string> = {
   thought: 'Thought record',
   exposure: 'Facing something',
   free_write: 'Free write',
+  chat: 'AI Chat',
 };

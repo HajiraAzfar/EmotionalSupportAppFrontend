@@ -3,7 +3,7 @@ import {ActivityIndicator, Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import ChatEntryScreen from './ChatEntryScreen';
-import {listRecentDrafts} from '../api/entries';
+import {latestChat} from '../api/entries';
 import {colors, space, type} from '../theme';
 
 type Props = {
@@ -11,12 +11,13 @@ type Props = {
 };
 
 /**
- * The AI Chat tab is the free write journal: she types as much as she likes,
- * Echo answers when she is ready, and the whole thing is stored as an entry
- * like any other (FR-JRN-003).
+ * The AI Chat tab: she writes or speaks, Echo answers, like any chat. There is
+ * no journal before the conversation (the free write journal lives in the
+ * Journal tab), and the chat is stored as an entry of type "chat".
  *
- * Opening the tab carries on the conversation she left unfinished rather than
- * starting a blank one, because that is what a chat does.
+ * Opening the tab carries on the most recent chat that is still going, because
+ * that is what a chat does. "New chat" starts a blank one, which is only saved
+ * once she sends something.
  */
 export default function ChatTabScreen({onOpenEntries}: Props) {
   const [entryId, setEntryId] = useState<string | null>(null);
@@ -25,13 +26,13 @@ export default function ChatTabScreen({onOpenEntries}: Props) {
   // Changing this remounts the chat, which is how "new chat" starts one.
   const [session, setSession] = useState(0);
 
-  const findDraft = useCallback(async () => {
+  const findChat = useCallback(async () => {
     setReady(false);
     setError('');
     try {
-      const entries = await listRecentDrafts();
-      const open = entries.find(entry => entry.journal_type === 'free_write');
-      setEntryId(open?.id ?? null);
+      const latest = await latestChat();
+      // A chat goes on until crisis support or the length failsafe closes it.
+      setEntryId(latest?.conversation_status === 'active' ? latest.id : null);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -40,8 +41,8 @@ export default function ChatTabScreen({onOpenEntries}: Props) {
   }, []);
 
   useEffect(() => {
-    findDraft();
-  }, [findDraft, session]);
+    findChat();
+  }, [findChat]);
 
   if (!ready) {
     return (
@@ -54,7 +55,7 @@ export default function ChatTabScreen({onOpenEntries}: Props) {
   if (error) {
     return (
       <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
-        <Pressable onPress={findDraft} style={{padding: space.screen}}>
+        <Pressable onPress={findChat} style={{padding: space.screen}}>
           <Text style={{...type.small, color: colors.alert}}>{error} — tap to retry</Text>
         </Pressable>
       </SafeAreaView>
@@ -65,9 +66,9 @@ export default function ChatTabScreen({onOpenEntries}: Props) {
     <View style={{flex: 1}}>
       <ChatEntryScreen
         key={`${session}-${entryId ?? 'new'}`}
-        journalType="free_write"
+        journalType="chat"
         entryId={entryId ?? undefined}
-        // Finishing or leaving a chat starts the next one fresh.
+        // "New chat": a blank chat, not the one she just left.
         onExit={() => {
           setEntryId(null);
           setSession(current => current + 1);

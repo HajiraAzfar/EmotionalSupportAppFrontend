@@ -38,9 +38,10 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 async function send(path: string, method: string, body: unknown, token?: string) {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  // A file upload (a voice recording) goes as multipart; fetch sets that
+  // Content-Type itself, with the boundary, so it must not be set here.
+  const isForm = body instanceof FormData;
+  const headers: Record<string, string> = isForm ? {} : {'Content-Type': 'application/json'};
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -49,7 +50,7 @@ async function send(path: string, method: string, body: unknown, token?: string)
   return fetch(`${API_URL}${path}`, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: isForm ? body : body ? JSON.stringify(body) : undefined,
   });
 }
 

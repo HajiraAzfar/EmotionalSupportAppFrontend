@@ -127,7 +127,8 @@ export default function HomeScreen({
         listRecentDrafts().catch(() => []),
         getInsights('7d').catch(() => null),
       ]);
-      setDraft(drafts[0] ?? null);
+      // A chat is carried on from the AI Chat tab, not offered as a draft here.
+      setDraft(drafts.find(d => d.journal_type !== 'chat') ?? null);
       setInsights(summary);
     } finally {
       setLoading(false);

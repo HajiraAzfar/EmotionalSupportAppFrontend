@@ -328,7 +328,7 @@ function App(): React.JSX.Element {
               />
             )}
 
-            {/* FR-JRN-003: free write is the chat. */}
+            {/* AI Chat: a chat with Echo; the free write journal is in the Journal tab. */}
             {tab === 'chat' && <ChatTabScreen onOpenEntries={() => setScreen('entries')} />}
 
             {tab === 'insights' && (
@@ -386,8 +386,11 @@ function App(): React.JSX.Element {
             setJournal({
               journalType: item.journal_type,
               entryId: item.id,
-              // FR-ENT-028: a finished thread is a record; a draft can be carried on.
-              readOnly: item.status === 'completed',
+              // FR-ENT-028: a finished thread is a record; a draft, or an AI Chat
+              // that is still going, can be carried on.
+              readOnly:
+                item.status === 'completed' &&
+                !(item.journal_type === 'chat' && item.conversation_status === 'active'),
             });
             setScreen('journal');
           }}

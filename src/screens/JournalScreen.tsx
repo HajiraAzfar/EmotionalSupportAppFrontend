@@ -20,6 +20,8 @@ const JOURNALS: {type: JournalType; blurb: string; minutes: string; icon: string
   {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', icon: '🌷'},
   {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', icon: '💭'},
   {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', icon: '🚪'},
+  // FR-JRN-003: the AI Chat tab is a plain chat now, so the free write journal lives here.
+  {type: 'free_write', blurb: 'Write whatever is on your mind, then talk it through.', minutes: 'Any length', icon: '✍️'},
 ];
 
 export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntries}: Props) {
@@ -29,7 +31,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
 
   useEffect(() => {
     listRecentDrafts()
-      .then(drafts => setDraft(drafts.find(d => d.journal_type !== 'free_write') ?? null))
+      .then(drafts => setDraft(drafts.find(d => d.journal_type !== 'chat') ?? null))
       .catch(() => undefined)
       .finally(() => setLoading(false));
   }, []);

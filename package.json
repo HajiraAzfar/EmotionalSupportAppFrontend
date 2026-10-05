@@ -17,6 +17,9 @@
     "js-sha256": "^1.0.0",
     "react": "19.2.3",
     "react-native": "0.87.1",
+    "react-native-file-access": "^4.0.4",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-nitro-sound": "^0.2.17",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-svg": "^15.15.5"
   },

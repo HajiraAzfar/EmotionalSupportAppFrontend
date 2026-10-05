@@ -17,6 +17,7 @@ import LibraryPicker from '../components/chat/LibraryPicker';
 import MessageBubble from '../components/chat/MessageBubble';
 import MoodScaleControl from '../components/chat/MoodScaleControl';
 import TextComposer from '../components/chat/TextComposer';
+import TypingIndicator from '../components/chat/TypingIndicator';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {
   CaptureValue,
@@ -25,6 +26,7 @@ import {
   createEntry,
   CrisisEvent,
   deleteEntry,
+  EntryMessage,
   EntryState,
   getEntry,
   JOURNAL_TITLES,
@@ -34,6 +36,20 @@ import {
   submitCapture,
 } from '../api/entries';
 import {colors, radius, space, type} from '../theme';
+
+// What a blank AI Chat opens with. Shown, never stored, so the model never reads it.
+const CHAT_GREETING: EntryMessage = {
+  id: 'greeting',
+  role: 'ai',
+  kind: 'chat',
+  value_id: null,
+  content: "Hi, I'm Echo. What's on your mind? Type, or tap the mic and talk.",
+  sequence: 0,
+  created_at: '',
+};
+
+// Same limit as the server's message (MessageCreate).
+const MAX_MESSAGE = 5000;
 
 type Props = {
   journalType: JournalType;
@@ -72,6 +88,9 @@ export default function ChatEntryScreen({
   const [resourcesOpen, setResourcesOpen] = useState(false);
   // FR-CRIS-007: emergency content stays until explicitly acknowledged.
   const [emergencyText, setEmergencyText] = useState<string | null>(null);
+  // A message on its way to Echo: shown at once, with Echo typing under it,
+  // and kept with a retry if it could not be sent.
+  const [pending, setPending] = useState<{text: string; failed: boolean} | null>(null);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   // So the mood from the home card is submitted once, and not again on re-render.
   const moodSent = useRef(false);
@@ -106,9 +125,16 @@ export default function ChatEntryScreen({
     [handleCrisisEvent],
   );
 
+  // A new AI Chat is only created with her first message, so opening the tab
+  // and leaving again leaves nothing behind.
+  const blankChat = journalType === 'chat' && !entryId;
+
   const load = useCallback(() => {
+    if (blankChat) {
+      return;
+    }
     run(() => (entryId ? getEntry(entryId) : createEntry(journalType, parentEntryId)));
-  }, [entryId, journalType, parentEntryId, run]);
+  }, [blankChat, entryId, journalType, parentEntryId, run]);
 
   useEffect(() => {
     load();
@@ -126,6 +152,20 @@ export default function ChatEntryScreen({
     moodSent.current = true;
     run(() => submitCapture(entry.id, 'mood', startMood, false, false));
   }, [entry, startMood, busy, run]);
+
+  // One conversation message that Echo answers.
+  async function say(text: string) {
+    setPending({text, failed: false});
+    const next = await run(async () => {
+      let current = entry;
+      if (!current) {
+        current = await createEntry('chat');
+        setEntry(current);
+      }
+      return sendMessage(current.id, text);
+    });
+    setPending(next ? null : {text, failed: true});
+  }
 
   function capture(valueId: string, value: CaptureValue, skipped = false, more = false) {
     if (!entry) {
@@ -170,6 +210,18 @@ export default function ChatEntryScreen({
   }
 
   function renderControl() {
+    if (blankChat && !entry) {
+      return (
+        <TextComposer
+          busy={busy}
+          placeholder="Message Echo…"
+          maxLength={MAX_MESSAGE}
+          onSend={say}
+          voice
+          voiceSends
+        />
+      );
+    }
     if (!entry) {
       return null;
     }
@@ -234,18 +286,17 @@ export default function ChatEntryScreen({
           />
         );
       }
-      const written = entry.messages.some(
-        m => m.kind === 'capture_answer' && m.value_id === spec.value_id,
-      );
       return (
         <TextComposer
           key={spec.value_id}
           busy={busy}
           maxLength={spec.max_length ?? undefined}
-          // FR-JRN-003: a repeatable value is sent message by message until she is done.
-          onSend={text => capture(spec.value_id, text, false, spec.repeatable)}
+          // Free write too is one send: sending it finishes the writing and moves
+          // on, with no separate "I'm done writing" step.
+          placeholder={spec.repeatable ? 'Write everything on your mind, then send.' : undefined}
+          onSend={text => capture(spec.value_id, text)}
           onSkip={spec.required ? undefined : () => capture(spec.value_id, null, true)}
-          onDone={spec.repeatable && written ? () => capture(spec.value_id, '') : undefined}
+          voice={entry.journal_type === 'free_write'}
         />
       );
     }
@@ -280,25 +331,27 @@ export default function ChatEntryScreen({
     }
 
     if (entry.conversation_status === 'active') {
+      // AI Chat: a plain chat. Voice messages go straight to Echo, and a chat
+      // ends by starting a new one, so there is no End session control.
+      const chat = entry.journal_type === 'chat';
       return (
         <View>
           <TextComposer
             busy={busy}
-            onSend={text => run(() => sendMessage(entry.id, text))}
-            // The extended free-write session: she can finish her thought across
-            // several messages, and Echo answers all of it at once.
-            onSendMore={
-              entry.journal_type === 'free_write'
-                ? text => run(() => sendMessage(entry.id, text, true))
-                : undefined
-            }
+            placeholder={chat ? 'Message Echo…' : undefined}
+            maxLength={MAX_MESSAGE}
+            onSend={say}
+            voice
+            voiceSends={chat}
           />
-          <Pressable
-            onPress={() => run(() => chooseConversation(entry.id, 'end'))}
-            disabled={busy}
-            style={{paddingTop: 12}}>
-            <Text style={{...type.small, textAlign: 'center'}}>End session</Text>
-          </Pressable>
+          {!chat && (
+            <Pressable
+              onPress={() => run(() => chooseConversation(entry.id, 'end'))}
+              disabled={busy}
+              style={{paddingTop: 12}}>
+              <Text style={{...type.small, textAlign: 'center'}}>End session</Text>
+            </Pressable>
+          )}
         </View>
       );
     }
@@ -324,7 +377,16 @@ export default function ChatEntryScreen({
             <Text style={{...type.label, color: colors.forest}}>Try this again</Text>
           </Pressable>
         )}
-        <PrimaryButton label="Return to dashboard" onPress={onExit} />
+        <PrimaryButton
+          label={
+            entry.journal_type !== 'chat'
+              ? 'Return to dashboard'
+              : exitLabel
+              ? 'Start a new chat'
+              : 'Back'
+          }
+          onPress={onExit}
+        />
       </View>
     );
   }
@@ -374,11 +436,33 @@ export default function ChatEntryScreen({
             paddingTop: 20,
             paddingBottom: 32,
           }}>
-          {!entry && !error && <ActivityIndicator color={colors.sage} />}
+          {!entry && !error && !blankChat && <ActivityIndicator color={colors.sage} />}
+
+          {journalType === 'chat' && !readOnly && !entry?.messages.length && !pending && (
+            <MessageBubble message={CHAT_GREETING} />
+          )}
 
           {entry?.messages.map(m => (
             <MessageBubble key={m.id} message={m} />
           ))}
+
+          {pending && (
+            <>
+              <MessageBubble
+                message={{...CHAT_GREETING, id: 'pending', role: 'user', content: pending.text}}
+              />
+              {pending.failed ? (
+                <Pressable
+                  onPress={() => say(pending.text)}
+                  disabled={busy}
+                  style={{alignSelf: 'flex-end', marginTop: -4, marginBottom: 12}}>
+                  <Text style={{...type.small, color: colors.alert}}>Not sent. Tap to try again</Text>
+                </Pressable>
+              ) : (
+                <TypingIndicator />
+              )}
+            </>
+          )}
 
           {highRisk && !readOnly && (
             <View
