@@ -15,7 +15,8 @@ type Props = {
 // The four structured journals. Free write is not here: it lives in AI Chat,
 // because it is a conversation rather than a form.
 // Ordered by expected completion time, shortest first (FR-HOME-001).
-const JOURNALS: {type: JournalType; blurb: string; minutes: string; icon: string}[] = [
+// The home screen's grid reuses these (all but free write).
+export const JOURNALS: {type: JournalType; blurb: string; minutes: string; icon: string}[] = [
   {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', icon: '🌤️'},
   {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', icon: '🌷'},
   {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', icon: '💭'},

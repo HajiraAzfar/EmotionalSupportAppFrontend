@@ -18,7 +18,7 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
 
       <View style={{flex: 1, paddingHorizontal: space.screen, alignItems: 'center'}}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          {/* The logo sits in a pane of glass, so it belongs to the screen
+          {/* The logo sits on a white disc, so it belongs to the screen
               rather than floating on it. */}
           <FadeIn order={0} distance={18}>
             <View
@@ -28,9 +28,9 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
                 borderRadius: 125,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.07)',
+                backgroundColor: colors.surface,
                 borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.16)',
+                borderColor: colors.line,
               }}>
               <Image
                 source={require('../assets/logo.png')}
@@ -68,7 +68,7 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
               borderRadius: radius.pill,
               paddingVertical: 17,
               alignItems: 'center',
-              // A soft halo, so the button glows out of the glass rather than
+              // A soft halo, so the button lifts off the page rather than
               // sitting flat on it.
               shadowColor: colors.accent,
               shadowOpacity: 0.5,
@@ -89,10 +89,10 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
               paddingVertical: 15,
               alignItems: 'center',
               backgroundColor: pressed
-                ? 'rgba(255, 255, 255, 0.10)'
-                : 'rgba(255, 255, 255, 0.05)',
+                ? colors.surfaceRaised
+                : colors.surface,
               borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.16)',
+              borderColor: colors.line,
             })}>
             <Text style={{...type.label, color: colors.ink}}>I already have an account</Text>
           </Pressable>

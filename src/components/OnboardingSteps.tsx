@@ -25,7 +25,7 @@ export default function OnboardingSteps({step, total = 6}: Props) {
                 width: here ? 22 : 8,
                 height: 8,
                 borderRadius: 4,
-                backgroundColor: here ? colors.coral : done ? colors.blush : colors.line,
+                backgroundColor: here ? colors.coral : done ? colors.coralSoft : colors.line,
               }}
             />
           );

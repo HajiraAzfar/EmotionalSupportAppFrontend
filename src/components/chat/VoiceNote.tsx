@@ -323,7 +323,7 @@ export function RecordingBar({
           <PulsingDot />
           <Text style={{...type.label, flex: 1}} accessibilityLiveRegion="polite">
             {phase === 'starting' ? 'Starting…' : 'Listening'}
-            <Text style={{color: nearLimit ? colors.coral : colors.inkFaint}}>
+            <Text style={{color: nearLimit ? colors.accent : colors.inkFaint}}>
               {'  '}
               {clock(seconds)}
               {nearLimit ? ` / ${clock(MAX_SECONDS)}` : ''}

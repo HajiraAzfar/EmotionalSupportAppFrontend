@@ -51,9 +51,9 @@ export default function PinPad({
               height: 14,
               borderRadius: 7,
               borderWidth: 1.5,
-              borderColor: error ? colors.alert : colors.blush,
+              borderColor: error ? colors.alert : colors.accent,
               backgroundColor:
-                index < value.length ? (error ? colors.alert : colors.blush) : 'transparent',
+                index < value.length ? (error ? colors.alert : colors.accent) : 'transparent',
             }}
           />
         ))}

@@ -118,9 +118,9 @@ function Card({
             alignItems: 'center',
             paddingVertical: 8,
             borderRadius: radius.pill,
-            backgroundColor: 'rgba(246, 182, 177, 0.22)',
+            backgroundColor: colors.accent,
           }}>
-          <Text style={{...type.small, color: colors.coralSoft}}>Read</Text>
+          <Text style={{...type.small, color: colors.onAccent}}>Read</Text>
         </Pressable>
       </View>
     </View>
@@ -255,7 +255,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
                 borderRadius: radius.pill,
                 backgroundColor: filter.on ? colors.accent : colors.surface,
               }}>
-              <Text style={{...type.small, color: filter.on ? onTint : colors.inkSoft}}>
+              <Text style={{...type.small, color: filter.on ? colors.onAccent : colors.inkSoft}}>
                 {filter.label}
               </Text>
             </Pressable>

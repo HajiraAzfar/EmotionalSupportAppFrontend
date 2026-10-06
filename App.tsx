@@ -140,7 +140,7 @@ function App(): React.JSX.Element {
     if (!splashDone) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <SplashScreen onDone={() => setSplashDone(true)} />
       </SafeAreaProvider>
     );
@@ -151,7 +151,7 @@ function App(): React.JSX.Element {
   if (locked === null) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={{flex: 1, backgroundColor: colors.bg}} />
       </SafeAreaProvider>
     );
@@ -161,7 +161,7 @@ function App(): React.JSX.Element {
   if (locked) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <AppLockScreen
           onUnlocked={() => setLocked(false)}
           onForgot={async () => {
@@ -191,8 +191,8 @@ function App(): React.JSX.Element {
 
   return (
     <SafeAreaProvider>
-      {/* The app is dark throughout, so the clock and battery must be light. */}
-      <StatusBar barStyle="light-content" />
+      {/* The app is light throughout, so the clock and battery must be dark. */}
+      <StatusBar barStyle="dark-content" />
       {screen === 'welcome' && (
         <WelcomeScreen
           onGoToSignup={() => setScreen('signup')}
@@ -295,11 +295,6 @@ function App(): React.JSX.Element {
             {tab === 'home' && (
               <HomeScreen
                 onSignedOut={() => setScreen('welcome')}
-                onStartCheckIn={mood => {
-                  setStartMood(mood);
-                  setJournal({journalType: 'check_in'});
-                  setScreen('journal');
-                }}
                 onStartJournal={type => {
                   setJournal({journalType: type});
                   setScreen('journal');

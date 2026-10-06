@@ -83,7 +83,7 @@ export default function MoodCalendar({days, labels}: Props) {
                   style={{
                     ...type.small,
                     fontSize: 12,
-                    color: colour ? colors.onAccent : colors.inkFaint,
+                    color: colour ? colors.ink : colors.inkFaint,
                   }}>
                   {date ? date.getDate() : ''}
                 </Text>
