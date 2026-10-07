@@ -1,42 +1,42 @@
-// mindDoc's palette, sampled from the brand designs: a warm cream page, white
-// rounded cards, a terracotta accent, peach for the AI Chat button and
-// sage-green pills. Every screen reads its colours from here, so this file is
-// the only place a theme change happens.
+// The lavender theme: a pale lilac page, white rounded cards, deep navy ink,
+// a violet accent for buttons and the user's chat bubbles, and pink for
+// emphasis. Every screen reads its colours from here, so this file is the only
+// place a theme change happens.
 const palette = {
-  // The page itself: flat warm cream.
-  bg: '#F6EEE4',
-  // Cards are plain white, set off from the cream by a hairline.
+  // The page itself: pale lilac.
+  bg: '#F5F3FF',
+  // Cards are plain white, set off from the lilac by a hairline.
   surface: '#FFFFFF',
-  // A pressed card, or a cell set into one: a shade warmer than the page.
-  surfaceRaised: '#F4E8DC',
+  // A pressed card, or a cell set into one: a shade deeper than the page.
+  surfaceRaised: '#ECE8FD',
   // The home screen's cards, and the ink on them.
   card: '#FFFFFF',
-  onCard: '#3A322E',
-  onCardSoft: '#5F5550',
-  ink: '#3A322E',
-  inkSoft: '#5F5550',
-  inkFaint: '#7E736C',
-  // A hairline, not a border: the edge of a white card on the cream.
-  line: '#EADFD3',
-  // Light peach: the home screen's journal cards.
-  blush: '#F6D9C8',
-  // Peach, from the flowers in the logo: the AI Chat button.
-  coral: '#E8956F',
-  coralSoft: '#F1B999',
-  // Terracotta: buttons, the user's chat bubbles, links. A shade deeper than
-  // the design so white text on it stays readable.
-  accent: '#BC6A4E',
-  accentSoft: '#DB937A',
-  accentWash: 'rgba(188, 106, 78, 0.10)',
+  onCard: '#2B2950',
+  onCardSoft: '#55527A',
+  ink: '#2B2950',
+  inkSoft: '#55527A',
+  inkFaint: '#6F6C93',
+  // A hairline, not a border: the edge of a white card on the lilac.
+  line: '#E2DDF6',
+  // Light lilac: the home screen's journal cards.
+  blush: '#EAE5FF',
+  // Pink: the AI Chat button and anything that needs to stand out.
+  coral: '#EE82AE',
+  coralSoft: '#F6B9D3',
+  // Violet: buttons, the user's chat bubbles, links. Deep enough that white
+  // text on it stays readable.
+  accent: '#6D5BE0',
+  accentSoft: '#A89AF0',
+  accentWash: 'rgba(109, 91, 224, 0.10)',
   // Text and spinners that sit on top of an accent colour.
   onAccent: '#FFFFFF',
-  // Sage: borders, spinners and charts; the wash is the pill colour.
-  sage: '#9AAD8C',
-  sageWash: '#E3E9D8',
+  // Periwinkle: borders, spinners and charts; the wash is the pill colour.
+  sage: '#8EA2EE',
+  sageWash: '#E6EAFD',
   // The ground the logo sits on.
   logoGround: '#FFFFFF',
-  // Deep enough to read as small text on cream and on white.
-  alert: '#B94A42',
+  // Deep enough to read as small text on lilac and on white.
+  alert: '#B8325A',
 };
 
 export const colors = {
@@ -49,24 +49,25 @@ export const colors = {
 // The five points of the mood scale, in order: muted at the low end, warm at
 // the high end. Used by the chart, the calendar and anywhere a recorded mood
 // is shown as a colour. Light enough for ink text to sit on them.
-export const moodColours = ['#BDB4AC', '#D4C3AE', '#C5D0B4', '#F1C4A8', '#E8956F'];
+export const moodColours = ['#CBC8DC', '#B9B2EA', '#A79CF1', '#F6B9D3', '#EE82AE'];
 export const moodFaces = ['😞', '🙁', '😐', '🙂', '😊'];
 
-// The learning library's cards: soft pastels on the cream page. Tints cycle,
+// The learning library's cards: soft pastels on the lilac page. Tints cycle,
 // so a library of any length keeps its rhythm.
 export const cardTints = [
-  {bg: '#FBE6D9', icon: '#F4CDB6'},
-  {bg: '#E9EEDF', icon: '#D3DDC3'},
-  {bg: '#FAF0DC', icon: '#F0DDB5'},
-  {bg: '#F7E3E0', icon: '#EDC7C1'},
+  {bg: '#EEEAFE', icon: '#DCD4FC'},
+  {bg: '#FCE8F1', icon: '#F7CFE1'},
+  {bg: '#E7EDFD', icon: '#CFDBFB'},
+  {bg: '#F3ECFB', icon: '#E3D5F6'},
 ];
 // Text and icons that sit on one of those tints.
 export const onTint = palette.ink;
-export const heart = '#D9605A';
+export const heart = '#D9477E';
 
+// Headings are a bold sans, as in the design, rather than a serif.
 export const type = {
-  display: {fontFamily: 'serif', fontSize: 44, color: colors.ink},
-  title: {fontFamily: 'serif', fontSize: 26, color: colors.ink},
+  display: {fontSize: 40, fontWeight: '700' as const, color: colors.ink},
+  title: {fontSize: 26, fontWeight: '700' as const, color: colors.ink},
   body: {fontSize: 15, lineHeight: 22, color: colors.inkSoft},
   label: {fontSize: 15, color: colors.ink},
   small: {fontSize: 13, color: colors.inkFaint},

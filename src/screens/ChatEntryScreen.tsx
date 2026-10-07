@@ -410,7 +410,7 @@ export default function ChatEntryScreen({
             {exitLabel ?? (readOnly ? 'Back' : 'Leave')}
           </Text>
         </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontFamily: 'serif'}}>
+        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
           {JOURNAL_TITLES[journalType]}
         </Text>
         {secondaryAction ? (

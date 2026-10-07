@@ -214,7 +214,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
         <Pressable onPress={onBack} hitSlop={12}>
           <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
         </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontFamily: 'serif'}}>
+        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
           Learning library
         </Text>
         <View style={{width: 32}} />

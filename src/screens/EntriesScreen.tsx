@@ -93,7 +93,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
         <Pressable onPress={onBack} hitSlop={12}>
           <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
         </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontFamily: 'serif'}}>
+        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
           Your entries
         </Text>
         {/* FR-CRIS-009: crisis resources on every screen. */}
