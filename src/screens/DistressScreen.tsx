@@ -3,10 +3,11 @@ import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 import ElevatedDistressScreen from './ElevatedDistressScreen';
 
 type Props = {
@@ -65,7 +66,8 @@ export default function DistressScreen({onContinue}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: space.screen,
@@ -92,11 +94,11 @@ export default function DistressScreen({onContinue}: Props) {
                 key={key}
                 onPress={() => setValue(number)}
                 style={{
+                  ...glass,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: isOn ? colors.sageWash : colors.surface,
-                  borderWidth: 1,
-                  borderColor: isOn ? colors.sage : colors.line,
+                  backgroundColor: isOn ? colors.surface : colors.glass,
+                  borderColor: isOn ? colors.accent : colors.glassEdge,
                   borderRadius: radius.card,
                   paddingVertical: 12,
                   paddingHorizontal: 14,
@@ -106,16 +108,16 @@ export default function DistressScreen({onContinue}: Props) {
                   style={{
                     width: 28,
                     height: 28,
-                    borderRadius: 14,
-                    backgroundColor: isOn ? colors.forest : colors.sageWash,
+                    borderRadius: radius.pill,
+                    backgroundColor: isOn ? colors.accent : colors.accentWash,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 14,
                   }}>
                   <Text
                     style={{
-                      fontSize: 13,
-                      color: isOn ? colors.surface : colors.inkSoft,
+                      ...type.small,
+                      color: isOn ? colors.onAccent : colors.inkSoft,
                     }}>
                     {key}
                   </Text>

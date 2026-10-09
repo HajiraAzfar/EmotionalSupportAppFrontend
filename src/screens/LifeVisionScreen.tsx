@@ -10,10 +10,11 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, radius, space, type} from '../theme';
+import {colors, font, radius, shadow, space, type} from '../theme';
 
 const MAX_LENGTH = 160;
 
@@ -51,7 +52,8 @@ export default function LifeVisionScreen({onContinue}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
         <ScrollView
           contentContainerStyle={{
@@ -69,7 +71,7 @@ export default function LifeVisionScreen({onContinue}: Props) {
             There is no right answer. Write whatever comes to mind.
           </Text>
 
-          <Text style={{...type.small, marginBottom: 7}}>
+          <Text style={{...type.small, color: colors.inkSoft, marginBottom: 7}}>
             Describe how life would be different
           </Text>
 
@@ -84,12 +86,14 @@ export default function LifeVisionScreen({onContinue}: Props) {
               backgroundColor: colors.surface,
               borderWidth: 1,
               borderColor: colors.line,
-              borderRadius: radius.card,
+              borderRadius: radius.input,
               paddingHorizontal: 16,
               paddingVertical: 15,
+              fontFamily: font.regular,
               fontSize: 15,
               color: colors.ink,
               minHeight: 120,
+              ...shadow.sm,
             }}
           />
 
@@ -108,7 +112,7 @@ export default function LifeVisionScreen({onContinue}: Props) {
           <PrimaryButton label="Continue" onPress={handleContinue} busy={busy} />
 
           <Pressable onPress={onContinue} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
+            <Text style={{...type.link, textAlign: 'center'}}>
               Skip for now
             </Text>
           </Pressable>

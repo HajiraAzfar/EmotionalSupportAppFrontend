@@ -3,8 +3,9 @@ import {Modal, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
-import {colors, space, type} from '../theme';
+import {space, type} from '../theme';
 
 // FR-ONB-007: shown when the submitted distress baseline is 9 or 10.
 // Both a resources control and a continue control are present; continue
@@ -18,8 +19,8 @@ export default function ElevatedDistressScreen({onContinue}: Props) {
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
   return (
-    <SafeAreaView
-      style={{flex: 1, backgroundColor: colors.bg, justifyContent: 'center'}}>
+    <SafeAreaView style={{flex: 1, justifyContent: 'center'}}>
+      <ScreenBackground />
       <View style={{paddingHorizontal: space.screen}}>
         <Text style={type.title}>Thank you for sharing that</Text>
         <Text style={{...type.body, marginTop: 10, marginBottom: 24}}>

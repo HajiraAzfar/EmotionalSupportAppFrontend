@@ -1,12 +1,14 @@
 import React, {useState} from 'react';
 import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {HeartHandshake, ShieldCheck, SlidersHorizontal} from 'lucide-react-native';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 type Props = {
   onAgreed: () => void;
@@ -14,14 +16,17 @@ type Props = {
 
 const points = [
   {
+    Icon: ShieldCheck,
     title: 'Your data is private',
     body: 'We do not sell or share your personal information.',
   },
   {
+    Icon: SlidersHorizontal,
     title: "You're in control",
     body: 'You can export or delete your data at any time.',
   },
   {
+    Icon: HeartHandshake,
     title: 'A safe, supportive space',
     body: 'This app is not a substitute for professional care, but we are here to support you.',
   },
@@ -51,7 +56,8 @@ export default function ConsentScreen({onAgreed}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -70,21 +76,24 @@ export default function ConsentScreen({onAgreed}: Props) {
           <View
             key={point.title}
             style={{
+              ...glass,
               flexDirection: 'row',
-              backgroundColor: colors.surface,
               borderRadius: radius.card,
               padding: 16,
               marginBottom: 12,
             }}>
             <View
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 17,
-                backgroundColor: colors.sageWash,
+                width: 36,
+                height: 36,
+                borderRadius: radius.pill,
+                backgroundColor: colors.accentWash,
+                alignItems: 'center',
+                justifyContent: 'center',
                 marginRight: 14,
-              }}
-            />
+              }}>
+              <point.Icon size={18} color={colors.accent} />
+            </View>
             <View style={{flex: 1}}>
               <Text style={{...type.label, marginBottom: 4}}>{point.title}</Text>
               <Text style={type.body}>{point.body}</Text>
@@ -103,7 +112,7 @@ export default function ConsentScreen({onAgreed}: Props) {
         <PrimaryButton label="I agree" onPress={handleAgree} busy={busy} />
 
         <Pressable style={{paddingVertical: 16}}>
-          <Text style={{...type.small, textAlign: 'center'}}>Learn more</Text>
+          <Text style={{...type.link, textAlign: 'center'}}>Learn more</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

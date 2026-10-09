@@ -1,12 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Check, Leaf} from 'lucide-react-native';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 type Props = {
   onContinue: () => void;
@@ -54,7 +56,8 @@ export default function FocusAreasScreen({onContinue}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -79,24 +82,27 @@ export default function FocusAreasScreen({onContinue}: Props) {
                 key={code}
                 onPress={() => toggle(code)}
                 style={{
+                  ...glass,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: isOn ? colors.sage : colors.line,
+                  backgroundColor: isOn ? colors.surface : colors.glass,
+                  borderColor: isOn ? colors.accent : colors.glassEdge,
                   borderRadius: radius.card,
                   padding: 16,
                   marginBottom: 10,
                 }}>
                 <View
                   style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 15,
-                    backgroundColor: colors.sageWash,
+                    width: 32,
+                    height: 32,
+                    borderRadius: radius.pill,
+                    backgroundColor: colors.accentWash,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     marginRight: 14,
-                  }}
-                />
+                  }}>
+                  <Leaf size={16} color={colors.accent} />
+                </View>
 
                 <Text style={{...type.label, flex: 1}}>{label}</Text>
 
@@ -104,12 +110,15 @@ export default function FocusAreasScreen({onContinue}: Props) {
                   style={{
                     width: 22,
                     height: 22,
-                    borderRadius: 11,
+                    borderRadius: radius.pill,
                     borderWidth: 1.5,
-                    borderColor: isOn ? colors.forest : colors.line,
-                    backgroundColor: isOn ? colors.forest : 'transparent',
-                  }}
-                />
+                    borderColor: isOn ? colors.accent : colors.muted,
+                    backgroundColor: isOn ? colors.accent : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isOn ? <Check size={14} color={colors.onAccent} strokeWidth={3} /> : null}
+                </View>
               </Pressable>
             );
           })

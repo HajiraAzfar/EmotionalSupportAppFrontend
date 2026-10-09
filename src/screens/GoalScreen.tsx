@@ -3,10 +3,11 @@ import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 type Props = {
   onContinue: () => void;
@@ -44,7 +45,8 @@ export default function GoalScreen({onContinue}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -66,11 +68,11 @@ export default function GoalScreen({onContinue}: Props) {
               key={goal.days}
               onPress={() => setSelected(goal.days)}
               style={{
+                ...glass,
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: isOn ? colors.sageWash : colors.surface,
-                borderWidth: 1,
-                borderColor: isOn ? colors.sage : colors.line,
+                backgroundColor: isOn ? colors.surface : colors.glass,
+                borderColor: isOn ? colors.accent : colors.glassEdge,
                 borderRadius: radius.card,
                 padding: 16,
                 marginBottom: 10,
@@ -79,16 +81,16 @@ export default function GoalScreen({onContinue}: Props) {
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 17,
-                  backgroundColor: isOn ? colors.forest : colors.sageWash,
+                  borderRadius: radius.pill,
+                  backgroundColor: isOn ? colors.accent : colors.accentWash,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginRight: 16,
                 }}>
                 <Text
                   style={{
-                    fontSize: 15,
-                    color: isOn ? colors.surface : colors.inkSoft,
+                    ...type.label,
+                    color: isOn ? colors.onAccent : colors.inkSoft,
                   }}>
                   {goal.days}
                 </Text>
