@@ -17,10 +17,10 @@ import Sound, {
   AVEncoderAudioQualityIOSType,
   OutputFormatAndroidType,
 } from 'react-native-nitro-sound';
-import Svg, {Path, Rect} from 'react-native-svg';
+import {Mic} from 'lucide-react-native';
 
 import {transcribeVoice} from '../../api/voice';
-import {colors, radius, type} from '../../theme';
+import {colors, glass, gradient, radius, shadow, type} from '../../theme';
 
 // Voice messages: she speaks, the recording is turned into text, and the text
 // lands in the composer for her to read and correct before sending. What she
@@ -218,20 +218,6 @@ export function useVoiceNote(onText: (text: string) => void) {
   return {phase, seconds, error, clearError: () => setError(''), start, finish, cancel};
 }
 
-function MicIcon({color}: {color: string}) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Rect x={9} y={3} width={6} height={11} rx={3} stroke={color} strokeWidth={1.8} />
-      <Path
-        d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"
-        stroke={color}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-    </Svg>
-  );
-}
-
 export function MicButton({disabled, onPress}: {disabled: boolean; onPress: () => void}) {
   return (
     <Pressable
@@ -245,13 +231,12 @@ export function MicButton({disabled, onPress}: {disabled: boolean; onPress: () =
         height: 46,
         alignItems: 'center',
         justifyContent: 'center',
+        ...glass,
         borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: colors.line,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+        backgroundColor: pressed ? colors.accentWash : colors.glass,
         opacity: disabled ? 0.5 : 1,
       })}>
-      <MicIcon color={colors.ink} />
+      <Mic size={20} color={colors.accent} />
     </Pressable>
   );
 }
@@ -275,7 +260,7 @@ function PulsingDot() {
   }, [opacity]);
   return (
     <Animated.View
-      style={{width: 10, height: 10, borderRadius: 5, backgroundColor: colors.coral, opacity}}
+      style={{width: 10, height: 10, borderRadius: radius.pill, backgroundColor: colors.coral, opacity}}
     />
   );
 }
@@ -306,7 +291,8 @@ export function RecordingBar({
         backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: colors.line,
-        borderRadius: radius.card,
+        borderRadius: radius.image,
+        ...shadow.sm,
         paddingLeft: 14,
         paddingRight: 6,
         paddingVertical: 6,
@@ -330,7 +316,7 @@ export function RecordingBar({
             </Text>
           </Text>
           <Pressable onPress={onCancel} hitSlop={8} accessibilityRole="button">
-            <Text style={{...type.small, color: colors.inkSoft, paddingHorizontal: 6}}>Cancel</Text>
+            <Text style={{...type.link, color: colors.inkSoft, paddingHorizontal: 6}}>Cancel</Text>
           </Pressable>
           <Pressable
             onPress={onDone}
@@ -338,7 +324,9 @@ export function RecordingBar({
             accessibilityRole="button"
             accessibilityLabel="Stop recording and turn it into text"
             style={{
-              backgroundColor: phase === 'recording' ? colors.forest : colors.sage,
+              ...(phase === 'recording'
+                ? {backgroundImage: gradient.primary}
+                : {backgroundColor: colors.accentSoft}),
               borderRadius: radius.pill,
               paddingHorizontal: 16,
               paddingVertical: 9,

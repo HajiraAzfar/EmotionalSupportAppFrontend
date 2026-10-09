@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
+import Logo from '../components/Logo';
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import LibraryPicker from '../components/chat/LibraryPicker';
 import MessageBubble from '../components/chat/MessageBubble';
 import MoodScaleControl from '../components/chat/MoodScaleControl';
@@ -35,7 +37,7 @@ import {
   sendMessage,
   submitCapture,
 } from '../api/entries';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, shadow, space, type} from '../theme';
 
 // What a blank AI Chat opens with. Shown, never stored, so the model never reads it.
 const CHAT_GREETING: EntryMessage = {
@@ -229,7 +231,7 @@ export default function ChatEntryScreen({
     if (readOnly) {
       return (
         <Pressable onPress={confirmDelete} style={{paddingVertical: 12}}>
-          <Text style={{...type.small, color: colors.alert, textAlign: 'center'}}>
+          <Text style={{...type.link, color: colors.alert, textAlign: 'center'}}>
             Delete entry
           </Text>
         </Pressable>
@@ -313,11 +315,12 @@ export default function ChatEntryScreen({
             paddingVertical: 15,
             borderRadius: radius.pill,
             borderWidth: 1.5,
-            borderColor: colors.forest,
-            backgroundColor: pressed ? colors.sageWash : colors.surface,
+            borderColor: colors.accent,
+            backgroundColor: pressed ? colors.accentWash : colors.surface,
+            ...shadow.sm,
             opacity: busy ? 0.5 : 1,
           })}>
-          <Text style={{...type.label, color: colors.forest}}>{label}</Text>
+          <Text style={{...type.label, color: colors.accent}}>{label}</Text>
         </Pressable>
       );
       return (
@@ -349,7 +352,7 @@ export default function ChatEntryScreen({
               onPress={() => run(() => chooseConversation(entry.id, 'end'))}
               disabled={busy}
               style={{paddingTop: 12}}>
-              <Text style={{...type.small, textAlign: 'center'}}>End session</Text>
+              <Text style={{...type.link, textAlign: 'center'}}>End session</Text>
             </Pressable>
           )}
         </View>
@@ -370,11 +373,12 @@ export default function ChatEntryScreen({
               marginBottom: 10,
               borderRadius: radius.pill,
               borderWidth: 1.5,
-              borderColor: colors.forest,
-              backgroundColor: pressed ? colors.sageWash : colors.surface,
+              borderColor: colors.accent,
+              backgroundColor: pressed ? colors.accentWash : colors.surface,
+              ...shadow.sm,
               opacity: busy ? 0.5 : 1,
             })}>
-            <Text style={{...type.label, color: colors.forest}}>Try this again</Text>
+            <Text style={{...type.label, color: colors.accent}}>Try this again</Text>
           </Pressable>
         )}
         <PrimaryButton
@@ -394,33 +398,34 @@ export default function ChatEntryScreen({
   const highRisk = entry?.crisis_tier === 'danger' || entry?.crisis_tier === 'emergency';
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: space.screen,
           paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.line,
         }}>
         {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept. */}
         <Pressable onPress={onExit} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>
+          <Text style={{...type.link, color: colors.inkSoft}}>
             {exitLabel ?? (readOnly ? 'Back' : 'Leave')}
           </Text>
         </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
-          {JOURNAL_TITLES[journalType]}
-        </Text>
+        <View
+          style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8}}>
+          {journalType === 'chat' ? <Logo size={24} /> : null}
+          <Text style={type.heading}>{JOURNAL_TITLES[journalType]}</Text>
+        </View>
         {secondaryAction ? (
           <Pressable onPress={secondaryAction.onPress} hitSlop={12} style={{marginRight: 14}}>
-            <Text style={{...type.small, color: colors.accent}}>{secondaryAction.label}</Text>
+            <Text style={type.link}>{secondaryAction.label}</Text>
           </Pressable>
         ) : null}
         {/* FR-CRIS-009: crisis resources are always one tap away. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
-          <Text style={{...type.small, color: colors.alert}}>Get help</Text>
+          <Text style={{...type.link, color: colors.alert}}>Get help</Text>
         </Pressable>
       </View>
 
@@ -467,10 +472,9 @@ export default function ChatEntryScreen({
           {highRisk && !readOnly && (
             <View
               style={{
-                borderWidth: 1,
+                ...glass,
                 borderColor: colors.alert,
                 borderRadius: radius.card,
-                backgroundColor: colors.surface,
                 padding: 14,
                 marginBottom: 12,
               }}>
@@ -486,7 +490,7 @@ export default function ChatEntryScreen({
             <Pressable
               onPress={() => setResourcesOpen(true)}
               style={{
-                backgroundColor: colors.sageWash,
+                backgroundColor: colors.accentWash,
                 borderRadius: radius.card,
                 padding: 12,
                 marginBottom: 12,
@@ -499,7 +503,7 @@ export default function ChatEntryScreen({
             <Pressable
               onPress={() => setResourcesOpen(true)}
               style={{
-                backgroundColor: colors.sageWash,
+                backgroundColor: colors.accentWash,
                 borderRadius: radius.card,
                 padding: 12,
                 marginBottom: 12,
@@ -516,7 +520,7 @@ export default function ChatEntryScreen({
               <Text style={{...type.small, color: colors.alert}}>{error}</Text>
               {!entry && (
                 <Pressable onPress={load} style={{paddingTop: 8}}>
-                  <Text style={{...type.small, color: colors.forest}}>Try again</Text>
+                  <Text style={type.link}>Try again</Text>
                 </Pressable>
               )}
             </View>

@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native';
-import Svg, {Path} from 'react-native-svg';
+import {SendHorizontal} from 'lucide-react-native';
 
-import {colors, radius, type} from '../../theme';
+import {colors, font, gradient, radius, shadow, type} from '../../theme';
 import {MicButton, RecordingBar, useVoiceNote} from './VoiceNote';
 
 type Props = {
@@ -18,21 +18,6 @@ type Props = {
   // voice note, with anything already typed in front of it.
   voiceSends?: boolean;
 };
-
-// A paper plane, drawn to match the mic: outline only, round joins.
-function SendIcon({color}: {color: string}) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M21 3 3 10.5l7 2.5 2.5 7.5L21 3ZM10 13l11-10"
-        stroke={color}
-        strokeWidth={1.9}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 export default function TextComposer({
   busy,
@@ -102,11 +87,13 @@ export default function TextComposer({
                 backgroundColor: colors.surface,
                 borderWidth: 1,
                 borderColor: colors.line,
-                borderRadius: radius.card,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
+                borderRadius: radius.image,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
                 color: colors.ink,
+                fontFamily: font.regular,
                 fontSize: 15,
+                ...shadow.sm,
               }}
             />
             {voice && <MicButton disabled={busy} onPress={recorder.start} />}
@@ -121,13 +108,15 @@ export default function TextComposer({
                 height: 46,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: canSend ? colors.forest : colors.sage,
+                ...(canSend
+                  ? {backgroundImage: gradient.primary, ...shadow.button}
+                  : {backgroundColor: colors.accentSoft}),
                 borderRadius: radius.pill,
               }}>
               {busy ? (
                 <ActivityIndicator color={colors.onAccent} />
               ) : (
-                <SendIcon color={colors.onAccent} />
+                <SendHorizontal size={20} color={colors.onAccent} />
               )}
             </Pressable>
           </>
@@ -144,7 +133,7 @@ export default function TextComposer({
 
       {onSkip && (
         <Pressable onPress={onSkip} disabled={busy || speaking} style={{paddingTop: 10}}>
-          <Text style={{...type.small, textAlign: 'center'}}>Skip</Text>
+          <Text style={{...type.link, textAlign: 'center'}}>Skip</Text>
         </Pressable>
       )}
     </View>

@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, View} from 'react-native';
 
-import {colors, radius} from '../../theme';
+import {colors, radius, shadow} from '../../theme';
 
 // "Echo is typing": three dots on Echo's side of the thread while a reply is
 // being written, so the wait reads as someone answering, not as a frozen screen.
@@ -31,11 +31,12 @@ export default function TypingIndicator() {
         alignSelf: 'flex-start',
         flexDirection: 'row',
         gap: 5,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.glass,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: colors.glassEdge,
+        ...shadow.sm,
         borderRadius: radius.card,
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: radius.tail,
         paddingHorizontal: 16,
         paddingVertical: 14,
         marginBottom: 10,
@@ -43,7 +44,13 @@ export default function TypingIndicator() {
       {dots.map((opacity, i) => (
         <Animated.View
           key={i}
-          style={{width: 7, height: 7, borderRadius: 4, backgroundColor: colors.inkSoft, opacity}}
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: radius.pill,
+            backgroundColor: colors.accent,
+            opacity,
+          }}
         />
       ))}
     </View>

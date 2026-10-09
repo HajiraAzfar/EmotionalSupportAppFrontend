@@ -2,7 +2,7 @@ import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
 import {ScaleOption} from '../../api/entries';
-import {colors, radius, type} from '../../theme';
+import {colors, glass, radius, type} from '../../theme';
 
 // Up to this many options fit side by side with their labels (the 1-5 mood scale).
 // More than that (the 0-10 distress scale) wraps as numbers, with the ends labelled.
@@ -27,20 +27,27 @@ export default function MoodScaleControl({options, busy, onSelect}: Props) {
             key={option.value}
             disabled={busy}
             onPress={() => onSelect(option.value)}
-            style={({pressed}) => ({
-              flex: 1,
-              alignItems: 'center',
-              paddingVertical: 12,
-              backgroundColor: pressed ? colors.sageWash : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-              borderRadius: radius.card,
-              opacity: busy ? 0.5 : 1,
-            })}>
-            <Text style={{...type.title, fontSize: 22}}>{option.value}</Text>
-            <Text style={{...type.small, textAlign: 'center', marginTop: 2}}>
-              {option.label}
-            </Text>
+            style={{flex: 1, alignItems: 'center', opacity: busy ? 0.5 : 1}}>
+            {({pressed}) => (
+              <>
+                <View
+                  style={{
+                    ...glass,
+                    width: 52,
+                    height: 52,
+                    borderRadius: radius.pill,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: pressed ? colors.accentWash : colors.glass,
+                    borderColor: pressed ? colors.accent : colors.glassEdge,
+                  }}>
+                  <Text style={type.heading}>{option.value}</Text>
+                </View>
+                <Text style={{...type.tiny, textAlign: 'center', marginTop: 6}}>
+                  {option.label}
+                </Text>
+              </>
+            )}
           </Pressable>
         ))}
       </View>
@@ -59,16 +66,17 @@ export default function MoodScaleControl({options, busy, onSelect}: Props) {
             disabled={busy}
             onPress={() => onSelect(option.value)}
             style={({pressed}) => ({
-              width: 52,
+              ...glass,
+              width: 46,
+              height: 46,
               alignItems: 'center',
-              paddingVertical: 12,
-              backgroundColor: pressed ? colors.sageWash : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-              borderRadius: radius.card,
+              justifyContent: 'center',
+              backgroundColor: pressed ? colors.accentWash : colors.glass,
+              borderColor: pressed ? colors.accent : colors.glassEdge,
+              borderRadius: radius.pill,
               opacity: busy ? 0.5 : 1,
             })}>
-            <Text style={{...type.title, fontSize: 20}}>{option.value}</Text>
+            <Text style={type.heading}>{option.value}</Text>
           </Pressable>
         ))}
       </View>

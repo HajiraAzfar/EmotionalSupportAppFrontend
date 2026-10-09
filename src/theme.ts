@@ -114,6 +114,8 @@ export const space = {
 };
 
 export const radius = {
+  // The corner a chat bubble points from.
+  tail: 6,
   tile: 14,
   input: 16,
   card: 20,

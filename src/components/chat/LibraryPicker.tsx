@@ -4,7 +4,7 @@ import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native'
 import PrimaryButton from '../PrimaryButton';
 import {CrisisEvent} from '../../api/entries';
 import {addTerm, getLibrary, Library, LibraryItem, TERM_MAX_LENGTH} from '../../api/libraries';
-import {colors, radius, type} from '../../theme';
+import {colors, font, gradient, radius, type} from '../../theme';
 
 // FR-PICK-010: how many items each category shows before it is expanded.
 const INITIAL_PER_CATEGORY = 4;
@@ -90,13 +90,18 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
           paddingHorizontal: 14,
           paddingVertical: 8,
           borderRadius: radius.pill,
-          borderWidth: 1,
-          borderColor: on ? colors.forest : colors.line,
-          backgroundColor: on ? colors.forest : colors.surface,
+          ...(on
+            ? {backgroundImage: gradient.primary}
+            : {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line}),
           marginRight: 8,
           marginBottom: 8,
         }}>
-        <Text style={{...type.label, fontSize: 14, color: on ? colors.surface : colors.ink}}>
+        <Text
+          style={{
+            ...type.small,
+            fontFamily: on ? font.semibold : font.medium,
+            color: on ? colors.onAccent : colors.ink,
+          }}>
           {item.name}
         </Text>
       </Pressable>
@@ -126,10 +131,11 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
             backgroundColor: colors.surface,
             borderWidth: 1,
             borderColor: colors.line,
-            borderRadius: radius.card,
+            borderRadius: radius.input,
             paddingHorizontal: 14,
-            paddingVertical: 8,
+            paddingVertical: 10,
             marginBottom: 10,
+            fontFamily: font.regular,
             color: colors.ink,
           }}
         />
@@ -162,7 +168,7 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
                   <Pressable
                     onPress={() => setExpanded(e => [...e, category.id])}
                     style={{paddingHorizontal: 10, paddingVertical: 8}}>
-                    <Text style={{...type.small, color: colors.forest}}>
+                    <Text style={type.link}>
                       +{hiddenCount} more
                     </Text>
                   </Pressable>
@@ -177,12 +183,12 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
         <Pressable
           onPress={() => setOpenInfo(null)}
           style={{
-            backgroundColor: colors.sageWash,
+            backgroundColor: colors.accentWash,
             borderRadius: radius.card,
             padding: 12,
             marginBottom: 10,
           }}>
-          <Text style={{...type.label, fontWeight: '600'}}>{info.name}</Text>
+          <Text style={type.label}>{info.name}</Text>
           <Text style={{...type.body, marginTop: 4}}>{info.definition}</Text>
           {info.example ? (
             <Text style={{...type.small, marginTop: 4, fontStyle: 'italic'}}>
@@ -212,9 +218,10 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
                 backgroundColor: colors.surface,
                 borderWidth: 1,
                 borderColor: colors.line,
-                borderRadius: radius.card,
+                borderRadius: radius.input,
                 paddingHorizontal: 14,
-                paddingVertical: 8,
+                paddingVertical: 10,
+                fontFamily: font.regular,
                 color: colors.ink,
               }}
             />
@@ -225,13 +232,13 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
               {saving ? (
                 <ActivityIndicator color={colors.sage} />
               ) : (
-                <Text style={{...type.label, color: colors.forest}}>Add</Text>
+                <Text style={{...type.label, color: colors.accent}}>Add</Text>
               )}
             </Pressable>
           </View>
         ) : (
           <Pressable onPress={() => setAdding(true)} style={{paddingBottom: 10}}>
-            <Text style={{...type.small, color: colors.forest}}>+ Add your own</Text>
+            <Text style={type.link}>+ Add your own</Text>
           </Pressable>
         ))}
 
