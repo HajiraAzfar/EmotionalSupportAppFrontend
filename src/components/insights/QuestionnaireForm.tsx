@@ -8,7 +8,8 @@ import {
   getQuestionnaire,
   submitQuestionnaire,
 } from '../../api/insights';
-import {colors, radius, space, type} from '../../theme';
+import ScreenBackground from '../ScreenBackground';
+import {colors, glass, radius, space, type} from '../../theme';
 
 type Props = {
   visible: boolean;
@@ -52,18 +53,17 @@ export default function QuestionnaireForm({visible, onClose, onDone}: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+      <SafeAreaView style={{flex: 1}}>
+        <ScreenBackground />
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: space.screen,
             paddingVertical: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.line,
           }}>
           <Pressable onPress={onClose} hitSlop={12}>
-            <Text style={{...type.small, color: colors.inkSoft}}>Close</Text>
+            <Text style={{...type.link, color: colors.inkSoft}}>Close</Text>
           </Pressable>
         </View>
 
@@ -87,10 +87,10 @@ export default function QuestionnaireForm({visible, onClose, onDone}: Props) {
                         paddingVertical: 12,
                         paddingHorizontal: 14,
                         marginBottom: 8,
+                        ...glass,
                         borderRadius: radius.card,
-                        borderWidth: 1,
-                        borderColor: chosen ? colors.forest : colors.line,
-                        backgroundColor: chosen ? colors.sageWash : colors.surface,
+                        borderColor: chosen ? colors.accent : colors.glassEdge,
+                        backgroundColor: chosen ? colors.surface : colors.glass,
                       }}>
                       <Text style={{...type.body, color: chosen ? colors.ink : colors.inkSoft}}>
                         {option.label}

@@ -2,7 +2,9 @@ import React, {useState} from 'react';
 import {Pressable, Text, View} from 'react-native';
 
 import {CalendarDay} from '../../api/insights';
-import {colors, moodColours, type} from '../../theme';
+import {ChevronLeft, ChevronRight} from 'lucide-react-native';
+
+import {colors, moodColours, radius, type} from '../../theme';
 
 type Props = {
   days: CalendarDay[];
@@ -41,14 +43,14 @@ export default function MoodCalendar({days, labels}: Props) {
   return (
     <View>
       <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
-        <Pressable onPress={() => shift(-1)} hitSlop={14}>
-          <Text style={{...type.label, color: colors.inkSoft}}>‹</Text>
+        <Pressable onPress={() => shift(-1)} hitSlop={14} accessibilityLabel="Previous month">
+          <ChevronLeft size={20} color={colors.inkSoft} />
         </Pressable>
         <Text style={{...type.label, flex: 1, textAlign: 'center'}}>
           {month.toLocaleDateString(undefined, {month: 'long', year: 'numeric'})}
         </Text>
-        <Pressable onPress={() => shift(1)} hitSlop={14}>
-          <Text style={{...type.label, color: colors.inkSoft}}>›</Text>
+        <Pressable onPress={() => shift(1)} hitSlop={14} accessibilityLabel="Next month">
+          <ChevronRight size={20} color={colors.inkSoft} />
         </Pressable>
       </View>
 
@@ -56,7 +58,7 @@ export default function MoodCalendar({days, labels}: Props) {
         {WEEKDAYS.map(day => (
           <Text
             key={day}
-            style={{...type.small, width: `${100 / 7}%`, textAlign: 'center', marginBottom: 8, fontSize: 11}}>
+            style={{...type.tiny, width: `${100 / 7}%`, textAlign: 'center', marginBottom: 8}}>
             {day}
           </Text>
         ))}
@@ -81,8 +83,7 @@ export default function MoodCalendar({days, labels}: Props) {
                 }}>
                 <Text
                   style={{
-                    ...type.small,
-                    fontSize: 12,
+                    ...type.tiny,
                     color: colour ? colors.ink : colors.inkFaint,
                   }}>
                   {date ? date.getDate() : ''}
@@ -96,8 +97,8 @@ export default function MoodCalendar({days, labels}: Props) {
       <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 6}}>
         {labels.map((label, index) => (
           <View key={label} style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-            <View style={{width: 9, height: 9, borderRadius: 5, backgroundColor: moodColours[index]}} />
-            <Text style={{...type.small, fontSize: 12}}>{label}</Text>
+            <View style={{width: 9, height: 9, borderRadius: radius.pill, backgroundColor: moodColours[index]}} />
+            <Text style={type.tiny}>{label}</Text>
           </View>
         ))}
       </View>

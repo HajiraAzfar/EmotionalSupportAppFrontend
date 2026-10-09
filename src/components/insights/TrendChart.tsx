@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {LayoutChangeEvent, Text, View} from 'react-native';
 import Svg, {Circle, Line, Path, Text as SvgText} from 'react-native-svg';
 
-import {colors, type} from '../../theme';
+import {chartLabel, colors, radius, type} from '../../theme';
 
 export type TrendSeries = {
   id: string;
@@ -64,8 +64,7 @@ export default function TrendChart({weeks, series, height = 170}: Props) {
                 <SvgText
                   x={PADDING.left - 6}
                   y={y(value) + 3.5}
-                  fontSize={10}
-                  fill={colors.inkFaint}
+                  {...chartLabel}
                   textAnchor="end">
                   {value}
                 </SvgText>
@@ -89,15 +88,14 @@ export default function TrendChart({weeks, series, height = 170}: Props) {
               );
             })}
 
-            <SvgText x={PADDING.left} y={height - 6} fontSize={10} fill={colors.inkFaint}>
+            <SvgText x={PADDING.left} y={height - 6} {...chartLabel}>
               {weekLabel(weeks[0])}
             </SvgText>
             {weeks.length > 1 && (
               <SvgText
                 x={width - PADDING.right}
                 y={height - 6}
-                fontSize={10}
-                fill={colors.inkFaint}
+                {...chartLabel}
                 textAnchor="end">
                 {weekLabel(weeks[weeks.length - 1])}
               </SvgText>
@@ -111,7 +109,7 @@ export default function TrendChart({weeks, series, height = 170}: Props) {
                   style={{
                     width: 10,
                     height: 10,
-                    borderRadius: 5,
+                    borderRadius: radius.pill,
                     backgroundColor: LINE_COLOURS[index % LINE_COLOURS.length],
                   }}
                 />

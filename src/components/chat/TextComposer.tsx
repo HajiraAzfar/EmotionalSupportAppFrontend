@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native';
 import {SendHorizontal} from 'lucide-react-native';
 
-import {colors, font, gradient, radius, shadow, type} from '../../theme';
+import {colors, gradient, radius, shadow, type} from '../../theme';
 import {MicButton, RecordingBar, useVoiceNote} from './VoiceNote';
 
 type Props = {
@@ -91,8 +91,7 @@ export default function TextComposer({
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 color: colors.ink,
-                fontFamily: font.regular,
-                fontSize: 15,
+                ...type.input,
                 ...shadow.sm,
               }}
             />

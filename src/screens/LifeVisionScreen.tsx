@@ -14,7 +14,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import {apiRequest} from '../api/client';
 import {getAccessToken} from '../storage/tokens';
 import OnboardingSteps from '../components/OnboardingSteps';
-import {colors, font, radius, shadow, space, type} from '../theme';
+import {colors, radius, shadow, space, type} from '../theme';
 
 const MAX_LENGTH = 160;
 
@@ -89,8 +89,7 @@ export default function LifeVisionScreen({onContinue}: Props) {
               borderRadius: radius.input,
               paddingHorizontal: 16,
               paddingVertical: 15,
-              fontFamily: font.regular,
-              fontSize: 15,
+              ...type.input,
               color: colors.ink,
               minHeight: 120,
               ...shadow.sm,

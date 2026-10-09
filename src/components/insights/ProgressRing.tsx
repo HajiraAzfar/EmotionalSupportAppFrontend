@@ -54,7 +54,7 @@ export default function ProgressRing({value, fraction = 1, size = 96, caption}: 
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={{...type.title, fontSize: 28}}>{value}</Text>
+          <Text style={type.display}>{value}</Text>
         </View>
       </View>
       {caption ? (

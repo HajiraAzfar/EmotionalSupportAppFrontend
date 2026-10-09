@@ -264,7 +264,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
               onChangeText={setQuery}
               placeholder="Search articles"
               placeholderTextColor={colors.inkFaint}
-              style={{flex: 1, paddingVertical: 12, fontFamily: font.regular, color: colors.ink}}
+              style={{flex: 1, paddingVertical: 12, ...type.input, color: colors.ink}}
             />
           </View>
         </View>

@@ -104,6 +104,8 @@ export const type = {
   label: {fontFamily: font.semibold, fontSize: 15, color: colors.ink},
   body: {fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: colors.inkSoft},
   small: {fontFamily: font.medium, fontSize: 13, color: colors.inkFaint},
+  // Text typed into a box.
+  input: {fontFamily: font.regular, fontSize: 15},
   tiny: {fontFamily: font.medium, fontSize: 11, color: colors.inkFaint},
   link: {fontFamily: font.semibold, fontSize: 13, color: colors.accent},
 };
@@ -131,6 +133,9 @@ export const shadow = {
   // Cast upwards, for the tab bar along the bottom edge.
   bar: {boxShadow: '0px -4px 20px rgba(107, 82, 249, 0.08)'},
 };
+
+// Axis labels inside the SVG charts.
+export const chartLabel = {fontSize: 10, fontFamily: font.medium, fill: colors.inkFaint};
 
 // A frosted-glass card. Real background blur would need a native module, so
 // this is translucent white with a bright edge and a soft shadow.

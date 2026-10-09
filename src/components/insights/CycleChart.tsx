@@ -3,7 +3,7 @@ import {LayoutChangeEvent, Text, View} from 'react-native';
 import Svg, {Line, Rect, Text as SvgText} from 'react-native-svg';
 
 import {ExposureCycle} from '../../api/insights';
-import {colors, type} from '../../theme';
+import {chartLabel, colors, radius, type} from '../../theme';
 
 type Props = {
   cycles: ExposureCycle[];
@@ -61,8 +61,7 @@ export default function CycleChart({cycles, min = 0, max = 10, height = 170}: Pr
                 <SvgText
                   x={PADDING.left - 6}
                   y={y(value) + 3.5}
-                  fontSize={10}
-                  fill={colors.inkFaint}
+                  {...chartLabel}
                   textAnchor="end">
                   {value}
                 </SvgText>
@@ -96,8 +95,7 @@ export default function CycleChart({cycles, min = 0, max = 10, height = 170}: Pr
                   <SvgText
                     x={groupLeft + groupWidth / 2}
                     y={height - 14}
-                    fontSize={10}
-                    fill={colors.inkFaint}
+                    {...chartLabel}
                     textAnchor="middle">
                     Cycle {cycle.cycle}
                   </SvgText>
@@ -109,7 +107,7 @@ export default function CycleChart({cycles, min = 0, max = 10, height = 170}: Pr
           <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 12}}>
             {BARS.map(bar => (
               <View key={bar.key} style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                <View style={{width: 10, height: 10, borderRadius: 2, backgroundColor: bar.colour}} />
+                <View style={{width: 10, height: 10, borderRadius: radius.pill, backgroundColor: bar.colour}} />
                 <Text style={type.small}>{bar.label}</Text>
               </View>
             ))}

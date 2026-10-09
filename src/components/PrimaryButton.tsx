@@ -36,7 +36,7 @@ export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
         <ActivityIndicator color={colors.onAccent} />
       ) : (
         <>
-          <Text style={{...type.label, color: colors.onAccent, fontSize: 16}}>{label}</Text>
+          <Text style={{...type.label, color: colors.onAccent}}>{label}</Text>
           <ArrowRight size={18} color={colors.onAccent} />
         </>
       )}

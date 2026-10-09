@@ -3,7 +3,7 @@ import {LayoutChangeEvent, Pressable, Text, View} from 'react-native';
 import Svg, {Circle, Defs, Line, LinearGradient, Path, Stop} from 'react-native-svg';
 
 import {MoodPoint} from '../../api/insights';
-import {colors, moodFaces, radius, type} from '../../theme';
+import {colors, glass, moodFaces, radius, type} from '../../theme';
 
 type Props = {
   points: MoodPoint[];
@@ -176,14 +176,15 @@ export default function MoodAreaChart({points, min, max, labels, height = 210, o
                 top: Math.max(yOf(chosen.value) - 56, 0),
                 width: 110,
                 alignItems: 'center',
-                backgroundColor: colors.surfaceRaised,
+                ...glass,
+                backgroundColor: colors.surface,
                 borderRadius: radius.card,
                 paddingVertical: 7,
               }}>
-              <Text style={{...type.small, color: colors.ink, fontSize: 12}}>
+              <Text style={{...type.small, color: colors.ink}}>
                 {labels[chosen.value - min] ?? chosen.value}
               </Text>
-              <Text style={{...type.small, fontSize: 11}}>{shortDate(chosen.date)}</Text>
+              <Text style={type.tiny}>{shortDate(chosen.date)}</Text>
             </Pressable>
           ) : null}
 
@@ -197,8 +198,7 @@ export default function MoodAreaChart({points, min, max, labels, height = 210, o
                 left: xOf(point) - 22,
                 width: 44,
                 textAlign: 'center',
-                ...type.small,
-                fontSize: 11,
+                ...type.tiny,
               }}>
               {new Date(`${point.date}T00:00:00`).toLocaleDateString(undefined, {
                 day: 'numeric',

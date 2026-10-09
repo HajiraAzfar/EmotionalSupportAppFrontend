@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {LayoutChangeEvent, View} from 'react-native';
 import Svg, {Line, Rect, Text as SvgText} from 'react-native-svg';
 
-import {colors} from '../../theme';
+import {chartLabel, colors} from '../../theme';
 
 export type Bar = {
   key: string;
@@ -52,8 +52,7 @@ export default function BarChart({bars, height = 160}: Props) {
               <SvgText
                 x={PADDING.left - 6}
                 y={y(value) + 3.5}
-                fontSize={10}
-                fill={colors.inkFaint}
+                {...chartLabel}
                 textAnchor="end">
                 {value}
               </SvgText>
@@ -78,8 +77,7 @@ export default function BarChart({bars, height = 160}: Props) {
                 <SvgText
                   x={left + barWidth / 2}
                   y={height - 16}
-                  fontSize={10}
-                  fill={colors.inkFaint}
+                  {...chartLabel}
                   textAnchor="middle">
                   {bar.label}
                 </SvgText>
@@ -87,7 +85,7 @@ export default function BarChart({bars, height = 160}: Props) {
                   <SvgText
                     x={left + barWidth / 2}
                     y={top - 4}
-                    fontSize={10}
+                    {...chartLabel}
                     fill={colors.inkSoft}
                     textAnchor="middle">
                     {bar.count}

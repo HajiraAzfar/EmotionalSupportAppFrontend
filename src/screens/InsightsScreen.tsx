@@ -3,6 +3,7 @@ import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
+import BackButton from '../components/BackButton';
 import BarChart from '../components/insights/BarChart';
 import CountGrid, {TRAP_ICONS} from '../components/insights/CountGrid';
 import CycleChart from '../components/insights/CycleChart';
@@ -28,7 +29,7 @@ import {
   rememberPeriod,
   rememberedPeriod,
 } from '../api/insights';
-import {colors, radius, space, type} from '../theme';
+import {colors, font, glass, gradient, radius, space, type} from '../theme';
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 
@@ -56,14 +57,12 @@ function Card({
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
+        ...glass,
         borderRadius: radius.card,
         padding: 16,
         marginBottom: 14,
       }}>
-      {title ? <Text style={{...type.label, fontWeight: '600'}}>{title}</Text> : null}
+      {title ? <Text style={type.heading}>{title}</Text> : null}
       {subtitle ? <Text style={{...type.small, marginTop: 2}}>{subtitle}</Text> : null}
       <View style={{marginTop: title ? 14 : 0}}>{children}</View>
     </View>
@@ -119,7 +118,8 @@ function EntriesCard({streak, onStartEntry}: {streak: Streak; onStartEntry: () =
           alignItems: 'center',
           paddingVertical: 13,
           borderRadius: radius.pill,
-          backgroundColor: pressed ? colors.accentSoft : colors.accent,
+          backgroundImage: gradient.primary,
+          opacity: pressed ? 0.85 : 1,
         })}>
         <Text style={{...type.label, color: colors.onAccent}}>Start new entry</Text>
       </Pressable>
@@ -145,7 +145,7 @@ function QuestionnaireOffer({
         padding: 16,
         marginBottom: 14,
       }}>
-      <Text style={{...type.label, fontWeight: '600'}}>A few questions, when you have a minute</Text>
+      <Text style={type.label}>A few questions, when you have a minute</Text>
       <Text style={{...type.small, marginTop: 4}}>
         Five short questions about the last two weeks. You will not be given a score.
       </Text>
@@ -158,7 +158,7 @@ function QuestionnaireOffer({
             alignItems: 'center',
             paddingVertical: 12,
             borderRadius: radius.pill,
-            backgroundColor: colors.accent,
+            backgroundImage: gradient.primary,
             opacity: busy ? 0.5 : 1,
           }}>
           <Text style={{...type.label, color: colors.onAccent}}>Answer them</Text>
@@ -235,13 +235,13 @@ function Counts({rows}: {rows: CountRow[]}) {
                 : `  ·  ${row.change > 0 ? '+' : '−'}${Math.abs(row.change)}`}
             </Text>
           </View>
-          <View style={{height: 8, backgroundColor: colors.line, borderRadius: 4, marginTop: 4}}>
+          <View style={{height: 8, backgroundColor: colors.muted, borderRadius: radius.pill, marginTop: 4}}>
             <View
               style={{
                 width: `${(row.count / highest) * 100}%`,
                 height: 8,
-                backgroundColor: colors.accentSoft,
-                borderRadius: 4,
+                backgroundImage: gradient.primary,
+                borderRadius: radius.pill,
               }}
             />
           </View>
@@ -322,13 +322,11 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
+        <BackButton onPress={onBack} />
         <View style={{flex: 1}} />
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
-          <Text style={{...type.small, color: colors.alert}}>Get help</Text>
+          <Text style={{...type.link, color: colors.alert}}>Get help</Text>
         </Pressable>
       </View>
 
@@ -351,9 +349,14 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
                   alignItems: 'center',
                   paddingVertical: 9,
                   borderRadius: radius.pill,
-                  backgroundColor: on ? colors.accent : colors.surface,
+                  ...(on ? {backgroundImage: gradient.primary} : {backgroundColor: colors.surfaceRaised}),
                 }}>
-                <Text style={{...type.small, color: on ? colors.onAccent : colors.inkSoft}}>
+                <Text
+                  style={{
+                    ...type.small,
+                    fontFamily: on ? font.semibold : font.medium,
+                    color: on ? colors.onAccent : colors.inkSoft,
+                  }}>
                   {option.label}
                 </Text>
               </Pressable>
@@ -406,7 +409,7 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
                     limit={allTraps ? data.thinking_traps.length : 4}
                     onPress={row => openTrapArticle(row.id)}
                   />
-                  <Text style={{...type.small, marginTop: 10, fontSize: 12}}>
+                  <Text style={{...type.tiny, marginTop: 10}}>
                     Tap a pattern to read about it.
                   </Text>
                   {data.thinking_traps.length > 4 && (
@@ -419,8 +422,9 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
                         borderRadius: radius.pill,
                         borderWidth: 1,
                         borderColor: colors.line,
+                        backgroundColor: colors.surface,
                       }}>
-                      <Text style={{...type.small, color: colors.accent}}>
+                      <Text style={type.link}>
                         {allTraps ? 'Show fewer' : `View all ${data.thinking_traps.length} traps`}
                       </Text>
                     </Pressable>
@@ -451,7 +455,7 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
             <Pressable
               onPress={() => setShowMore(current => !current)}
               style={{alignItems: 'center', paddingVertical: 14}}>
-              <Text style={{...type.small, color: colors.accent}}>
+              <Text style={type.link}>
                 {showMore ? 'Show less' : 'Everything else you recorded'}
               </Text>
             </Pressable>

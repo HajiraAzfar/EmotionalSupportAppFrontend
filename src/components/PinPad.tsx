@@ -79,7 +79,7 @@ export default function PinPad({
               ...(key ? shadow.sm : null),
               opacity: disabled ? 0.4 : 1,
             })}>
-            <Text style={{...type.heading, fontSize: 22}}>{key}</Text>
+            <Text style={type.title}>{key}</Text>
           </Pressable>
         ))}
       </View>

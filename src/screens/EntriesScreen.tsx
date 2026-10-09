@@ -121,7 +121,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
             onChangeText={setQuery}
             placeholder="Search what you wrote"
             placeholderTextColor={colors.inkFaint}
-            style={{flex: 1, paddingVertical: 12, fontFamily: font.regular, color: colors.ink}}
+            style={{flex: 1, paddingVertical: 12, ...type.input, color: colors.ink}}
           />
         </View>
       </View>

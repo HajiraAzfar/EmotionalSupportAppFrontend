@@ -135,7 +135,7 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
             paddingHorizontal: 14,
             paddingVertical: 10,
             marginBottom: 10,
-            fontFamily: font.regular,
+            ...type.input,
             color: colors.ink,
           }}
         />
@@ -221,7 +221,7 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
                 borderRadius: radius.input,
                 paddingHorizontal: 14,
                 paddingVertical: 10,
-                fontFamily: font.regular,
+                ...type.input,
                 color: colors.ink,
               }}
             />

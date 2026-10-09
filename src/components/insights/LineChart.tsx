@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {LayoutChangeEvent, View} from 'react-native';
 import Svg, {Circle, Line, Path, Text as SvgText} from 'react-native-svg';
 
-import {colors} from '../../theme';
+import {chartLabel, colors} from '../../theme';
 
 export type SeriesPoint = {
   date: string;
@@ -96,8 +96,7 @@ export default function LineChart({
                 <SvgText
                   x={PADDING.left - 6}
                   y={y(value) + 3.5}
-                  fontSize={10}
-                  fill={colors.inkFaint}
+                  {...chartLabel}
                   textAnchor="end">
                   {Number.isInteger(value) ? String(value) : value.toFixed(1)}
                 </SvgText>
@@ -124,27 +123,26 @@ export default function LineChart({
           ))}
 
           {/* Only the ends are labelled; a date under every dot is unreadable. */}
-          <SvgText x={PADDING.left} y={height - 6} fontSize={10} fill={colors.inkFaint}>
+          <SvgText x={PADDING.left} y={height - 6} {...chartLabel}>
             {shortDate(points[0].date)}
           </SvgText>
           {points.length > 1 && (
             <SvgText
               x={width - PADDING.right}
               y={height - 6}
-              fontSize={10}
-              fill={colors.inkFaint}
+              {...chartLabel}
               textAnchor="end">
               {shortDate(points[points.length - 1].date)}
             </SvgText>
           )}
 
           {lowLabel && (
-            <SvgText x={width - PADDING.right} y={y(min) - 6} fontSize={10} fill={colors.inkFaint} textAnchor="end">
+            <SvgText x={width - PADDING.right} y={y(min) - 6} {...chartLabel} textAnchor="end">
               {lowLabel}
             </SvgText>
           )}
           {highLabel && (
-            <SvgText x={width - PADDING.right} y={y(max) + 12} fontSize={10} fill={colors.inkFaint} textAnchor="end">
+            <SvgText x={width - PADDING.right} y={y(max) + 12} {...chartLabel} textAnchor="end">
               {highLabel}
             </SvgText>
           )}
