@@ -2,7 +2,7 @@ import React from 'react';
 import {Text, View} from 'react-native';
 
 import FadeIn from './FadeIn';
-import {colors, type} from '../theme';
+import {colors, radius, type} from '../theme';
 
 type Props = {
   step: number;
@@ -22,15 +22,15 @@ export default function OnboardingSteps({step, total = 6}: Props) {
             <View
               key={index}
               style={{
-                width: here ? 22 : 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: here ? colors.coral : done ? colors.coralSoft : colors.line,
+                width: here ? 18 : 6,
+                height: 6,
+                borderRadius: radius.pill,
+                backgroundColor: here ? colors.accent : done ? colors.accentSoft : colors.muted,
               }}
             />
           );
         })}
-        <Text style={{...type.small, marginLeft: 8, fontSize: 12}}>
+        <Text style={{...type.tiny, marginLeft: 8}}>
           {step} of {total}
         </Text>
       </View>

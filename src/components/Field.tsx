@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Text, TextInput, View} from 'react-native';
 
-import {colors, radius, type} from '../theme';
+import {colors, font, radius, shadow, type} from '../theme';
 
 type Props = {
   label: string;
@@ -24,7 +24,7 @@ export default function Field({
 
   return (
     <View style={{marginBottom: 18}}>
-      <Text style={{...type.small, marginBottom: 7}}>{label}</Text>
+      <Text style={{...type.small, color: colors.inkSoft, marginBottom: 7}}>{label}</Text>
 
       <TextInput
         value={value}
@@ -39,12 +39,14 @@ export default function Field({
         style={{
           backgroundColor: colors.surface,
           borderWidth: 1,
-          borderColor: focused ? colors.sage : colors.line,
-          borderRadius: radius.card,
+          borderColor: focused ? colors.accent : colors.line,
+          borderRadius: radius.input,
           paddingHorizontal: 16,
           paddingVertical: 15,
+          fontFamily: font.regular,
           fontSize: 15,
           color: colors.ink,
+          ...shadow.sm,
         }}
       />
     </View>
