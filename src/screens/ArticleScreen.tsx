@@ -1,9 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Heart} from 'lucide-react-native';
+
+import BackButton from '../components/BackButton';
+import ScreenBackground from '../components/ScreenBackground';
 
 import {Article, readArticle, setFavourite} from '../api/library';
-import {colors, heart, radius, space, type} from '../theme';
+import {colors, gradient, heart, radius, shadow, space, type} from '../theme';
 
 type Props = {
   slug: string;
@@ -24,7 +28,7 @@ function Body({text}: {text: string}) {
           return (
             <Text
               key={index}
-              style={{...type.label, fontWeight: '600', marginTop: 22, marginBottom: 8}}>
+              style={{...type.heading, marginTop: 22, marginBottom: 8}}>
               {trimmed.slice(3)}
             </Text>
           );
@@ -81,7 +85,8 @@ export default function ArticleScreen({slug, onBack}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <View
         style={{
           flexDirection: 'row',
@@ -89,15 +94,15 @@ export default function ArticleScreen({slug, onBack}: Props) {
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
+        <BackButton onPress={onBack} />
         <View style={{flex: 1}} />
         {article ? (
-          <Pressable onPress={toggleSave} hitSlop={12}>
-            <Text style={{fontSize: 20, color: heart, opacity: article.favourite ? 1 : 0.4}}>
-              {article.favourite ? '♥' : '♡'}
-            </Text>
+          <Pressable
+            onPress={toggleSave}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={article.favourite ? 'Remove from saved' : 'Save'}>
+            <Heart size={22} color={heart} fill={article.favourite ? heart : 'transparent'} />
           </Pressable>
         ) : null}
       </View>
@@ -108,16 +113,26 @@ export default function ArticleScreen({slug, onBack}: Props) {
         <ActivityIndicator color={colors.accent} style={{marginTop: 40}} />
       ) : (
         <ScrollView contentContainerStyle={{padding: space.screen, paddingBottom: 60}}>
+          {/* Where the design has its illustration. */}
+          <View
+            style={{
+              height: 180,
+              borderRadius: radius.image,
+              backgroundImage: gradient.landscape,
+              marginBottom: 18,
+              ...shadow.md,
+            }}
+          />
           <View
             style={{
               alignSelf: 'flex-start',
               paddingHorizontal: 12,
               paddingVertical: 5,
               borderRadius: radius.pill,
-              backgroundColor: colors.surface,
+              backgroundColor: colors.accentWash,
               marginBottom: 12,
             }}>
-            <Text style={{...type.small, fontSize: 12}}>
+            <Text style={{...type.tiny, color: colors.accent}}>
               {article.category} · {article.minutes} min read
             </Text>
           </View>

@@ -3,8 +3,9 @@ import {ActivityIndicator, Linking, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {getCrisisResources, CrisisResource} from '../api/crisis';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 // FR-CRIS-009 / FR-CRIS-010: must be reachable without sign-in or app unlock.
 // getCrisisResources() calls apiRequest with no token, so this works even
@@ -32,7 +33,8 @@ export default function CrisisResourcesScreen({onClose, intro, closeLabel = 'Clo
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: space.screen,
@@ -61,14 +63,12 @@ export default function CrisisResourcesScreen({onClose, intro, closeLabel = 'Clo
           <View
             key={r.id}
             style={{
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
+              ...glass,
               borderRadius: radius.card,
               padding: 14,
               marginBottom: 10,
             }}>
-            <Text style={{...type.body, color: colors.ink, fontWeight: '600'}}>
+            <Text style={type.label}>
               {r.name}
             </Text>
             <Text

@@ -10,10 +10,13 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Search} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
+import BackButton from '../components/BackButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {deleteEntry, EntrySummary, JOURNAL_TITLES, listEntries} from '../api/entries';
-import {colors, radius, space, type} from '../theme';
+import {colors, font, glass, radius, shadow, space, type} from '../theme';
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 // Wait this long after the last keystroke before searching.
@@ -80,44 +83,47 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: space.screen,
           paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.line,
         }}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
+        <BackButton onPress={onBack} />
+        <Text style={{...type.heading, flex: 1, textAlign: 'center'}}>
           Your entries
         </Text>
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
-          <Text style={{...type.small, color: colors.alert}}>Get help</Text>
+          <Text style={{...type.link, color: colors.alert}}>Get help</Text>
         </Pressable>
       </View>
 
       <View style={{paddingHorizontal: space.screen, paddingTop: 12}}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search what you wrote"
-          placeholderTextColor={colors.inkFaint}
+        <View
           style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
             backgroundColor: colors.surface,
             borderWidth: 1,
             borderColor: colors.line,
-            borderRadius: radius.card,
+            borderRadius: radius.input,
             paddingHorizontal: 14,
-            paddingVertical: 10,
-            color: colors.ink,
-          }}
-        />
+            ...shadow.sm,
+          }}>
+          <Search size={18} color={colors.inkFaint} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search what you wrote"
+            placeholderTextColor={colors.inkFaint}
+            style={{flex: 1, paddingVertical: 12, fontFamily: font.regular, color: colors.ink}}
+          />
+        </View>
       </View>
 
       {error ? (
@@ -146,22 +152,22 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
                 onPress={() => onOpen(item)}
                 onLongPress={() => confirmDelete(item)}
                 style={({pressed}) => ({
-                  backgroundColor: pressed ? colors.sageWash : colors.surface,
-                  borderWidth: 1,
-                  borderColor: draft ? colors.sage : colors.line,
+                  ...glass,
+                  backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
+                  borderColor: draft ? colors.accent : colors.glassEdge,
                   borderRadius: radius.card,
                   padding: 14,
                   marginBottom: 10,
                 })}>
                 <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
-                  <Text style={{...type.label, fontWeight: '600', flex: 1}}>
+                  <Text style={{...type.label, flex: 1}}>
                     {item.name ?? JOURNAL_TITLES[item.journal_type] ?? item.journal_type}
                   </Text>
                   {draft ? (
-                    <Text style={{...type.small, color: colors.forest}}>Unfinished</Text>
+                    <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>Unfinished</Text>
                   ) : null}
                   <Pressable onPress={() => confirmDelete(item)} hitSlop={12} style={{paddingLeft: 12}}>
-                    <Text style={{...type.small, color: colors.alert}}>Delete</Text>
+                    <Text style={{...type.link, color: colors.alert}}>Delete</Text>
                   </Pressable>
                 </View>
 

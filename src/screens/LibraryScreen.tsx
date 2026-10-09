@@ -9,9 +9,24 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Brain, CloudSun, Heart, LucideIcon, NotebookPen, Search, Sparkles} from 'lucide-react-native';
+
+import BackButton from '../components/BackButton';
 
 import {ArticleCard, LibraryListing, listArticles, setFavourite} from '../api/library';
-import {cardTints, colors, heart, onTint, radius, space, type} from '../theme';
+import {
+  cardTints,
+  colors,
+  font,
+  glass,
+  gradient,
+  heart,
+  onTint,
+  radius,
+  shadow,
+  space,
+  type,
+} from '../theme';
 
 type Props = {
   onOpenArticle: (slug: string) => void;
@@ -24,10 +39,10 @@ const {width: SCREEN} = Dimensions.get('window');
 const FEATURE_WIDTH = SCREEN - space.screen * 2;
 
 // One picture per category, so a card is recognisable before it is read.
-const CATEGORY_ICONS: Record<string, string> = {
-  Thinking: '🧠',
-  Coping: '🌤️',
-  Journalling: '📖',
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  Thinking: Brain,
+  Coping: CloudSun,
+  Journalling: NotebookPen,
 };
 
 function Feature({
@@ -37,27 +52,36 @@ function Feature({
   article: ArticleCard;
   onOpen: () => void;
 }) {
+  const Icon = CATEGORY_ICONS[article.category] ?? Sparkles;
   return (
     <Pressable
       onPress={onOpen}
       style={{
         width: FEATURE_WIDTH,
         marginRight: 12,
-        borderRadius: radius.card,
+        borderRadius: radius.image,
         overflow: 'hidden',
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
+        backgroundImage: gradient.landscape,
         padding: 18,
         justifyContent: 'flex-end',
-        minHeight: 170,
+        minHeight: 190,
+        ...shadow.md,
       }}>
-      <Text style={{fontSize: 30, marginBottom: 10}}>
-        {CATEGORY_ICONS[article.category] ?? '✨'}
-      </Text>
-      <Text style={{...type.title, fontSize: 22}}>{article.title}</Text>
-      <Text style={{...type.body, marginTop: 6}}>{article.summary}</Text>
-      <Text style={{...type.small, marginTop: 8, color: colors.accent}}>
+      <View
+        style={{
+          ...glass,
+          width: 44,
+          height: 44,
+          borderRadius: radius.pill,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 10,
+        }}>
+        <Icon size={22} color={colors.accent} />
+      </View>
+      <Text style={type.title}>{article.title}</Text>
+      <Text style={{...type.body, color: colors.ink, marginTop: 6}}>{article.summary}</Text>
+      <Text style={{...type.small, fontFamily: font.semibold, marginTop: 8, color: colors.accent}}>
         {article.minutes} min read
       </Text>
     </Pressable>
@@ -75,6 +99,7 @@ function Card({
   onOpen: () => void;
   onToggleSave: () => void;
 }) {
+  const Icon = CATEGORY_ICONS[article.category] ?? Sparkles;
   return (
     <View
       style={{
@@ -82,23 +107,24 @@ function Card({
         flexGrow: 1,
         backgroundColor: tint.bg,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: colors.glassEdge,
         borderRadius: radius.card,
         padding: 14,
+        ...shadow.sm,
       }}>
       <View
         style={{
           width: 46,
           height: 46,
-          borderRadius: 23,
+          borderRadius: radius.pill,
           backgroundColor: tint.icon,
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <Text style={{fontSize: 20}}>{CATEGORY_ICONS[article.category] ?? '✨'}</Text>
+        <Icon size={22} color={onTint} />
       </View>
 
-      <Text style={{...type.label, color: onTint, fontWeight: '600', marginTop: 12}}>
+      <Text style={{...type.label, color: onTint, marginTop: 12}}>
         {article.title}
       </Text>
       <Text style={{...type.small, color: onTint, opacity: 0.75, marginTop: 4}} numberOfLines={3}>
@@ -106,10 +132,12 @@ function Card({
       </Text>
 
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14}}>
-        <Pressable onPress={onToggleSave} hitSlop={8}>
-          <Text style={{fontSize: 18, opacity: article.favourite ? 1 : 0.35, color: heart}}>
-            {article.favourite ? '♥' : '♡'}
-          </Text>
+        <Pressable
+          onPress={onToggleSave}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={article.favourite ? 'Remove from saved' : 'Save'}>
+          <Heart size={20} color={heart} fill={article.favourite ? heart : 'transparent'} />
         </Pressable>
         <Pressable
           onPress={onOpen}
@@ -118,9 +146,9 @@ function Card({
             alignItems: 'center',
             paddingVertical: 8,
             borderRadius: radius.pill,
-            backgroundColor: colors.accent,
+            backgroundImage: gradient.primary,
           }}>
-          <Text style={{...type.small, color: colors.onAccent}}>Read</Text>
+          <Text style={{...type.small, fontFamily: font.semibold, color: colors.onAccent}}>Read</Text>
         </Pressable>
       </View>
     </View>
@@ -211,32 +239,34 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
-        <Text style={{...type.label, flex: 1, textAlign: 'center', fontWeight: '600'}}>
-          Learning library
-        </Text>
-        <View style={{width: 32}} />
+        <BackButton onPress={onBack} />
+        <Text style={{...type.heading, flex: 1, textAlign: 'center'}}>Learning library</Text>
+        <View style={{width: 40}} />
       </View>
 
       <ScrollView contentContainerStyle={{paddingBottom: 40}}>
         <View style={{paddingHorizontal: space.screen}}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search articles"
-            placeholderTextColor={colors.inkFaint}
+          <View
             style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
               backgroundColor: colors.surface,
               borderWidth: 1,
-              borderColor: colors.accent,
-              borderRadius: radius.pill,
-              paddingHorizontal: 18,
-              paddingVertical: 12,
-              color: colors.ink,
-            }}
-          />
+              borderColor: colors.line,
+              borderRadius: radius.input,
+              paddingHorizontal: 14,
+              ...shadow.sm,
+            }}>
+            <Search size={18} color={colors.inkFaint} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search articles"
+              placeholderTextColor={colors.inkFaint}
+              style={{flex: 1, paddingVertical: 12, fontFamily: font.regular, color: colors.ink}}
+            />
+          </View>
         </View>
 
         <ScrollView
@@ -253,9 +283,16 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
                 paddingVertical: 8,
                 marginRight: 8,
                 borderRadius: radius.pill,
-                backgroundColor: filter.on ? colors.accent : colors.surface,
+                ...(filter.on
+                  ? {backgroundImage: gradient.primary}
+                  : {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line}),
               }}>
-              <Text style={{...type.small, color: filter.on ? colors.onAccent : colors.inkSoft}}>
+              <Text
+                style={{
+                  ...type.small,
+                  fontFamily: filter.on ? font.semibold : font.medium,
+                  color: filter.on ? colors.onAccent : colors.inkSoft,
+                }}>
                 {filter.label}
               </Text>
             </Pressable>
@@ -296,8 +333,8 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
                       style={{
                         width: index === page ? 18 : 6,
                         height: 6,
-                        borderRadius: 3,
-                        backgroundColor: index === page ? colors.accent : colors.line,
+                        borderRadius: radius.pill,
+                        backgroundColor: index === page ? colors.accent : colors.muted,
                       }}
                     />
                   ))}

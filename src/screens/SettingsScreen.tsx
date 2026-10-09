@@ -1,12 +1,13 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Image, Pressable, ScrollView, Text, View} from 'react-native';
+import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
+import BackButton from '../components/BackButton';
+import Logo from '../components/Logo';
 import ScreenBackground from '../components/ScreenBackground';
-
 import {isLockSet} from '../storage/appLock';
 import {clearTokens} from '../storage/tokens';
-import {colors, radius, space, type} from '../theme';
+import {colors, font, glass, radius, space, type} from '../theme';
 
 type Props = {
   onOpenAppLock: () => void;
@@ -31,9 +32,8 @@ function Row({
     <Pressable
       onPress={onPress}
       style={({pressed}) => ({
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
+        ...glass,
+        backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
         borderRadius: radius.card,
         padding: 16,
         marginBottom: 12,
@@ -42,13 +42,14 @@ function Row({
         <Text
           style={{
             ...type.label,
-            fontWeight: '600',
             flex: 1,
             color: danger ? colors.alert : colors.ink,
           }}>
           {label}
         </Text>
-        {value ? <Text style={{...type.small, color: colors.accent}}>{value}</Text> : null}
+        {value ? (
+          <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>{value}</Text>
+        ) : null}
       </View>
       <Text style={{...type.small, marginTop: 4}}>{description}</Text>
     </Pressable>
@@ -83,9 +84,7 @@ export default function SettingsScreen({onOpenAppLock, onSignedOut, onBack}: Pro
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
+        <BackButton onPress={onBack} />
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 30}}>
@@ -112,12 +111,8 @@ export default function SettingsScreen({onOpenAppLock, onSignedOut, onBack}: Pro
         />
 
         <View style={{alignItems: 'center', marginTop: 34}}>
-          <Image
-            source={require('../assets/logo.png')}
-            style={{width: 92, height: 106, opacity: 0.8}}
-            resizeMode="contain"
-          />
-          <Text style={{...type.small, marginTop: 10}}>mindDoc</Text>
+          <Logo size={56} />
+          <Text style={{...type.small, marginTop: 8}}>Mind Doc</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,14 +1,16 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {ChevronRight, Settings} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {JOURNALS} from './JournalScreen';
+import Logo from '../components/Logo';
 import ProgressRing from '../components/insights/ProgressRing';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
 import {Insights, getInsights} from '../api/insights';
 import {getAccessToken} from '../storage/tokens';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, gradient, radius, space, type} from '../theme';
 
 type Props = {
   onSignedOut: () => void;
@@ -73,15 +75,11 @@ export default function HomeScreen({
         <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 12}}>
           {/* FR-CRIS-009: crisis resources on every screen. */}
           <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12} style={{flex: 1}}>
-            <Text style={{...type.small, color: colors.alert}}>Get help</Text>
+            <Text style={{...type.link, color: colors.alert}}>Get help</Text>
           </Pressable>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-            <Image
-              source={require('../assets/logo.png')}
-              style={{width: 28, height: 32}}
-              resizeMode="contain"
-            />
-            <Text style={{...type.title, fontSize: 22}}>mindDoc</Text>
+            <Logo size={30} />
+            <Text style={type.heading}>Mind Doc</Text>
           </View>
           <Pressable
             onPress={onOpenSettings}
@@ -89,7 +87,7 @@ export default function HomeScreen({
             accessibilityRole="button"
             accessibilityLabel="Settings"
             style={{flex: 1, alignItems: 'flex-end'}}>
-            <Text style={{fontSize: 22, color: colors.inkSoft}}>⚙</Text>
+            <Settings size={22} color={colors.inkSoft} />
           </Pressable>
         </View>
 
@@ -117,14 +115,12 @@ export default function HomeScreen({
         {draft ? (
           <View
             style={{
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
+              ...glass,
               borderRadius: radius.card,
               padding: 16,
               marginTop: 20,
             }}>
-            <Text style={{...type.label, fontWeight: '600'}}>Resume Draft</Text>
+            <Text style={type.label}>Resume Draft</Text>
             <Text style={{...type.small, marginTop: 4}} numberOfLines={2}>
               {JOURNAL_TITLES[draft.journal_type] ?? 'Entry'}
               {draft.preview ? `: ${draft.preview}` : ''}
@@ -137,9 +133,10 @@ export default function HomeScreen({
                 paddingHorizontal: 20,
                 paddingVertical: 8,
                 borderRadius: radius.pill,
-                backgroundColor: pressed ? colors.accentSoft : colors.accent,
+                backgroundImage: gradient.primary,
+                opacity: pressed ? 0.85 : 1,
               })}>
-              <Text style={{...type.label, fontSize: 14, color: colors.onAccent}}>Continue</Text>
+              <Text style={{...type.label, color: colors.onAccent}}>Continue</Text>
             </Pressable>
           </View>
         ) : null}
@@ -157,10 +154,9 @@ export default function HomeScreen({
               key={journal.type}
               onPress={() => onStartJournal(journal.type)}
               style={({pressed}) => ({
+                ...glass,
                 width: '48%',
-                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                borderWidth: 1,
-                borderColor: colors.line,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
                 borderRadius: radius.card,
                 padding: 14,
               })}>
@@ -168,18 +164,18 @@ export default function HomeScreen({
                 style={{
                   width: 40,
                   height: 40,
-                  borderRadius: 20,
-                  backgroundColor: colors.sageWash,
+                  borderRadius: radius.pill,
+                  backgroundColor: colors.accentWash,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                <Text style={{fontSize: 18}}>{journal.icon}</Text>
+                <journal.Icon size={20} color={colors.accent} />
               </View>
               <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 10}}>
-                <Text style={{...type.label, fontWeight: '600', flex: 1}}>
+                <Text style={{...type.label, flex: 1}}>
                   {LABELS[journal.type]}
                 </Text>
-                <Text style={{...type.label, color: colors.inkFaint}}>›</Text>
+                <ChevronRight size={16} color={colors.inkFaint} />
               </View>
               <Text style={{...type.small, marginTop: 4}} numberOfLines={3}>
                 {journal.blurb}
@@ -189,7 +185,7 @@ export default function HomeScreen({
         </View>
 
         <Pressable onPress={onOpenEntries} style={{paddingVertical: 18, marginTop: 8}}>
-          <Text style={{...type.small, color: colors.accent, textAlign: 'center'}}>
+          <Text style={{...type.link, textAlign: 'center'}}>
             Your entries
           </Text>
         </Pressable>

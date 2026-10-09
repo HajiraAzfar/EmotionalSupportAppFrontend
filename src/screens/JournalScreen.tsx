@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {CloudSun, DoorOpen, Flower2, LucideIcon, MessageCircleMore, PenLine} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 type Props = {
   onStartJournal: (journalType: JournalType) => void;
@@ -16,13 +17,13 @@ type Props = {
 // because it is a conversation rather than a form.
 // Ordered by expected completion time, shortest first (FR-HOME-001).
 // The home screen's grid reuses these (all but free write).
-export const JOURNALS: {type: JournalType; blurb: string; minutes: string; icon: string}[] = [
-  {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', icon: '🌤️'},
-  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', icon: '🌷'},
-  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', icon: '💭'},
-  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', icon: '🚪'},
+export const JOURNALS: {type: JournalType; blurb: string; minutes: string; Icon: LucideIcon}[] = [
+  {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', Icon: CloudSun},
+  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Flower2},
+  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: MessageCircleMore},
+  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: DoorOpen},
   // FR-JRN-003: the AI Chat tab is a plain chat now, so the free write journal lives here.
-  {type: 'free_write', blurb: 'Write whatever is on your mind, then talk it through.', minutes: 'Any length', icon: '✍️'},
+  {type: 'free_write', blurb: 'Write whatever is on your mind, then talk it through.', minutes: 'Any length', Icon: PenLine},
 ];
 
 export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntries}: Props) {
@@ -49,7 +50,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
         <Text style={{...type.title, flex: 1}}>Journals</Text>
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
-          <Text style={{...type.small, color: colors.alert}}>Get help</Text>
+          <Text style={{...type.link, color: colors.alert}}>Get help</Text>
         </Pressable>
       </View>
 
@@ -69,7 +70,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
               padding: 16,
               marginBottom: 14,
             }}>
-            <Text style={{...type.label, fontWeight: '600'}}>
+            <Text style={type.label}>
               Continue your {JOURNAL_TITLES[draft.journal_type]?.toLowerCase() ?? 'entry'}
             </Text>
             <Text style={{...type.small, marginTop: 4}}>Pick up where you left off.</Text>
@@ -81,9 +82,8 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
             key={journal.type}
             onPress={() => onStartJournal(journal.type)}
             style={({pressed}) => ({
-              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
+              ...glass,
+              backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
               borderRadius: radius.card,
               padding: 16,
               marginBottom: 12,
@@ -95,16 +95,16 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
               style={{
                 width: 46,
                 height: 46,
-                borderRadius: 23,
+                borderRadius: radius.pill,
                 backgroundColor: colors.accentWash,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-              <Text style={{fontSize: 20}}>{journal.icon}</Text>
+              <journal.Icon size={22} color={colors.accent} />
             </View>
             <View style={{flex: 1}}>
               <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
-                <Text style={{...type.label, fontWeight: '600', flex: 1}}>
+                <Text style={{...type.label, flex: 1}}>
                   {JOURNAL_TITLES[journal.type]}
                 </Text>
                 <Text style={type.small}>{journal.minutes}</Text>
