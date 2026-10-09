@@ -4,6 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {login} from '../api/auth';
 import {saveTokens} from '../storage/tokens';
 import {colors, space, type} from '../theme';
@@ -40,7 +41,8 @@ export default function LoginScreen({
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
         <ScrollView
           contentContainerStyle={{
@@ -82,7 +84,7 @@ export default function LoginScreen({
           </View>
 
           <Pressable onPress={onGoToForgot} style={{paddingVertical: 14}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
+            <Text style={{...type.link, textAlign: 'center'}}>
               Forgot your password?
             </Text>
           </Pressable>
@@ -90,7 +92,7 @@ export default function LoginScreen({
           <View style={{flex: 1}} />
 
           <Pressable onPress={onGoToSignup} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
+            <Text style={{...type.link, textAlign: 'center'}}>
               Create an account
             </Text>
           </Pressable>

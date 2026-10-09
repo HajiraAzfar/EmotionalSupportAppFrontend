@@ -2,9 +2,9 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import ScreenBackground from '../components/ScreenBackground';
-
+import Logo from '../components/Logo';
 import PinPad from '../components/PinPad';
+import ScreenBackground from '../components/ScreenBackground';
 
 import {
   Attempts,
@@ -78,7 +78,10 @@ export default function AppLockScreen({onUnlocked, onForgot}: Props) {
     <SafeAreaView style={{flex: 1}}>
       <ScreenBackground />
       <View style={{flex: 1, paddingHorizontal: space.screen, justifyContent: 'center'}}>
-        <Text style={{...type.title, textAlign: 'center'}}>mindDoc</Text>
+        <View style={{alignItems: 'center', marginBottom: 12}}>
+          <Logo size={56} />
+        </View>
+        <Text style={{...type.title, textAlign: 'center'}}>Mind Doc</Text>
         <Text style={{...type.body, textAlign: 'center', marginTop: 8, marginBottom: 30}}>
           Enter your PIN to continue.
         </Text>
@@ -106,7 +109,7 @@ export default function AppLockScreen({onUnlocked, onForgot}: Props) {
         </Text>
 
         <Pressable onPress={onForgot} style={{paddingVertical: 18}}>
-          <Text style={{...type.small, textAlign: 'center', color: colors.accent}}>
+          <Text style={{...type.link, textAlign: 'center'}}>
             Forgot your PIN? Sign in again
           </Text>
         </Pressable>

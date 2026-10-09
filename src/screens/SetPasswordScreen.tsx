@@ -4,6 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {saveTokens} from '../storage/tokens';
 import {colors, space, type} from '../theme';
 
@@ -40,7 +41,8 @@ export default function SetPasswordScreen({title, submit, onDone}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
         <ScrollView
           contentContainerStyle={{

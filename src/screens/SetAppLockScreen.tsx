@@ -2,11 +2,11 @@ import React, {useEffect, useState} from 'react';
 import {Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import ScreenBackground from '../components/ScreenBackground';
-
+import BackButton from '../components/BackButton';
 import PinPad from '../components/PinPad';
+import ScreenBackground from '../components/ScreenBackground';
 import {PIN_LENGTH, clearLock, isLockSet, setPin, verifyPin} from '../storage/appLock';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, radius, space, type} from '../theme';
 
 type Props = {
   onDone: () => void;
@@ -90,19 +90,24 @@ export default function SetAppLockScreen({onDone}: Props) {
   }
 
   if (locked === null) {
-    return <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}} />;
+    return (
+      <SafeAreaView style={{flex: 1}}>
+        <ScreenBackground />
+      </SafeAreaView>
+    );
   }
 
   const option = (label: string, description: string, onPress: () => void, danger = false) => (
     <Pressable
       onPress={onPress}
       style={({pressed}) => ({
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+        ...glass,
+        backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
         borderRadius: radius.card,
         padding: 16,
         marginBottom: 12,
       })}>
-      <Text style={{...type.label, fontWeight: '600', color: danger ? colors.alert : colors.ink}}>
+      <Text style={{...type.label, color: danger ? colors.alert : colors.ink}}>
         {label}
       </Text>
       <Text style={{...type.small, marginTop: 4}}>{description}</Text>
@@ -119,9 +124,7 @@ export default function SetAppLockScreen({onDone}: Props) {
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        <Pressable onPress={onDone} hitSlop={12}>
-          <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
-        </Pressable>
+        <BackButton onPress={onDone} />
       </View>
 
       <View style={{flex: 1, paddingHorizontal: space.screen}}>

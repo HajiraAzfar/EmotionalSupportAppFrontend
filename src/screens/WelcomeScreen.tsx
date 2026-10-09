@@ -1,10 +1,12 @@
 import React from 'react';
-import {Image, Pressable, Text, View} from 'react-native';
+import {Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import FadeIn from '../components/FadeIn';
+import Logo from '../components/Logo';
+import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
-import {colors, radius, space, type} from '../theme';
+import {colors, glass, gradient, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onGoToSignup: () => void;
@@ -17,69 +19,48 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
       <ScreenBackground intensity="full" />
 
       <View style={{flex: 1, paddingHorizontal: space.screen, alignItems: 'center'}}>
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          {/* The logo sits on a white disc, so it belongs to the screen
-              rather than floating on it. */}
+        <View style={{flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'}}>
+          {/* The mark on a frosted tile, as on the app icon. */}
           <FadeIn order={0} distance={18}>
             <View
               style={{
-                width: 250,
-                height: 250,
-                borderRadius: 125,
+                ...glass,
+                width: 104,
+                height: 104,
+                borderRadius: radius.image,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.line,
               }}>
-              <Image
-                source={require('../assets/logo.png')}
-                style={{width: 176, height: 204}}
-                resizeMode="contain"
-              />
+              <Logo size={72} />
             </View>
           </FadeIn>
 
           <FadeIn order={1}>
-            <Text style={{...type.display, fontSize: 46, textAlign: 'center', marginTop: 30}}>
-              mindDoc
-            </Text>
+            <Text style={{...type.display, textAlign: 'center', marginTop: 22}}>Mind Doc</Text>
           </FadeIn>
 
           <FadeIn order={2}>
-            <Text
-              style={{
-                ...type.body,
-                textAlign: 'center',
-                marginTop: 10,
-                maxWidth: 280,
-                lineHeight: 24,
-              }}>
+            <Text style={{...type.body, textAlign: 'center', marginTop: 8, maxWidth: 280}}>
               A quiet companion for your loudest thoughts.
             </Text>
+          </FadeIn>
+
+          {/* Where the design has its mountain-lake illustration. */}
+          <FadeIn order={2} style={{width: '100%'}}>
+            <View
+              style={{
+                height: 180,
+                marginTop: 28,
+                borderRadius: radius.image,
+                backgroundImage: gradient.landscape,
+                ...shadow.md,
+              }}
+            />
           </FadeIn>
         </View>
 
         <FadeIn order={3} style={{width: '100%', paddingBottom: 36}}>
-          <Pressable
-            onPress={onGoToSignup}
-            style={({pressed}) => ({
-              backgroundColor: pressed ? colors.coralSoft : colors.accent,
-              borderRadius: radius.pill,
-              paddingVertical: 17,
-              alignItems: 'center',
-              // A soft halo, so the button lifts off the page rather than
-              // sitting flat on it.
-              shadowColor: colors.accent,
-              shadowOpacity: 0.5,
-              shadowRadius: 18,
-              shadowOffset: {width: 0, height: 6},
-              elevation: 6,
-            })}>
-            <Text style={{...type.label, color: colors.onAccent, fontSize: 16, fontWeight: '600'}}>
-              Get started
-            </Text>
-          </Pressable>
+          <PrimaryButton label="Get started" onPress={onGoToSignup} />
 
           <Pressable
             onPress={onGoToLogin}
@@ -88,13 +69,12 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
               borderRadius: radius.pill,
               paddingVertical: 15,
               alignItems: 'center',
-              backgroundColor: pressed
-                ? colors.surfaceRaised
-                : colors.surface,
+              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
               borderWidth: 1,
               borderColor: colors.line,
+              ...shadow.sm,
             })}>
-            <Text style={{...type.label, color: colors.ink}}>I already have an account</Text>
+            <Text style={{...type.label, color: colors.accent}}>I already have an account</Text>
           </Pressable>
         </FadeIn>
       </View>

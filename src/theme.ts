@@ -59,6 +59,9 @@ export const colors = {
 // CSS gradients, drawn natively by React Native's backgroundImage.
 export const gradient = {
   primary: `linear-gradient(90deg, ${palette.accent}, ${palette.accentLight})`,
+  // ponytail: stands in for the design's pastel mountain-lake illustrations
+  // until real artwork is added.
+  landscape: 'linear-gradient(180deg, #B9C6FB 0%, #E9C6F2 45%, #F8D9E6 55%, #A9B8F4 100%)',
 };
 
 // The logo's ribbon runs blue, violet, pink.
@@ -102,6 +105,7 @@ export const type = {
   body: {fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: colors.inkSoft},
   small: {fontFamily: font.medium, fontSize: 13, color: colors.inkFaint},
   tiny: {fontFamily: font.medium, fontSize: 11, color: colors.inkFaint},
+  link: {fontFamily: font.semibold, fontSize: 13, color: colors.accent},
 };
 
 export const space = {

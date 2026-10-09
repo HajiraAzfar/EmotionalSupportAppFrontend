@@ -4,6 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {signupEmail, verifySignupCode} from '../api/auth';
 import {colors, space, type} from '../theme';
 
@@ -55,7 +56,8 @@ export default function VerifySignupCodeScreen({email, onVerified, onBack}: Prop
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
         <ScrollView
           contentContainerStyle={{
@@ -94,7 +96,7 @@ export default function VerifySignupCodeScreen({email, onVerified, onBack}: Prop
           </View>
 
           <Pressable onPress={handleResend} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
+            <Text style={{...type.link, textAlign: 'center'}}>
               Didn't get a code? Resend
             </Text>
           </Pressable>
@@ -102,7 +104,7 @@ export default function VerifySignupCodeScreen({email, onVerified, onBack}: Prop
           <View style={{flex: 1}} />
 
           <Pressable onPress={onBack} style={{paddingVertical: 16}}>
-            <Text style={{...type.small, textAlign: 'center'}}>
+            <Text style={{...type.link, textAlign: 'center'}}>
               Use a different email
             </Text>
           </Pressable>

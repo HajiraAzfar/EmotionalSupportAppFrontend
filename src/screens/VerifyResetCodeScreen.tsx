@@ -4,6 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import Field from '../components/Field';
 import PrimaryButton from '../components/PrimaryButton';
+import ScreenBackground from '../components/ScreenBackground';
 import {verifyResetCode} from '../api/auth';
 import {colors, space, type} from '../theme';
 
@@ -38,7 +39,8 @@ export default function VerifyResetCodeScreen({email, onVerified}: Props) {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.bg}}>
+    <SafeAreaView style={{flex: 1}}>
+      <ScreenBackground />
       <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
         <ScrollView
           contentContainerStyle={{
