@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {sha256} from 'js-sha256';
+import {Linking} from 'react-native';
 
 // FR-AUTH-009: the lock lives on this device and nowhere else. The PIN is never
 // sent to the server, never written to a log, and never stored as itself —
@@ -104,4 +105,18 @@ export async function registerFailure(): Promise<Attempts> {
 
 export async function resetAttempts(): Promise<void> {
   await AsyncStorage.removeItem(ATTEMPTS_KEY);
+}
+
+// Quick exit: a neutral page goes in front, and the PIN is asked on the way back.
+let lockOnReturn = false;
+
+export function quickExit(): void {
+  lockOnReturn = true;
+  Linking.openURL('https://www.google.com/search?q=weather');
+}
+
+export function takeLockOnReturn(): boolean {
+  const value = lockOnReturn;
+  lockOnReturn = false;
+  return value;
 }

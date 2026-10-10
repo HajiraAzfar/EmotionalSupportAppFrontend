@@ -18,6 +18,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import LibraryPicker from '../components/chat/LibraryPicker';
 import MessageBubble from '../components/chat/MessageBubble';
 import MoodScaleControl from '../components/chat/MoodScaleControl';
+import SupportCard from '../components/chat/SupportCard';
 import TextComposer from '../components/chat/TextComposer';
 import TypingIndicator from '../components/chat/TypingIndicator';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
@@ -32,11 +33,13 @@ import {
   EntryState,
   getEntry,
   JOURNAL_TITLES,
+  newClientId,
   resumeEntry,
   JournalType,
   sendMessage,
   submitCapture,
 } from '../api/entries';
+import {quickExit} from '../storage/appLock';
 import {colors, glass, radius, shadow, space, type} from '../theme';
 
 // What a blank AI Chat opens with. Shown, never stored, so the model never reads it.
@@ -52,6 +55,8 @@ const CHAT_GREETING: EntryMessage = {
 
 // Same limit as the server's message (MessageCreate).
 const MAX_MESSAGE = 5000;
+// Journals: the only words she sees when a step can't be sent. Never a raw error.
+const SEND_FAILED = "Couldn't send that. Nothing you wrote is lost.";
 
 type Props = {
   journalType: JournalType;
@@ -96,6 +101,12 @@ export default function ChatEntryScreen({
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   // So the mood from the home card is submitted once, and not again on re-render.
   const moodSent = useRef(false);
+  // Journals: what to run again when she taps the retry line (same answer, same client id).
+  const retryAction = useRef<(() => Promise<EntryState>) | null>(null);
+  // The current list step's selection; its Continue bar sits under the thread.
+  const [picked, setPicked] = useState<string[]>([]);
+  const pickingFor = entry?.next_capture?.value_id;
+  useEffect(() => setPicked([]), [pickingFor]);
 
   const handleCrisisEvent = useCallback((event: CrisisEvent | null) => {
     if (event?.tier === 'emergency') {
@@ -118,13 +129,18 @@ export default function ChatEntryScreen({
         }
         return next;
       } catch (e) {
-        setError((e as Error).message);
+        if (journalType === 'chat') {
+          setError((e as Error).message);
+        } else {
+          retryAction.current = action;
+          setError(SEND_FAILED);
+        }
         return null;
       } finally {
         setBusy(false);
       }
     },
-    [handleCrisisEvent],
+    [handleCrisisEvent, journalType],
   );
 
   // A new AI Chat is only created with her first message, so opening the tab
@@ -173,7 +189,8 @@ export default function ChatEntryScreen({
     if (!entry) {
       return;
     }
-    run(() => submitCapture(entry.id, valueId, value, skipped, more));
+    const clientId = newClientId();
+    run(() => submitCapture(entry.id, valueId, value, skipped, more, clientId));
   }
 
   async function stopHere() {
@@ -278,8 +295,8 @@ export default function ChatEntryScreen({
             library={spec.library}
             preferValence={spec.prefer_valence}
             entryId={entry.id}
-            busy={busy}
-            onSubmit={ids => capture(spec.value_id, ids)}
+            selected={picked}
+            onChange={setPicked}
             onCrisisEvent={event => {
               handleCrisisEvent(event);
               // The thread gained a crisis message and the entry's tier may have changed.
@@ -297,8 +314,8 @@ export default function ChatEntryScreen({
           // on, with no separate "I'm done writing" step.
           placeholder={spec.repeatable ? 'Write everything on your mind, then send.' : undefined}
           onSend={text => capture(spec.value_id, text)}
-          onSkip={spec.required ? undefined : () => capture(spec.value_id, null, true)}
-          voice={entry.journal_type === 'free_write'}
+          allowEmpty={!spec.required}
+          voice={spec.voice || entry.journal_type === 'free_write'}
         />
       );
     }
@@ -423,6 +440,17 @@ export default function ChatEntryScreen({
             <Text style={type.link}>{secondaryAction.label}</Text>
           </Pressable>
         ) : null}
+        {/* Quick exit: one tap to a neutral page; the PIN is asked on return. */}
+        <Pressable
+          onPress={() => {
+            onExit();
+            quickExit();
+          }}
+          hitSlop={12}
+          accessibilityLabel="Quick exit"
+          style={{marginRight: 14}}>
+          <Text style={{...type.link, color: colors.inkSoft}}>Exit</Text>
+        </Pressable>
         {/* FR-CRIS-009: crisis resources are always one tap away. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>
@@ -448,7 +476,11 @@ export default function ChatEntryScreen({
           )}
 
           {entry?.messages.map(m => (
-            <MessageBubble key={m.id} message={m} />
+            <React.Fragment key={m.id}>
+              <MessageBubble message={m} />
+              {/* The helplines card is the reply's own field, drawn under it — never text. */}
+              {m.card ? <SupportCard prominent={m.card === 'prominent'} /> : null}
+            </React.Fragment>
           ))}
 
           {pending && (
@@ -469,7 +501,8 @@ export default function ChatEntryScreen({
             </>
           )}
 
-          {highRisk && !readOnly && (
+          {/* Journals only: AI Chat shows its helplines inline, as support cards above. */}
+          {highRisk && !readOnly && journalType !== 'chat' && (
             <View
               style={{
                 ...glass,
@@ -499,7 +532,7 @@ export default function ChatEntryScreen({
             </Pressable>
           )}
 
-          {showReferral && !highRisk && !entry?.support_note && (
+          {showReferral && !highRisk && !entry?.support_note && journalType !== 'chat' && (
             <Pressable
               onPress={() => setResourcesOpen(true)}
               style={{
@@ -518,16 +551,32 @@ export default function ChatEntryScreen({
           {error ? (
             <View style={{marginBottom: 12}}>
               <Text style={{...type.small, color: colors.alert}}>{error}</Text>
-              {!entry && (
+              {!entry ? (
                 <Pressable onPress={load} style={{paddingTop: 8}}>
                   <Text style={type.link}>Try again</Text>
                 </Pressable>
-              )}
+              ) : journalType !== 'chat' && retryAction.current ? (
+                <Pressable onPress={() => retryAction.current && run(retryAction.current)} style={{paddingTop: 8}}>
+                  <Text style={type.link}>Try again</Text>
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
 
           <View style={{marginTop: 6}}>{renderControl()}</View>
         </ScrollView>
+
+        {/* A list step's Continue stays on screen however long the list. Always
+            enabled: continuing with nothing chosen leaves the step empty. */}
+        {!readOnly && entry?.next_capture?.control === 'multi_select' && !entry.pending_notice && !entry.pending_resume && (
+          <View style={{paddingHorizontal: space.screen, paddingVertical: 10}}>
+            <PrimaryButton
+              label={picked.length ? `Continue (${picked.length} selected)` : 'Continue'}
+              busy={busy}
+              onPress={() => capture(entry.next_capture!.value_id, picked)}
+            />
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       <Modal

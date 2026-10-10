@@ -6,6 +6,12 @@ export interface CrisisResource {
   phone: string;
   description: string;
   last_verified: string;
+  // Optional, filled only from the service itself: text and chat for when a call could be overheard.
+  sms?: string | null;
+  whatsapp?: string | null;
+  chat_url?: string | null;
+  hours?: string | null;
+  languages?: string[] | null;
 }
 
 export interface CrisisResourcesResponse {

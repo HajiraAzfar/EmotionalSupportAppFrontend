@@ -3,6 +3,8 @@ import {ActivityIndicator, StatusBar, View} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import ChatEntryScreen from './src/screens/ChatEntryScreen';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import GetHelp from './src/components/GetHelp';
 import ConsentScreen from './src/screens/ConsentScreen';
 import DistressScreen from './src/screens/DistressScreen';
 import EntriesScreen from './src/screens/EntriesScreen';
@@ -35,7 +37,7 @@ import SetAppLockScreen from './src/screens/SetAppLockScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
-import {LOCK_AFTER_MS, clearLock, isLockSet} from './src/storage/appLock';
+import {LOCK_AFTER_MS, clearLock, isLockSet, takeLockOnReturn} from './src/storage/appLock';
 
 type Screen =
   | 'loading'
@@ -59,6 +61,13 @@ type Screen =
   | 'article'
   | 'appLockSetup'
   | 'settings';
+
+// Screens whose own header has no Get help link (FR-CRIS-009).
+const SCREENS_WITHOUT_HELP: Screen[] = [
+  'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
+  'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'goal', 'article',
+  'appLockSetup', 'settings',
+];
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -103,9 +112,10 @@ function App(): React.JSX.Element {
       }
       const away = Date.now() - backgroundedAt.current;
       backgroundedAt.current = null;
+      const forced = takeLockOnReturn();
       // A few seconds in another app should not cost her the PIN; a real
-      // absence should.
-      if (away >= LOCK_AFTER_MS && (await isLockSet())) {
+      // absence should, and so does a quick exit.
+      if ((away >= LOCK_AFTER_MS || forced) && (await isLockSet())) {
         setLocked(true);
       }
     });
@@ -162,6 +172,8 @@ function App(): React.JSX.Element {
     return (
       <SafeAreaProvider>
         <StatusBar barStyle="dark-content" />
+        {/* Help is reachable without the PIN. */}
+        <GetHelp />
         <AppLockScreen
           onUnlocked={() => setLocked(false)}
           onForgot={async () => {
@@ -360,18 +372,22 @@ function App(): React.JSX.Element {
         </View>
       )}
 
+      {/* Every journal, check-in included, runs its own capture schedule here. */}
       {screen === 'journal' && (
-        <ChatEntryScreen
-          key={journal.entryId ?? 'new'}
-          journalType={journal.journalType}
-          entryId={journal.entryId}
-          readOnly={journal.readOnly}
-          startMood={startMood ?? undefined}
-          onExit={() => {
-            setStartMood(null);
-            setScreen(journal.readOnly ? 'entries' : 'tabs');
-          }}
-        />
+        // A rendering bug in the thread shows a retry; every message is already saved.
+        <ErrorBoundary>
+          <ChatEntryScreen
+            key={journal.entryId ?? 'new'}
+            journalType={journal.journalType}
+            entryId={journal.entryId}
+            readOnly={journal.readOnly}
+            startMood={startMood ?? undefined}
+            onExit={() => {
+              setStartMood(null);
+              setScreen(journal.readOnly ? 'entries' : 'tabs');
+            }}
+          />
+        </ErrorBoundary>
       )}
 
       {screen === 'entries' && (
@@ -406,6 +422,10 @@ function App(): React.JSX.Element {
       {screen === 'appLockSetup' && (
         <SetAppLockScreen onDone={() => setScreen('settings')} />
       )}
+
+      {/* FR-CRIS-009: every screen without its own Get help link gets this one,
+          including sign-in and onboarding. */}
+      {(SCREENS_WITHOUT_HELP.includes(screen) || (screen === 'tabs' && tab === 'library')) && <GetHelp />}
     </SafeAreaProvider>
   );
 }

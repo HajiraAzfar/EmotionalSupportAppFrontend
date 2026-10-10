@@ -1,10 +1,12 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, Modal, Pressable, Text, TextInput, View} from 'react-native';
 
-import PrimaryButton from '../PrimaryButton';
+import Chip from './Chip';
+import ArticleScreen from '../../screens/ArticleScreen';
 import {CrisisEvent} from '../../api/entries';
 import {addTerm, getLibrary, Library, LibraryItem, TERM_MAX_LENGTH} from '../../api/libraries';
-import {colors, font, gradient, radius, type} from '../../theme';
+import {listArticles} from '../../api/library';
+import {colors, radius, type} from '../../theme';
 
 // FR-PICK-010: how many items each category shows before it is expanded.
 const INITIAL_PER_CATEGORY = 4;
@@ -15,22 +17,26 @@ type Props = {
   library: string;
   preferValence?: string | null;
   entryId: string;
-  busy: boolean;
-  onSubmit: (ids: string[]) => void;
+  // The selection lives with the thread, whose Continue bar stays on screen
+  // however long the list grows (submit always reachable).
+  selected: string[];
+  onChange: (ids: string[]) => void;
   // FR-PICK-007: a user's own term is screened like any other text.
   onCrisisEvent: (event: CrisisEvent) => void;
 };
 
-export default function LibraryPicker({library, preferValence, entryId, busy, onSubmit, onCrisisEvent}: Props) {
+export default function LibraryPicker({library, preferValence, entryId, selected, onChange, onCrisisEvent}: Props) {
   const [data, setData] = useState<Library | null>(null);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [openInfo, setOpenInfo] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [newTerm, setNewTerm] = useState('');
   const [saving, setSaving] = useState(false);
+  // A thinking trap's article, read over the thread; closing it returns to the same question.
+  const [articleSlug, setArticleSlug] = useState<string | null>(null);
+  const [noArticle, setNoArticle] = useState(false);
 
   useEffect(() => {
     getLibrary(library, preferValence)
@@ -58,9 +64,7 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
     try {
       const result = await addTerm(library, name, entryId);
       setData(await getLibrary(library, preferValence));
-      setSelected(current =>
-        current.includes(result.term.id) ? current : [...current, result.term.id],
-      );
+      onChange(selected.includes(result.term.id) ? selected : [...selected, result.term.id]);
       setNewTerm('');
       setAdding(false);
       if (result.crisis_event) {
@@ -74,37 +78,32 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
   }
 
   function toggle(id: string) {
-    setSelected(current =>
-      current.includes(id) ? current.filter(x => x !== id) : [...current, id],
-    );
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
+  }
+
+  async function openArticle(trap: string) {
+    setNoArticle(false);
+    try {
+      const found = await listArticles({trap});
+      if (found.articles.length) {
+        setArticleSlug(found.articles[0].slug);
+      } else {
+        setNoArticle(true);
+      }
+    } catch {
+      setNoArticle(true);
+    }
   }
 
   function chip(item: LibraryItem) {
-    const on = selected.includes(item.id);
     return (
-      <Pressable
+      <Chip
         key={item.id}
+        label={item.name}
+        on={selected.includes(item.id)}
         onPress={() => toggle(item.id)}
         onLongPress={() => item.definition && setOpenInfo(item.id)}
-        style={{
-          paddingHorizontal: 14,
-          paddingVertical: 8,
-          borderRadius: radius.pill,
-          ...(on
-            ? {backgroundImage: gradient.primary}
-            : {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line}),
-          marginRight: 8,
-          marginBottom: 8,
-        }}>
-        <Text
-          style={{
-            ...type.small,
-            fontFamily: on ? font.semibold : font.medium,
-            color: on ? colors.onAccent : colors.ink,
-          }}>
-          {item.name}
-        </Text>
-      </Pressable>
+      />
     );
   }
 
@@ -195,6 +194,11 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
               “{info.example}”
             </Text>
           ) : null}
+          {library === 'thinking_traps' ? (
+            <Pressable onPress={() => openArticle(info.id)} hitSlop={8} style={{marginTop: 8}}>
+              <Text style={type.link}>{noArticle ? "Couldn't open the article. Tap to try again" : 'Read more'}</Text>
+            </Pressable>
+          ) : null}
         </Pressable>
       ) : data.categories.some(c => c.items.some(i => i.definition)) ? (
         <Text style={{...type.small, marginBottom: 10}}>
@@ -246,12 +250,9 @@ export default function LibraryPicker({library, preferValence, entryId, busy, on
         <Text style={{...type.small, color: colors.alert, marginBottom: 8}}>{error}</Text>
       ) : null}
 
-      {/* FR-PICK-004: submitting with nothing selected records a skip. */}
-      <PrimaryButton
-        label={selected.length ? `Continue (${selected.length})` : 'None of these — skip'}
-        busy={busy}
-        onPress={() => onSubmit(selected)}
-      />
+      <Modal visible={articleSlug !== null} animationType="slide" onRequestClose={() => setArticleSlug(null)}>
+        {articleSlug ? <ArticleScreen slug={articleSlug} onBack={() => setArticleSlug(null)} /> : null}
+      </Modal>
     </View>
   );
 }

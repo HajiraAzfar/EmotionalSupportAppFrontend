@@ -10,8 +10,9 @@ type Props = {
   placeholder?: string;
   maxLength?: number;
   onSend: (text: string) => void;
-  // Optional capture values show a Skip control (FR-ENT-024 "explicit skip").
-  onSkip?: () => void;
+  // Optional capture values: with nothing written, Continue sends an empty answer.
+  // There is no Skip control, and nothing comments on an empty answer.
+  allowEmpty?: boolean;
   // Shows the mic: she can speak instead of typing, and checks the text before it is sent.
   voice?: boolean;
   // AI Chat: a voice message is sent as soon as it is turned into text, like a
@@ -24,7 +25,7 @@ export default function TextComposer({
   placeholder,
   maxLength,
   onSend,
-  onSkip,
+  allowEmpty = false,
   voice = false,
   voiceSends = false,
 }: Props) {
@@ -130,9 +131,9 @@ export default function TextComposer({
         </Text>
       ) : null}
 
-      {onSkip && (
-        <Pressable onPress={onSkip} disabled={busy || speaking} style={{paddingTop: 10}}>
-          <Text style={{...type.link, textAlign: 'center'}}>Skip</Text>
+      {allowEmpty && !text.trim() && !speaking && (
+        <Pressable onPress={() => onSend('')} disabled={busy} style={{paddingTop: 12}} accessibilityRole="button">
+          <Text style={{...type.link, textAlign: 'center'}}>Continue</Text>
         </Pressable>
       )}
     </View>

@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
 import {getCrisisResources, CrisisResource} from '../api/crisis';
+import {offers, ResourceLinks} from '../components/chat/SupportCard';
 import {colors, glass, radius, space, type} from '../theme';
 
 // FR-CRIS-009 / FR-CRIS-010: must be reachable without sign-in or app unlock.
@@ -73,12 +74,13 @@ export default function CrisisResourcesScreen({onClose, intro, closeLabel = 'Clo
             </Text>
             <Text
               style={{...type.small, color: colors.inkSoft, marginVertical: 6}}>
-              {r.description}
+              {offers(r)} · {r.description}
             </Text>
             <PrimaryButton
               label={`Call ${r.phone}`}
               onPress={() => call(r.phone)}
             />
+            <ResourceLinks r={r} call={false} />
           </View>
         ))}
 

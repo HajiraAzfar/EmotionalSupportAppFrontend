@@ -47,11 +47,27 @@ async function send(path: string, method: string, body: unknown, token?: string)
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: isForm ? body : body ? JSON.stringify(body) : undefined,
-  });
+  try {
+    return await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: isForm ? body : body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // No connection: fetch's own "Network request failed" means nothing to her.
+    throw new NetworkError();
+  }
+}
+
+export const NETWORK_MESSAGE = "Couldn't connect. Check your internet and try again.";
+
+// Thrown when the request never reached the server, so a screen can keep what
+// she entered and offer a retry instead of treating it as a server answer.
+export class NetworkError extends Error {
+  constructor() {
+    super(NETWORK_MESSAGE);
+    this.name = 'NetworkError';
+  }
 }
 
 export async function apiRequest(path: string, options: RequestOptions = {}) {
@@ -72,10 +88,18 @@ export async function apiRequest(path: string, options: RequestOptions = {}) {
     return null;
   }
 
-  const data = await response.json();
+  // A crashed server answers in plain text ("Internal Server Error"), not JSON:
+  // read it as text first so she sees a readable message, not a parser error.
+  const raw = await response.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
 
   if (!response.ok) {
-    throw new Error(data.detail || 'Something went wrong.');
+    throw new Error(data?.detail || "Couldn't reach Echo just now. Please try again in a moment.");
   }
 
   return data;

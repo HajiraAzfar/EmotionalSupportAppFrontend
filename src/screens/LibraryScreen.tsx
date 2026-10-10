@@ -283,9 +283,11 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
                 paddingVertical: 8,
                 marginRight: 8,
                 borderRadius: radius.pill,
-                ...(filter.on
-                  ? {backgroundImage: gradient.primary}
-                  : {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line}),
+                // Same properties in both states: swapping a border for a
+                // backgroundImage on tap closed the app (see Chip.tsx).
+                borderWidth: 1,
+                borderColor: filter.on ? colors.accent : colors.line,
+                backgroundColor: filter.on ? colors.accent : colors.surface,
               }}>
               <Text
                 style={{

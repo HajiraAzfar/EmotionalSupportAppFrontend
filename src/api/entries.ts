@@ -20,6 +20,8 @@ export interface EntryMessage {
   kind: MessageKind | null;
   value_id: string | null;
   content: string;
+  // AI Chat: the helplines card drawn under this reply. Its own field, never part of the text.
+  card?: 'soft' | 'prominent' | null;
   sequence: number;
   created_at: string;
 }
@@ -40,6 +42,8 @@ export interface CaptureSpec {
   repeatable: boolean;
   // Library categories of this valence come first (positive feelings when savouring).
   prefer_valence: string | null;
+  // She may speak this answer instead of typing it.
+  voice?: boolean;
 }
 
 export type ConversationStatus =
@@ -158,12 +162,23 @@ export function submitCapture(
   skipped = false,
   // Repeatable values (free write): true means she is still writing.
   more = false,
+  // Made once per answer and reused on retry, so a lost response never records it twice.
+  clientId: string = newClientId(),
 ): Promise<EntryState> {
   return authed(`/entries/${entryId}/captures`, 'POST', {
     value_id: valueId,
     value,
     skipped,
     more,
+    client_id: clientId,
+  });
+}
+
+// RFC 4122 v4 from Math.random: only an idempotency key, never a secret.
+export function newClientId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => {
+    const r = Math.floor(Math.random() * 16);
+    return (ch === 'x' ? r : 8 + (r % 4)).toString(16);
   });
 }
 
