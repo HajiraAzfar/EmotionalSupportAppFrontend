@@ -4,7 +4,8 @@ import {Text, View} from 'react-native';
 import FadeIn from '../components/FadeIn';
 import Logo from '../components/Logo';
 import ScreenBackground from '../components/ScreenBackground';
-import {colors, glass, radius, type} from '../theme';
+import Wordmark from '../components/Wordmark';
+import {colors, type} from '../theme';
 
 type Props = {
   onDone: () => void;
@@ -24,27 +25,16 @@ export default function SplashScreen({onDone}: Props) {
   return (
     <View style={{flex: 1}}>
       <ScreenBackground intensity="full" />
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        {/* The mark on a frosted tile, as on the app icon. */}
+      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32}}>
         <FadeIn order={0} distance={18}>
-          <View
-            style={{
-              ...glass,
-              width: 132,
-              height: 132,
-              borderRadius: radius.image,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Logo size={92} />
-          </View>
+          <Logo size={120} />
         </FadeIn>
-        <FadeIn order={1}>
-          <Text style={{...type.display, marginTop: 22}}>Mind Doc</Text>
+        <FadeIn order={1} style={{marginTop: 18}}>
+          <Wordmark size="large" />
         </FadeIn>
         <FadeIn order={2}>
-          <Text style={{...type.small, marginTop: 8, color: colors.inkSoft}}>
-            A quiet companion for your loudest thoughts
+          <Text style={{...type.body, textAlign: 'center', marginTop: 18, color: colors.inkSoft}}>
+            Your safe space for a calmer mind and a stronger you.
           </Text>
         </FadeIn>
       </View>

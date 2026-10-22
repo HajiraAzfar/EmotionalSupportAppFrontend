@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Image, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Heart} from 'lucide-react-native';
 
+import {brandImages} from '../assets/brand';
 import BackButton from '../components/BackButton';
 import ScreenBackground from '../components/ScreenBackground';
 
 import {Article, readArticle, setFavourite} from '../api/library';
-import {colors, gradient, heart, radius, shadow, space, type} from '../theme';
+import {colors, heart, radius, shadow, space, type} from '../theme';
 
 type Props = {
   slug: string;
@@ -113,12 +114,15 @@ export default function ArticleScreen({slug, onBack}: Props) {
         <ActivityIndicator color={colors.accent} style={{marginTop: 40}} />
       ) : (
         <ScrollView contentContainerStyle={{padding: space.screen, paddingBottom: 60}}>
-          {/* Where the design has its illustration. */}
-          <View
+          {/* Dawn over lavender hills, from the brand artwork. */}
+          <Image
+            source={brandImages.landscape}
+            resizeMode="cover"
+            accessible={false}
             style={{
+              width: '100%',
               height: 180,
               borderRadius: radius.image,
-              backgroundImage: gradient.landscape,
               marginBottom: 18,
               ...shadow.md,
             }}

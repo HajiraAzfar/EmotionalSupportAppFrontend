@@ -1,12 +1,14 @@
 import React from 'react';
-import {Pressable, Text, View} from 'react-native';
+import {Image, Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
+import {brandImages} from '../assets/brand';
 import FadeIn from '../components/FadeIn';
 import Logo from '../components/Logo';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
-import {colors, glass, gradient, radius, shadow, space, type} from '../theme';
+import Wordmark from '../components/Wordmark';
+import {colors, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onGoToSignup: () => void;
@@ -20,39 +22,31 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
 
       <View style={{flex: 1, paddingHorizontal: space.screen, alignItems: 'center'}}>
         <View style={{flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'}}>
-          {/* The mark on a frosted tile, as on the app icon. */}
           <FadeIn order={0} distance={18}>
-            <View
-              style={{
-                ...glass,
-                width: 104,
-                height: 104,
-                borderRadius: radius.image,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Logo size={72} />
-            </View>
+            <Logo size={92} />
           </FadeIn>
 
-          <FadeIn order={1}>
-            <Text style={{...type.display, textAlign: 'center', marginTop: 22}}>Mind Doc</Text>
+          <FadeIn order={1} style={{marginTop: 14}}>
+            <Wordmark />
           </FadeIn>
 
           <FadeIn order={2}>
-            <Text style={{...type.body, textAlign: 'center', marginTop: 8, maxWidth: 280}}>
-              A quiet companion for your loudest thoughts.
+            <Text style={{...type.body, textAlign: 'center', marginTop: 12, maxWidth: 290}}>
+              Your safe space for a calmer mind and a stronger you.
             </Text>
           </FadeIn>
 
-          {/* Where the design has its mountain-lake illustration. */}
+          {/* Dawn over lavender hills, from the brand artwork. */}
           <FadeIn order={2} style={{width: '100%'}}>
-            <View
+            <Image
+              source={brandImages.landscape}
+              resizeMode="cover"
+              accessible={false}
               style={{
-                height: 180,
+                width: '100%',
+                height: 200,
                 marginTop: 28,
                 borderRadius: radius.image,
-                backgroundImage: gradient.landscape,
                 ...shadow.md,
               }}
             />

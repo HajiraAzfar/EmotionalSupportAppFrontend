@@ -61,7 +61,8 @@ function Feature({
         marginRight: 12,
         borderRadius: radius.image,
         overflow: 'hidden',
-        backgroundImage: gradient.landscape,
+        // ponytail: a dawn wash until each article has its own artwork (Phase 4).
+        backgroundImage: gradient.dawn,
         padding: 18,
         justifyContent: 'flex-end',
         minHeight: 190,

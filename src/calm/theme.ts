@@ -72,8 +72,8 @@ export const motion = {
 };
 
 export const text = {
-  title: {fontFamily: appFont.bold, fontSize: fontSize.title, color: colors.ink},
-  heading: {fontFamily: appFont.semibold, fontSize: fontSize.heading, color: colors.ink},
+  title: {fontFamily: appFont.serifBold, fontSize: fontSize.title, color: colors.ink},
+  heading: {fontFamily: appFont.serif, fontSize: fontSize.heading, color: colors.ink},
   body: {
     fontFamily: appFont.regular,
     fontSize: fontSize.body,
