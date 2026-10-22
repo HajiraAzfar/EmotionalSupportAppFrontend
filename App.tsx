@@ -30,6 +30,8 @@ import ChatTabScreen from './src/screens/ChatTabScreen';
 import JournalScreen from './src/screens/JournalScreen';
 import TabBar, {Tab} from './src/components/TabBar';
 import InsightsScreen from './src/screens/InsightsScreen';
+import WeeklyReportScreen from './src/screens/WeeklyReportScreen';
+import DeckScreen from './src/screens/DeckScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import {AppState} from 'react-native';
 import AppLockScreen from './src/screens/AppLockScreen';
@@ -37,6 +39,7 @@ import SetAppLockScreen from './src/screens/SetAppLockScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
+import CalmModule from './src/calm/CalmModule';
 import {LOCK_AFTER_MS, clearLock, isLockSet, takeLockOnReturn} from './src/storage/appLock';
 
 type Screen =
@@ -60,14 +63,20 @@ type Screen =
   | 'entries'
   | 'article'
   | 'appLockSetup'
-  | 'settings';
+  | 'weeklyReport'
+  | 'settings'
+  | 'calm';
 
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
   'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
   'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'goal', 'article',
-  'appLockSetup', 'settings',
+  'appLockSetup', 'settings', 'calm',
 ];
+
+// Short enough to answer a card at a time. Thought and exposure keep the
+// thread: they are long, and a pause, a resume and a conversation all live there.
+const DECK_JOURNALS: JournalType[] = ['check_in', 'savouring', 'thought'];
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -318,6 +327,7 @@ function App(): React.JSX.Element {
                 onOpenInsights={() => setTab('insights')}
                 onOpenEntries={() => setScreen('entries')}
                 onOpenSettings={() => setScreen('settings')}
+                onOpenCalm={() => setScreen('calm')}
               />
             )}
 
@@ -354,6 +364,7 @@ function App(): React.JSX.Element {
                   setJournal({journalType: 'check_in', entryId, readOnly: true});
                   setScreen('journal');
                 }}
+                onOpenWeekly={() => setScreen('weeklyReport')}
               />
             )}
 
@@ -372,8 +383,26 @@ function App(): React.JSX.Element {
         </View>
       )}
 
-      {/* Every journal, check-in included, runs its own capture schedule here. */}
-      {screen === 'journal' && (
+      {/* The two short journals run as a deck of cards: one question on screen
+          at a time, the next decided by the last answer. A new entry only —
+          reopening a past one shows the thread it was recorded in. */}
+      {screen === 'journal' && !journal.entryId && DECK_JOURNALS.includes(journal.journalType) && (
+        <ErrorBoundary>
+          <DeckScreen
+            journalType={journal.journalType as 'check_in' | 'savouring' | 'thought'}
+            onExit={() => {
+              setStartMood(null);
+              setScreen('tabs');
+            }}
+            onContinueInThread={(entryId, journalType) => {
+              setJournal({journalType, entryId});
+            }}
+          />
+        </ErrorBoundary>
+      )}
+
+      {/* Everything else — and every entry reopened — stays a thread. */}
+      {screen === 'journal' && !(!journal.entryId && DECK_JOURNALS.includes(journal.journalType)) && (
         // A rendering bug in the thread shows a retry; every message is already saved.
         <ErrorBoundary>
           <ChatEntryScreen
@@ -419,8 +448,21 @@ function App(): React.JSX.Element {
         />
       )}
 
+      {/* Breathing and grounding, offline: nothing is saved or sent. */}
+      {screen === 'calm' && <CalmModule onExit={() => setScreen('tabs')} />}
+
       {screen === 'appLockSetup' && (
         <SetAppLockScreen onDone={() => setScreen('settings')} />
+      )}
+
+      {screen === 'weeklyReport' && (
+        <WeeklyReportScreen
+          onBack={() => setScreen('tabs')}
+          onOpenEntry={(entryId, journalType) => {
+            setJournal({journalType, entryId, readOnly: true});
+            setScreen('journal');
+          }}
+        />
       )}
 
       {/* FR-CRIS-009: every screen without its own Get help link gets this one,

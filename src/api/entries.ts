@@ -12,7 +12,10 @@ export type MessageKind =
   | 'crisis'
   | 'notice'
   | 'closing'
-  | 'grounding';
+  | 'grounding'
+  // Thought journal: one other way of reading the thought, offered when she
+  // asks. Labelled as Echo's and never saved as her answer.
+  | 'perspective';
 
 export interface EntryMessage {
   id: string;
@@ -31,9 +34,23 @@ export interface ScaleOption {
   label: string;
 }
 
+export interface RatedItem {
+  id: string;
+  name: string;
+}
+
+// rating_set: one rating per item she already chose, on the range the server sets.
+export interface RatingSet {
+  items: RatedItem[];
+  min: number;
+  max: number;
+  // Ratings she gave the same items earlier, so the second pass starts there.
+  carried: Record<string, number> | null;
+}
+
 export interface CaptureSpec {
   value_id: string;
-  control: 'scale' | 'multi_select' | 'free_text';
+  control: 'scale' | 'multi_select' | 'free_text' | 'rating_set';
   required: boolean;
   library: string | null;
   scale: ScaleOption[] | null;
@@ -44,6 +61,11 @@ export interface CaptureSpec {
   prefer_valence: string | null;
   // She may speak this answer instead of typing it.
   voice?: boolean;
+  rates?: RatingSet | null;
+  // Which step of this entry she is on, out of how many it will ask. Counted by
+  // the server from her answers: it shrinks when a branch closes, never grows.
+  step?: number | null;
+  total?: number | null;
 }
 
 export type ConversationStatus =
@@ -102,7 +124,7 @@ export interface EntrySummary {
   conversation_status: ConversationStatus;
 }
 
-export type CaptureValue = number | string[] | string | null;
+export type CaptureValue = number | string[] | string | Record<string, number> | null;
 
 async function authed(path: string, method = 'GET', body?: unknown) {
   const token = await getAccessToken();
@@ -180,6 +202,29 @@ export function newClientId(): string {
     const r = Math.floor(Math.random() * 16);
     return (ch === 'x' ? r : 8 + (r % 4)).toString(16);
   });
+}
+
+// Change an answer she has already given, from the review. /captures only ever
+// goes forward (FR-ENT-024); this is the one way back, and it touches only a
+// value already recorded. Her first version stays in the thread.
+export function reviseCapture(
+  entryId: string,
+  valueId: string,
+  value: CaptureValue,
+  skipped = false,
+  clientId: string = newClientId(),
+): Promise<EntryState> {
+  return authed(`/entries/${entryId}/captures/${valueId}`, 'PATCH', {
+    value,
+    skipped,
+    client_id: clientId,
+  });
+}
+
+// "Help me explore another perspective" — one suggestion, because she pressed
+// the button. It arrives as a message of its own kind and is never her answer.
+export function askPerspective(entryId: string): Promise<EntryState> {
+  return authed(`/entries/${entryId}/perspective`, 'POST', {});
 }
 
 export function chooseConversation(

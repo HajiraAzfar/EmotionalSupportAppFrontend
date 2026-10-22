@@ -1,10 +1,11 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ChevronRight, Settings} from 'lucide-react-native';
+import {ChevronRight, Settings, Wind} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {JOURNALS} from './JournalScreen';
+import {calm} from '../calm/content';
 import Logo from '../components/Logo';
 import ProgressRing from '../components/insights/ProgressRing';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
@@ -19,6 +20,7 @@ type Props = {
   onOpenInsights: () => void;
   onOpenEntries: () => void;
   onOpenSettings: () => void;
+  onOpenCalm: () => void;
 };
 
 // The design's short names for the four structured journals. Free write stays
@@ -38,6 +40,7 @@ export default function HomeScreen({
   onOpenInsights,
   onOpenEntries,
   onOpenSettings,
+  onOpenCalm,
 }: Props) {
   const [draft, setDraft] = useState<EntrySummary | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
@@ -183,6 +186,40 @@ export default function HomeScreen({
             </Pressable>
           ))}
         </View>
+
+        {/* The Calm module: breathing and grounding, offline. */}
+        <Pressable
+          onPress={onOpenCalm}
+          accessibilityRole="button"
+          accessibilityLabel={calm.entry.title}
+          accessibilityHint={calm.entry.blurb}
+          style={({pressed}) => ({
+            ...glass,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
+            borderRadius: radius.card,
+            padding: 14,
+            marginTop: 12,
+          })}>
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.pill,
+              backgroundColor: colors.accentWash,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Wind size={20} color={colors.accent} />
+          </View>
+          <View style={{flex: 1}}>
+            <Text style={type.label}>{calm.entry.title}</Text>
+            <Text style={{...type.small, marginTop: 2}}>{calm.entry.blurb}</Text>
+          </View>
+          <ChevronRight size={16} color={colors.inkFaint} />
+        </Pressable>
 
         <Pressable onPress={onOpenEntries} style={{paddingVertical: 18, marginTop: 8}}>
           <Text style={{...type.link, textAlign: 'center'}}>

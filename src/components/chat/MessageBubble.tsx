@@ -14,6 +14,10 @@ export default function MessageBubble({message}: Props) {
   const isCrisis = message.kind === 'crisis';
   const isNotice = message.kind === 'notice';
   const isGrounding = message.kind === 'grounding';
+  // A suggestion Echo offered, not something she wrote and not a conclusion
+  // about her. Reading the entry back weeks later, the line still has to say
+  // whose words these were.
+  const isSuggestion = message.kind === 'perspective';
 
   return (
     <View
@@ -35,6 +39,11 @@ export default function MessageBubble({message}: Props) {
         paddingVertical: 10,
         marginBottom: 10,
       }}>
+      {isSuggestion && (
+        <Text style={{...type.tiny, marginBottom: 4}}>
+          ECHO'S SUGGESTION — YOURS TO KEEP OR LEAVE
+        </Text>
+      )}
       <Text
         style={{
           ...type.body,

@@ -284,6 +284,7 @@ export default function ChatEntryScreen({
           <MoodScaleControl
             options={spec.scale}
             busy={busy}
+            faces={spec.value_id === 'mood'}
             onSelect={v => capture(spec.value_id, v)}
           />
         );

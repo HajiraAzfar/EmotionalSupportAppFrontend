@@ -38,6 +38,8 @@ type Props = {
   onStartEntry: () => void;
   // FR-INS-012: a thinking pattern opens its article.
   onOpenArticle: (slug: string) => void;
+  // "Your Week in Reflection": the week read as a report rather than a dashboard.
+  onOpenWeekly: () => void;
   onBack: () => void;
 };
 
@@ -267,7 +269,7 @@ function Exposure({group}: {group: ExposureGroup}) {
 
 // SRS 4.10: every view describes what she recorded — nothing here explains,
 // predicts, recommends, or compares her with anyone else (FR-INS-020, FR-INS-022).
-export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle, onBack}: Props) {
+export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle, onOpenWeekly, onBack}: Props) {
   const [period, setPeriod] = useState<Period>(rememberedPeriod());
   const [data, setData] = useState<Insights | null>(null);
   const [error, setError] = useState('');
@@ -332,6 +334,25 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 40}}>
         <Text style={{...type.title, marginBottom: 16}}>Your emotional journey</Text>
+
+        {/* The week, read as a report. The views below stay as they are: this
+            is a different way in, not a replacement for them. */}
+        <Pressable
+          onPress={onOpenWeekly}
+          accessibilityRole="button"
+          style={({pressed}) => ({
+            ...glass,
+            borderRadius: radius.card,
+            padding: 16,
+            marginBottom: 18,
+            opacity: pressed ? 0.85 : 1,
+          })}>
+          <Text style={type.heading}>Your Week in Reflection</Text>
+          <Text style={{...type.small, marginTop: 4}}>
+            A little time to understand what your week was really like.
+          </Text>
+          <Text style={{...type.link, marginTop: 10}}>Open this week</Text>
+        </Pressable>
 
         {/* FR-INS-001: one control, applied to every view below. */}
         <View style={{flexDirection: 'row', gap: 8, marginBottom: 18}}>
