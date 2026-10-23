@@ -13,7 +13,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.emotionalsupportapp.R
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /**
  * The check-in reminders: one local notification a day per slot (morning,
@@ -41,9 +44,34 @@ object ReminderScheduler {
 
   private fun key(slot: String) = "minutes_$slot"
 
+  // The latest day (yyyy-MM-dd) that slot's check-in was finished.
+  private fun doneKey(slot: String) = "done_$slot"
+
   private fun requestCode(slot: String) = 4211 + SLOTS.indexOf(slot)
 
   fun isSlot(slot: String) = slot in SLOTS
+
+  // Every reminder time sits inside its slot's window, so the day a reminder
+  // fires on is the day its check-in belongs to.
+  private fun today() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
+  /**
+   * A check-in finished for [localDate]: that day's reminder stays quiet, and
+   * one already showing is taken away. Only a later day replaces the one kept,
+   * so adding yesterday's check-in never wakes today's reminder again.
+   */
+  fun markDone(context: Context, slot: String, localDate: String) {
+    val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    if (localDate > (prefs.getString(doneKey(slot), "") ?: "")) {
+      prefs.edit().putString(doneKey(slot), localDate).apply()
+    }
+    if (localDate == today()) {
+      NotificationManagerCompat.from(context).cancel(requestCode(slot))
+    }
+  }
+
+  private fun doneToday(context: Context, slot: String) =
+      context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(doneKey(slot), null) == today()
 
   fun scheduledAt(context: Context, slot: String): Int =
       context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(key(slot), -1)
@@ -107,6 +135,9 @@ object ReminderScheduler {
   }
 
   fun show(context: Context, slot: String) {
+    if (doneToday(context, slot)) {
+      return
+    }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED) {

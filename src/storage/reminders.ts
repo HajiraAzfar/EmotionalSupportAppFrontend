@@ -55,6 +55,16 @@ export async function clearReminder(slot: CheckInSlot) {
   await NativeReminders?.cancel(slot);
 }
 
+// A check-in finished for its day: that slot's reminder stays quiet that day.
+// A mark that fails only costs one reminder too many, so it never surfaces.
+export async function markSlotDone(slot: CheckInSlot, localDate: string) {
+  try {
+    await NativeReminders?.markDone(slot, localDate);
+  } catch {
+    // nothing to show her
+  }
+}
+
 // Every reminder off: deleting the account leaves none behind.
 export async function clearAllReminders() {
   for (const slot of SLOTS) {

@@ -3,11 +3,13 @@ import {TurboModuleRegistry} from 'react-native';
 
 // The check-in reminders, on Android (android/.../reminders): one per slot
 // ("morning" | "afternoon" | "evening"). A time is minutes after midnight on
-// the phone's own clock; -1 means that slot has no reminder.
+// the phone's own clock; -1 means that slot has no reminder. markDone keeps a
+// slot quiet for a day (yyyy-MM-dd) whose check-in is already finished.
 export interface Spec extends TurboModule {
   schedule(slot: string, minutesOfDay: number): Promise<void>;
   cancel(slot: string): Promise<void>;
   scheduledAt(slot: string): Promise<number>;
+  markDone(slot: string, localDate: string): Promise<void>;
 }
 
 // `get`, not `getEnforcing`: on a phone without the module (iOS, tests) the

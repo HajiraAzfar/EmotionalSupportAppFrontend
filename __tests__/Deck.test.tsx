@@ -39,6 +39,11 @@ jest.mock('../src/api/libraries', () => ({
   ...jest.requireActual('../src/api/libraries'),
   getLibrary: jest.fn(),
 }));
+jest.mock('../src/specs/NativeMindDocReminders', () => ({
+  __esModule: true,
+  default: {markDone: jest.fn(async () => {})},
+}));
+const mockReminders = jest.requireMock('../src/specs/NativeMindDocReminders').default;
 
 const flatten = (c: any): string =>
   Array.isArray(c) ? c.map(flatten).join('') : c == null || c === false ? '' : String(c);
@@ -486,4 +491,19 @@ test("an evening's Yes leads on to its journal, and the weekly answers are not r
   expect(text).toContain("This week's questions are saved. No score is shown.");
   await press(pressable(tree.root, 'Work through that thought'));
   expect(onOpenJournal).toHaveBeenCalledWith('thought', 'e1');
+});
+
+test("a slot's reminder is quieted for its day only once the check-in is finished", async () => {
+  const morning = {slot: 'morning' as const, local_date: '2026-10-22'};
+  (createEntry as jest.Mock).mockResolvedValue({...moodStep, ...morning});
+  (submitCapture as jest.Mock).mockResolvedValue(entry(null, [], {status: 'completed', ...morning}));
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" slot="morning" onExit={jest.fn()} onContinueInThread={jest.fn()} />,
+    );
+  });
+  expect(mockReminders.markDone).not.toHaveBeenCalled();
+  await press(pressable(tree.root, 'Very good'));
+  expect(mockReminders.markDone).toHaveBeenCalledWith('morning', '2026-10-22');
 });

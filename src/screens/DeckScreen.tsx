@@ -40,6 +40,7 @@ import {
   submitCapture,
 } from '../api/entries';
 import {quickExit} from '../storage/appLock';
+import {markSlotDone} from '../storage/reminders';
 import {colors, font, radius, shadow, space, type} from '../theme';
 
 type DeckJournal = 'check_in' | 'savouring' | 'thought';
@@ -193,6 +194,10 @@ export default function DeckScreen({
       // A safety question answered positively: the resources come first, now.
       if (next.crisis_event?.show_resources) {
         setResourcesOpen(true);
+      }
+      // A finished check-in keeps its slot's reminder quiet for that day.
+      if (next.slot && next.local_date && next.status === 'completed') {
+        markSlotDone(next.slot, next.local_date);
       }
       return next;
     } catch {

@@ -30,6 +30,13 @@ class MindDocRemindersModule(reactContext: ReactApplicationContext) :
     promise.resolve(null)
   }
 
+  override fun markDone(slot: String, localDate: String, promise: Promise) {
+    if (ReminderScheduler.isSlot(slot) && DATE.matches(localDate)) {
+      ReminderScheduler.markDone(reactApplicationContext, slot, localDate)
+    }
+    promise.resolve(null)
+  }
+
   override fun scheduledAt(slot: String, promise: Promise) {
     val minutes = if (ReminderScheduler.isSlot(slot)) ReminderScheduler.scheduledAt(reactApplicationContext, slot) else -1
     promise.resolve(minutes.toDouble())
@@ -37,6 +44,7 @@ class MindDocRemindersModule(reactContext: ReactApplicationContext) :
 
   companion object {
     const val NAME = "MindDocReminders"
+    private val DATE = Regex("""\d{4}-\d{2}-\d{2}""")
   }
 }
 

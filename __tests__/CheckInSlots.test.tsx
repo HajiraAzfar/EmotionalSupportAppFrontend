@@ -14,6 +14,11 @@ jest.mock('../src/api/entries', () => ({
   ...jest.requireActual('../src/api/entries'),
   getCheckInSlots: jest.fn(),
 }));
+jest.mock('../src/specs/NativeMindDocReminders', () => ({
+  __esModule: true,
+  default: {markDone: jest.fn(async () => {})},
+}));
+const mockReminders = jest.requireMock('../src/specs/NativeMindDocReminders').default;
 
 const flatten = (c: any): string =>
   Array.isArray(c) ? c.map(flatten).join('') : c == null || c === false ? '' : String(c);
@@ -47,6 +52,9 @@ test('leads with the open slot, lets a missed one be added, and opens a finished
   expect(text).toContain('Today');
   expect(text).toContain('Yesterday');
   expect(text).not.toMatch(/missed|failed|streak|behind/i);
+  // Only the finished slot quiets its reminder.
+  expect(mockReminders.markDone).toHaveBeenCalledTimes(1);
+  expect(mockReminders.markDone).toHaveBeenCalledWith('morning', '2026-10-21');
 
   const start = root.findAll(n => typeof n.props.onPress === 'function' && allText(n).includes('Start'))[0];
   await ReactTestRenderer.act(async () => start.props.onPress());

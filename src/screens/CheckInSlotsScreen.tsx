@@ -8,6 +8,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {CheckInSlot, SLOT_TITLES, SlotBoard, SlotRow, getCheckInSlots} from '../api/entries';
+import {markSlotDone} from '../storage/reminders';
 import {colors, font, radius, shadow, space, type} from '../theme';
 
 type Props = {
@@ -57,7 +58,12 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry}: Props
   const load = useCallback(() => {
     setError('');
     getCheckInSlots()
-      .then(setBoard)
+      .then(next => {
+        setBoard(next);
+        // A check-in finished elsewhere (another phone, an older build) quiets
+        // its reminder here too.
+        next.slots.filter(row => row.state === 'done').forEach(row => markSlotDone(row.slot, row.local_date));
+      })
       .catch(e => setError((e as Error).message));
   }, []);
 
