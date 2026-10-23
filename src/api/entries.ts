@@ -246,9 +246,10 @@ export function sendMessage(
 
 export const JOURNAL_TITLES: Record<JournalType, string> = {
   check_in: 'Check-in',
-  savouring: 'Savouring',
-  thought: 'Thought record',
-  exposure: 'Facing something',
+  // The brand brief's names.
+  savouring: 'Saving Journal',
+  thought: 'Thought Journal',
+  exposure: 'Exposure Journal',
   free_write: 'Free write',
   chat: 'AI Chat',
 };

@@ -1,4 +1,6 @@
-import {apiRequest} from './client';
+import {Dirs, FileSystem} from 'react-native-file-access';
+
+import {apiRequest, apiUrl, NetworkError} from './client';
 import {JournalType} from './entries';
 import {getAccessToken} from '../storage/tokens';
 
@@ -179,6 +181,35 @@ export async function getInsights(period: Period): Promise<Insights> {
     token: token ?? undefined,
   });
 }
+
+// Phase B: this period's insights as a PDF, saved to the phone's Downloads.
+// Returns the file's name there.
+export async function downloadReport(period: Period): Promise<string> {
+  // A small authorised call first, so an expired access token is refreshed the
+  // usual way before the download, which cannot refresh it itself.
+  await apiRequest('/auth/me', {token: (await getAccessToken()) ?? undefined});
+  const token = await getAccessToken();
+  const tzOffset = -new Date().getTimezoneOffset();
+  const name = `mind-doc-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const path = `${Dirs.CacheDir}/${name}`;
+  let result;
+  try {
+    result = await FileSystem.fetch(apiUrl(`/insights/report.pdf?period=${period}&tz_offset=${tzOffset}`), {
+      path,
+      headers: {Authorization: `Bearer ${token}`},
+    });
+  } catch {
+    throw new NetworkError();
+  }
+  if (!result.ok) {
+    throw new Error("Couldn't make the report just now. Please try again in a moment.");
+  }
+  await FileSystem.cpExternal(path, name, 'downloads');
+  // The copy in Downloads is the one to keep; the cached one goes.
+  await FileSystem.unlink(path).catch(() => undefined);
+  return name;
+}
+
 export async function getQuestionnaire(): Promise<QuestionnaireSpec> {
   const token = await getAccessToken();
   return apiRequest('/insights/questionnaire', {token: token ?? undefined});

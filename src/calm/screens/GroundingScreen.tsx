@@ -7,10 +7,11 @@ import CompletionCard from '../components/CompletionCard';
 import StepCard from '../components/StepCard';
 import {calm} from '../content';
 import {useGroundingFlow} from '../hooks/useGroundingFlow';
+import {StepExercise} from '../hooks/useGroundYourself';
 import {space} from '../theme';
 
 type Props = {
-  exercise: 'senses' | 'feet';
+  exercise: StepExercise;
   onBack: () => void;
 };
 

@@ -11,12 +11,13 @@ type Props = {
   fraction?: number;
   size?: number;
   caption?: string;
+  // A small ring needs a thinner stroke and a smaller number.
+  compact?: boolean;
 };
 
-const STROKE = 8;
-
 // A count in a ring. The ring is decoration: the number is the fact (FR-INS-007).
-export default function ProgressRing({value, fraction = 1, size = 96, caption}: Props) {
+export default function ProgressRing({value, fraction = 1, size = 96, caption, compact}: Props) {
+  const STROKE = compact ? 5 : 8;
   const radius = (size - STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled = Math.max(0, Math.min(1, fraction)) * circumference;
@@ -54,7 +55,7 @@ export default function ProgressRing({value, fraction = 1, size = 96, caption}: 
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={type.display}>{value}</Text>
+          <Text style={compact ? {...type.heading, fontSize: size * 0.36} : type.display}>{value}</Text>
         </View>
       </View>
       {caption ? (

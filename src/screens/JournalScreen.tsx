@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {CloudSun, DoorOpen, Flower2, LucideIcon, MessageCircleMore, PenLine} from 'lucide-react-native';
+import {Brain, CloudSun, Leaf, LucideIcon, Mountain, PenLine} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
+import {brandImages} from '../assets/brand';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
-import {colors, glass, radius, space, type} from '../theme';
+import {cardTints, colors, glass, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onStartJournal: (journalType: JournalType) => void;
@@ -19,12 +20,21 @@ type Props = {
 // The home screen's grid reuses these (all but free write).
 export const JOURNALS: {type: JournalType; blurb: string; minutes: string; Icon: LucideIcon}[] = [
   {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', Icon: CloudSun},
-  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Flower2},
-  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: MessageCircleMore},
-  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: DoorOpen},
+  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Leaf},
+  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: Brain},
+  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: Mountain},
   // FR-JRN-003: the AI Chat tab is a plain chat now, so the free write journal lives here.
   {type: 'free_write', blurb: 'Write whatever is on your mind, then talk it through.', minutes: 'Any length', Icon: PenLine},
 ];
+
+// Each journal's icon sits on its own soft tint, matching its card on Home.
+const ICON_TINTS: Partial<Record<JournalType, string>> = {
+  check_in: colors.sageWash,
+  savouring: cardTints[2].icon,
+  thought: cardTints[0].icon,
+  exposure: cardTints[1].icon,
+  free_write: cardTints[3].icon,
+};
 
 export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntries}: Props) {
   const [draft, setDraft] = useState<EntrySummary | null>(null);
@@ -55,9 +65,26 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 24}}>
-        <Text style={{...type.body, marginTop: 6, marginBottom: 18}}>
-          Pick the one that fits the time you have.
-        </Text>
+        {/* A woman writing at a window, from the brand artwork. */}
+        <View
+          style={{
+            marginTop: 14,
+            borderRadius: radius.card,
+            overflow: 'hidden',
+            backgroundColor: colors.surface,
+            ...shadow.sm,
+          }}>
+          <Image
+            source={brandImages.journalingWide}
+            resizeMode="cover"
+            accessible={false}
+            style={{width: '100%', height: 150}}
+          />
+          <Text style={{...type.small, color: colors.inkSoft, textAlign: 'center', paddingVertical: 10}}>
+            Pick the one that fits the time you have.
+          </Text>
+        </View>
+        <View style={{height: 18}} />
 
         {loading ? (
           <ActivityIndicator color={colors.accent} style={{marginBottom: 16}} />
@@ -96,7 +123,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
                 width: 46,
                 height: 46,
                 borderRadius: radius.pill,
-                backgroundColor: colors.accentWash,
+                backgroundColor: ICON_TINTS[journal.type] ?? colors.accentWash,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>

@@ -1,6 +1,8 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, ViewStyle} from 'react-native';
 
+import {useReducedMotion} from '../calm/hooks/useReducedMotion';
+
 type Props = {
   children: React.ReactNode;
   // Stagger a list by passing 0, 1, 2… rather than working out milliseconds.
@@ -22,8 +24,14 @@ const DURATION_MS = 380;
  */
 export default function FadeIn({children, order = 0, distance = 12, style}: Props) {
   const progress = useRef(new Animated.Value(0)).current;
+  // With the phone's reduce-motion setting on, things simply appear.
+  const reduced = useReducedMotion();
 
   useEffect(() => {
+    if (reduced) {
+      progress.setValue(1);
+      return;
+    }
     const animation = Animated.timing(progress, {
       toValue: 1,
       duration: DURATION_MS,
@@ -32,7 +40,7 @@ export default function FadeIn({children, order = 0, distance = 12, style}: Prop
     });
     animation.start();
     return () => animation.stop();
-  }, [progress, order]);
+  }, [progress, order, reduced]);
 
   return (
     <Animated.View

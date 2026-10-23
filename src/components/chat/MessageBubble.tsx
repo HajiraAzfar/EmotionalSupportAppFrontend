@@ -8,7 +8,7 @@ type Props = {
   message: EntryMessage;
 };
 
-// Hers in the violet gradient on the right; Echo's on frosted glass on the left.
+// The user's in the primary gradient on the right; Echo's on white on the left.
 export default function MessageBubble({message}: Props) {
   const mine = message.role === 'user';
   const isCrisis = message.kind === 'crisis';
@@ -27,9 +27,9 @@ export default function MessageBubble({message}: Props) {
         ...(mine
           ? {backgroundImage: gradient.primary}
           : {
-              backgroundColor: colors.glass,
+              backgroundColor: colors.surface,
               borderWidth: 1,
-              borderColor: isCrisis ? colors.alert : isGrounding ? colors.sage : colors.glassEdge,
+              borderColor: isCrisis ? colors.alert : isGrounding ? colors.sage : colors.line,
             }),
         ...shadow.sm,
         borderRadius: radius.card,

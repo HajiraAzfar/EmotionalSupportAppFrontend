@@ -9,24 +9,14 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Brain, CloudSun, Heart, LucideIcon, NotebookPen, Search, Sparkles} from 'lucide-react-native';
+import {Heart, Search} from 'lucide-react-native';
 
 import BackButton from '../components/BackButton';
+import Illustration from '../components/illustrations/Illustration';
+import {articleArt} from '../components/illustrations/articleArt';
 
 import {ArticleCard, LibraryListing, listArticles, setFavourite} from '../api/library';
-import {
-  cardTints,
-  colors,
-  font,
-  glass,
-  gradient,
-  heart,
-  onTint,
-  radius,
-  shadow,
-  space,
-  type,
-} from '../theme';
+import {colors, font, heart, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onOpenArticle: (slug: string) => void;
@@ -38,121 +28,103 @@ const SEARCH_DELAY_MS = 300;
 const {width: SCREEN} = Dimensions.get('window');
 const FEATURE_WIDTH = SCREEN - space.screen * 2;
 
-// One picture per category, so a card is recognisable before it is read.
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  Thinking: Brain,
-  Coping: CloudSun,
-  Journalling: NotebookPen,
-};
-
-function Feature({
-  article,
-  onOpen,
-}: {
-  article: ArticleCard;
-  onOpen: () => void;
-}) {
-  const Icon = CATEGORY_ICONS[article.category] ?? Sparkles;
+function SaveButton({article, onToggleSave}: {article: ArticleCard; onToggleSave: () => void}) {
   return (
     <Pressable
-      onPress={onOpen}
-      style={{
-        width: FEATURE_WIDTH,
-        marginRight: 12,
-        borderRadius: radius.image,
-        overflow: 'hidden',
-        // ponytail: a dawn wash until each article has its own artwork (Phase 4).
-        backgroundImage: gradient.dawn,
-        padding: 18,
-        justifyContent: 'flex-end',
-        minHeight: 190,
-        ...shadow.md,
-      }}>
-      <View
-        style={{
-          ...glass,
-          width: 44,
-          height: 44,
-          borderRadius: radius.pill,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 10,
-        }}>
-        <Icon size={22} color={colors.accent} />
-      </View>
-      <Text style={type.title}>{article.title}</Text>
-      <Text style={{...type.body, color: colors.ink, marginTop: 6}}>{article.summary}</Text>
-      <Text style={{...type.small, fontFamily: font.semibold, marginTop: 8, color: colors.accent}}>
-        {article.minutes} min read
-      </Text>
+      onPress={onToggleSave}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel={article.favourite ? 'Remove from saved' : 'Save'}>
+      <Heart size={20} color={heart} fill={article.favourite ? heart : 'transparent'} />
     </Pressable>
   );
 }
 
-function Card({
+// A featured article: its scene above, then the words, editorial style.
+function Feature({article, onOpen}: {article: ArticleCard; onOpen: () => void}) {
+  return (
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={article.title}
+      style={({pressed}) => ({
+        width: FEATURE_WIDTH,
+        marginRight: 12,
+        borderRadius: radius.image,
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+        opacity: pressed ? 0.9 : 1,
+        ...shadow.md,
+      })}>
+      <Illustration name={articleArt(article.slug, article.category)} height={140} />
+      <View style={{padding: 16}}>
+        <Text style={{...type.tiny, letterSpacing: 1}}>
+          {article.category.toUpperCase()} · {article.minutes} MIN READ
+        </Text>
+        <Text style={{...type.title, fontSize: 22, marginTop: 6}}>{article.title}</Text>
+        <Text style={{...type.body, marginTop: 6}} numberOfLines={2}>
+          {article.summary}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// One article in the list: a small scene, the title, a line of summary, and
+// its category and reading time.
+function Row({
   article,
-  tint,
   onOpen,
   onToggleSave,
 }: {
   article: ArticleCard;
-  tint: {bg: string; icon: string};
   onOpen: () => void;
   onToggleSave: () => void;
 }) {
-  const Icon = CATEGORY_ICONS[article.category] ?? Sparkles;
   return (
-    <View
-      style={{
-        width: '47.5%',
-        flexGrow: 1,
-        backgroundColor: tint.bg,
-        borderWidth: 1,
-        borderColor: colors.glassEdge,
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={`${article.title}, ${article.minutes} minute read`}
+      style={({pressed}) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        padding: 10,
+        marginBottom: 12,
         borderRadius: radius.card,
-        padding: 14,
+        borderWidth: 1,
+        borderColor: colors.line,
+        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
         ...shadow.sm,
-      }}>
-      <View
-        style={{
-          width: 46,
-          height: 46,
-          borderRadius: radius.pill,
-          backgroundColor: tint.icon,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <Icon size={22} color={onTint} />
+      })}>
+      <View style={{width: 92, height: 72, borderRadius: radius.tile, overflow: 'hidden'}}>
+        <Illustration name={articleArt(article.slug, article.category)} height={72} />
       </View>
-
-      <Text style={{...type.label, color: onTint, marginTop: 12}}>
-        {article.title}
-      </Text>
-      <Text style={{...type.small, color: onTint, opacity: 0.75, marginTop: 4}} numberOfLines={3}>
-        {article.summary}
-      </Text>
-
-      <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14}}>
-        <Pressable
-          onPress={onToggleSave}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={article.favourite ? 'Remove from saved' : 'Save'}>
-          <Heart size={20} color={heart} fill={article.favourite ? heart : 'transparent'} />
-        </Pressable>
-        <Pressable
-          onPress={onOpen}
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            paddingVertical: 8,
-            borderRadius: radius.pill,
-            backgroundImage: gradient.primary,
-          }}>
-          <Text style={{...type.small, fontFamily: font.semibold, color: colors.onAccent}}>Read</Text>
-        </Pressable>
+      <View style={{flex: 1}}>
+        <Text style={type.label} numberOfLines={2}>
+          {article.title}
+        </Text>
+        <Text style={{...type.small, marginTop: 2}} numberOfLines={2}>
+          {article.summary}
+        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8}}>
+          <View
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: radius.pill,
+              backgroundColor: colors.sageWash,
+            }}>
+            <Text style={{...type.tiny, color: colors.accent}}>{article.category}</Text>
+          </View>
+          <Text style={type.tiny}>{article.minutes} min read</Text>
+        </View>
       </View>
-    </View>
+      <SaveButton article={article} onToggleSave={onToggleSave} />
+    </Pressable>
   );
 }
 
@@ -241,7 +213,9 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
           paddingVertical: 12,
         }}>
         <BackButton onPress={onBack} />
-        <Text style={{...type.heading, flex: 1, textAlign: 'center'}}>Learning library</Text>
+        <Text accessibilityRole="header" style={{...type.heading, flex: 1, textAlign: 'center'}}>
+          Reading library
+        </Text>
         <View style={{width: 40}} />
       </View>
 
@@ -265,6 +239,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
               onChangeText={setQuery}
               placeholder="Search articles"
               placeholderTextColor={colors.inkFaint}
+              accessibilityLabel="Search articles"
               style={{flex: 1, paddingVertical: 12, ...type.input, color: colors.ink}}
             />
           </View>
@@ -279,6 +254,8 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
             <Pressable
               key={filter.key}
               onPress={filter.onPress}
+              accessibilityRole="button"
+              accessibilityState={{selected: filter.on}}
               style={{
                 paddingHorizontal: 16,
                 paddingVertical: 8,
@@ -286,8 +263,8 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
                 borderRadius: radius.pill,
                 // Same properties in both states: swapping a border for a
                 // backgroundImage on tap closed the app (see Chip.tsx).
-                borderWidth: 1,
-                borderColor: filter.on ? colors.accent : colors.line,
+                borderWidth: 1.5,
+                borderColor: filter.on ? colors.accent : colors.muted,
                 backgroundColor: filter.on ? colors.accent : colors.surface,
               }}>
               <Text
@@ -345,19 +322,11 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
               </View>
             ) : null}
 
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 12,
-                paddingHorizontal: space.screen,
-                marginTop: 18,
-              }}>
-              {data.articles.map((article, index) => (
-                <Card
+            <View style={{paddingHorizontal: space.screen, marginTop: 18}}>
+              {data.articles.map(article => (
+                <Row
                   key={article.slug}
                   article={article}
-                  tint={cardTints[index % cardTints.length]}
                   onOpen={() => onOpenArticle(article.slug)}
                   onToggleSave={() => toggleSave(article)}
                 />
@@ -365,9 +334,14 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
             </View>
 
             {!data.articles.length ? (
-              <Text style={{...type.body, textAlign: 'center', marginTop: 30}}>
-                {savedOnly ? 'Nothing saved yet.' : `Nothing matches “${query}”.`}
-              </Text>
+              <View style={{alignItems: 'center', paddingHorizontal: space.screen, marginTop: 10}}>
+                <Illustration name="empty" width={220} />
+                <Text style={{...type.body, textAlign: 'center', marginTop: 4}}>
+                  {savedOnly
+                    ? 'Nothing saved yet. Tap the heart on an article to keep it here.'
+                    : `Nothing matches “${query}”.`}
+                </Text>
+              </View>
             ) : null}
           </>
         )}

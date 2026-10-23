@@ -2,7 +2,7 @@ import React from 'react';
 import {View} from 'react-native';
 import Animated, {FadeIn, LinearTransition, SlideInRight, SlideOutLeft} from 'react-native-reanimated';
 
-import {glass, radius} from '../theme';
+import {colors, radius, shadow} from '../theme';
 
 type Props = {
   // Changing this is what makes a card leave and the next one arrive. Give it
@@ -34,9 +34,12 @@ export default function Flashcard({cardKey, children, first}: Props) {
         // The card grows rather than jumping when the note field opens.
         layout={LinearTransition.duration(IN_MS)}
         style={{
-          ...glass,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.line,
           borderRadius: radius.card,
-          padding: 20,
+          padding: 22,
+          ...shadow.md,
         }}>
         {children}
       </Animated.View>

@@ -12,6 +12,7 @@ import FocusAreasScreen from './src/screens/FocusAreasScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import GoalScreen from './src/screens/GoalScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import IntroScreen from './src/screens/IntroScreen';
 import LifeVisionScreen from './src/screens/LifeVisionScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SetPasswordScreen from './src/screens/SetPasswordScreen';
@@ -37,9 +38,12 @@ import {AppState} from 'react-native';
 import AppLockScreen from './src/screens/AppLockScreen';
 import SetAppLockScreen from './src/screens/SetAppLockScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import NameScreen from './src/screens/NameScreen';
+import DeleteAccountScreen from './src/screens/DeleteAccountScreen';
+import RemindersScreen from './src/screens/RemindersScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
-import CalmModule from './src/calm/CalmModule';
+import CalmModule, {CalmView} from './src/calm/CalmModule';
 import {LOCK_AFTER_MS, clearLock, isLockSet, takeLockOnReturn} from './src/storage/appLock';
 
 type Screen =
@@ -65,13 +69,19 @@ type Screen =
   | 'appLockSetup'
   | 'weeklyReport'
   | 'settings'
-  | 'calm';
+  | 'calm'
+  | 'intro'
+  | 'name'
+  | 'editName'
+  | 'deleteAccount'
+  | 'reminders';
 
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
   'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
   'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'goal', 'article',
-  'appLockSetup', 'settings', 'calm',
+  'appLockSetup', 'settings', 'calm', 'intro', 'name', 'editName', 'deleteAccount',
+  'reminders',
 ];
 
 // Short enough to answer a card at a time. Thought and exposure keep the
@@ -95,6 +105,10 @@ function App(): React.JSX.Element {
   const [articleSlug, setArticleSlug] = useState('');
   // Which of the four areas is showing. The tab bar is the only way between them.
   const [tab, setTab] = useState<Tab>('home');
+  // Where Calm opens: its own list, or straight into an exercise (Home's quick tools).
+  const [calmStart, setCalmStart] = useState<CalmView>('home');
+  // What the user asked to be called (optional), for the greeting on Home.
+  const [userName, setUserName] = useState<string | null>(null);
   // A mood tapped on the home card is recorded as soon as the check-in opens.
   const [startMood, setStartMood] = useState<number | null>(null);
     // FR-AUTH-009: the app lock. `locked` is null until we know whether a PIN
@@ -140,6 +154,7 @@ function App(): React.JSX.Element {
       }
 
       const status = await apiRequest('/onboarding/status', {token});
+      setUserName(status.preferred_name ?? null);
 
       if (status.consent_version !== status.current_consent_version) {
         setScreen('consent');
@@ -216,9 +231,14 @@ function App(): React.JSX.Element {
       <StatusBar barStyle="dark-content" />
       {screen === 'welcome' && (
         <WelcomeScreen
-          onGoToSignup={() => setScreen('signup')}
+          onGoToSignup={() => setScreen('intro')}
           onGoToLogin={() => setScreen('login')}
         />
+      )}
+
+      {/* What the app is for, before an account is asked for. */}
+      {screen === 'intro' && (
+        <IntroScreen onDone={() => setScreen('signup')} onBack={() => setScreen('welcome')} />
       )}
 
       {screen === 'signup' && (
@@ -287,7 +307,18 @@ function App(): React.JSX.Element {
       )}
 
       {screen === 'consent' && (
-        <ConsentScreen onAgreed={() => setScreen('focus')} />
+        <ConsentScreen onAgreed={() => setScreen('name')} />
+      )}
+
+      {/* Optional: what to call the user in the greeting. */}
+      {screen === 'name' && (
+        <NameScreen
+          mode="onboarding"
+          onDone={name => {
+            setUserName(name);
+            setScreen('focus');
+          }}
+        />
       )}
 
       {screen === 'focus' && (
@@ -315,7 +346,11 @@ function App(): React.JSX.Element {
           <View style={{flex: 1}}>
             {tab === 'home' && (
               <HomeScreen
-                onSignedOut={() => setScreen('welcome')}
+                name={userName}
+                onSignedOut={() => {
+                  setUserName(null);
+                  setScreen('welcome');
+                }}
                 onStartJournal={type => {
                   setJournal({journalType: type});
                   setScreen('journal');
@@ -327,7 +362,11 @@ function App(): React.JSX.Element {
                 onOpenInsights={() => setTab('insights')}
                 onOpenEntries={() => setScreen('entries')}
                 onOpenSettings={() => setScreen('settings')}
-                onOpenCalm={() => setScreen('calm')}
+                onOpenCalm={start => {
+                  setCalmStart(start ?? 'home');
+                  setScreen('calm');
+                }}
+                onOpenChat={() => setTab('chat')}
               />
             )}
 
@@ -346,7 +385,15 @@ function App(): React.JSX.Element {
             )}
 
             {/* AI Chat: a chat with Echo; the free write journal is in the Journal tab. */}
-            {tab === 'chat' && <ChatTabScreen onOpenEntries={() => setScreen('entries')} />}
+            {tab === 'chat' && (
+              <ChatTabScreen
+                onOpenEntries={() => setScreen('entries')}
+                onOpenCalm={() => {
+                  setCalmStart('home');
+                  setScreen('calm');
+                }}
+              />
+            )}
 
             {tab === 'insights' && (
               <InsightsScreen
@@ -442,14 +489,47 @@ function App(): React.JSX.Element {
       )}
             {screen === 'settings' && (
         <SettingsScreen
+          name={userName}
+          onOpenName={() => setScreen('editName')}
           onOpenAppLock={() => setScreen('appLockSetup')}
-          onSignedOut={() => setScreen('welcome')}
+          onOpenReminders={() => setScreen('reminders')}
+          onOpenDeleteAccount={() => setScreen('deleteAccount')}
+          onSignedOut={() => {
+            setUserName(null);
+            setScreen('welcome');
+          }}
           onBack={() => setScreen('tabs')}
         />
       )}
 
+      {screen === 'editName' && (
+        <NameScreen
+          mode="settings"
+          initial={userName}
+          onDone={name => {
+            setUserName(name);
+            setScreen('settings');
+          }}
+          onCancel={() => setScreen('settings')}
+        />
+      )}
+
+      {screen === 'reminders' && <RemindersScreen onBack={() => setScreen('settings')} />}
+
+      {/* SRS 4.12: the account and everything in it, deleted for good. */}
+      {screen === 'deleteAccount' && (
+        <DeleteAccountScreen
+          onBack={() => setScreen('settings')}
+          onDeleted={() => {
+            setUserName(null);
+            setTab('home');
+            setScreen('welcome');
+          }}
+        />
+      )}
+
       {/* Breathing and grounding, offline: nothing is saved or sent. */}
-      {screen === 'calm' && <CalmModule onExit={() => setScreen('tabs')} />}
+      {screen === 'calm' && <CalmModule initial={calmStart} onExit={() => setScreen('tabs')} />}
 
       {screen === 'appLockSetup' && (
         <SetAppLockScreen onDone={() => setScreen('settings')} />

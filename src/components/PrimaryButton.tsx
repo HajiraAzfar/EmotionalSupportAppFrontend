@@ -1,6 +1,5 @@
 import React from 'react';
 import {ActivityIndicator, Pressable, Text} from 'react-native';
-import {ArrowRight} from 'lucide-react-native';
 
 import {colors, gradient, radius, shadow, type} from '../theme';
 
@@ -11,8 +10,8 @@ type Props = {
   disabled?: boolean;
 };
 
-// The violet gradient pill with an arrow, as on every call to action in the
-// design.
+// The primary purple pill, as on every call to action in the brand brief:
+// a subtle gradient, a soft shadow, and the label alone.
 export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
   const inactive = busy || disabled;
 
@@ -20,6 +19,8 @@ export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
     <Pressable
       onPress={onPress}
       disabled={inactive}
+      accessibilityRole="button"
+      accessibilityState={{disabled: !!inactive, busy: !!busy}}
       style={({pressed}) => ({
         ...(inactive
           ? {backgroundColor: colors.accentSoft}
@@ -27,18 +28,14 @@ export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
         opacity: pressed ? 0.85 : 1,
         borderRadius: radius.pill,
         paddingVertical: 16,
-        flexDirection: 'row',
+        minHeight: 52,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
       })}>
       {busy ? (
         <ActivityIndicator color={colors.onAccent} />
       ) : (
-        <>
-          <Text style={{...type.label, color: colors.onAccent}}>{label}</Text>
-          <ArrowRight size={18} color={colors.onAccent} />
-        </>
+        <Text style={{...type.label, color: colors.onAccent}}>{label}</Text>
       )}
     </Pressable>
   );

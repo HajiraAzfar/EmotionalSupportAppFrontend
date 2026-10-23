@@ -19,15 +19,17 @@ const TABS: {key: Tab; label: string; Icon: typeof House}[] = [
   {key: 'library', label: 'Library', Icon: BookOpen},
 ];
 
-// The flat white bar from the design, on every main screen. It is the only way
-// between the five areas, so nothing here ever disappears.
+// The white bar along the bottom of every main screen, in the brand brief's
+// style: thin icons, the current tab in the primary purple on a lavender pill.
+// It is the only way between the five areas, so nothing here ever disappears.
 export default function TabBar({current, onChange}: Props) {
   return (
     <View
+      accessibilityRole="tablist"
       style={{
         flexDirection: 'row',
         paddingHorizontal: 6,
-        paddingTop: 10,
+        paddingTop: 8,
         paddingBottom: 8,
         backgroundColor: colors.surface,
         borderTopLeftRadius: radius.image,
@@ -42,13 +44,24 @@ export default function TabBar({current, onChange}: Props) {
             key={key}
             onPress={() => onChange(key)}
             accessibilityRole="tab"
+            accessibilityLabel={label}
             accessibilityState={{selected: on}}
-            style={{flex: 1, alignItems: 'center', paddingVertical: 4}}>
-            <Icon size={22} color={tint} strokeWidth={on ? 2.2 : 1.8} />
+            style={{flex: 1, alignItems: 'center', paddingVertical: 2}}>
+            <View
+              style={{
+                width: 52,
+                height: 30,
+                borderRadius: radius.pill,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: on ? colors.sageWash : colors.surface,
+              }}>
+              <Icon size={21} color={tint} strokeWidth={on ? 2.1 : 1.7} />
+            </View>
             <Text
               style={{
                 ...type.tiny,
-                marginTop: 4,
+                marginTop: 3,
                 color: tint,
                 fontFamily: on ? font.semibold : font.medium,
               }}>

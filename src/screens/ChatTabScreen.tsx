@@ -8,6 +8,7 @@ import {colors, space, type} from '../theme';
 
 type Props = {
   onOpenEntries: () => void;
+  onOpenCalm?: () => void;
 };
 
 /**
@@ -19,7 +20,7 @@ type Props = {
  * that is what a chat does. "New chat" starts a blank one, which is only saved
  * once she sends something.
  */
-export default function ChatTabScreen({onOpenEntries}: Props) {
+export default function ChatTabScreen({onOpenEntries, onOpenCalm}: Props) {
   const [entryId, setEntryId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -75,6 +76,7 @@ export default function ChatTabScreen({onOpenEntries}: Props) {
         }}
         exitLabel="New chat"
         secondaryAction={{label: 'Past chats', onPress: onOpenEntries}}
+        onOpenCalm={onOpenCalm}
       />
     </View>
   );

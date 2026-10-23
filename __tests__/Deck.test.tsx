@@ -197,7 +197,35 @@ test('savouring runs the same deck with its own journal type', async () => {
 
   expect(createEntry).toHaveBeenCalledWith('savouring');
   expect(allText(tree.root)).toContain('What happened?');
-  expect(allText(tree.root)).toContain('A good moment');
+  expect(allText(tree.root)).toContain('Saving Journal');
+});
+
+test('the Saving Journal opens with its intro and offers starters while the answer is empty', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(
+    entry({value_id: 'event', control: 'free_text', required: true, library: null, scale: null,
+           max_length: 2000, repeatable: false, prefer_valence: null},
+      [prompt('event', 'What happened?')], {journal_type: 'savouring'}),
+  );
+  const tree = await render('savouring');
+  const starter = (label: string) =>
+    tree.root.findAll(n => n.props.accessibilityLabel === `Start with: ${label}` && typeof n.props.onPress === 'function');
+
+  expect(allText(tree.root)).toContain('Notice what made today a little better.');
+  await press(starter('A small joy')[0]);
+  // A starter begins the sentence; once there are words, the starters step aside.
+  expect(tree.root.findByType(TextInput).props.value).toBe('A small joy: ');
+  expect(starter('A kind moment')).toHaveLength(0);
+});
+
+test('the deck header keeps Get help one tap away, and the intro leaves after the first answer', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(moodStep);
+  (submitCapture as jest.Mock).mockResolvedValue(noteStep);
+  const tree = await render();
+
+  expect(allText(tree.root)).toContain('Get help');
+  expect(allText(tree.root)).toContain('Take a moment. Your feelings matter.');
+  await press(pressable(tree.root, 'Very good'));
+  expect(allText(tree.root)).not.toContain('Take a moment. Your feelings matter.');
 });
 
 // --- the thought record: ratings per feeling, going back, and a suggestion ---

@@ -9,6 +9,12 @@ const API_URL = __DEV__
   ? 'http://10.0.2.2:8000'
   : 'https://emotional-support-backend-a0039c1a.fastapicloud.dev';
 
+// The full address of an API path, for the few calls that do not go through
+// apiRequest (a file download straight to disk).
+export function apiUrl(path: string) {
+  return `${API_URL}${path}`;
+}
+
 type RequestOptions = {
   method?: string;
   body?: unknown;

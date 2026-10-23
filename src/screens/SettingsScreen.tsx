@@ -1,68 +1,122 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Pressable, ScrollView, Text, View} from 'react-native';
+import {Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {
+  Bell,
+  ChevronRight,
+  LifeBuoy,
+  LockKeyhole,
+  LogOut,
+  LucideIcon,
+  Trash2,
+  UserRound,
+} from 'lucide-react-native';
 
 import BackButton from '../components/BackButton';
 import Logo from '../components/Logo';
 import ScreenBackground from '../components/ScreenBackground';
+import Wordmark from '../components/Wordmark';
+import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {isLockSet} from '../storage/appLock';
+import {formatTime, getReminder, remindersAvailable} from '../storage/reminders';
 import {clearTokens} from '../storage/tokens';
-import {colors, font, glass, radius, space, type} from '../theme';
+import {colors, font, radius, shadow, space, type} from '../theme';
 
 type Props = {
+  name: string | null;
+  onOpenName: () => void;
   onOpenAppLock: () => void;
+  onOpenReminders: () => void;
+  onOpenDeleteAccount: () => void;
   onSignedOut: () => void;
   onBack: () => void;
 };
+
+function Section({children}: {children: string}) {
+  return (
+    <Text accessibilityRole="header" style={{...type.small, marginTop: 18, marginBottom: 10}}>
+      {children}
+    </Text>
+  );
+}
 
 function Row({
   label,
   description,
   value,
+  Icon,
   onPress,
   danger = false,
 }: {
   label: string;
   description: string;
   value?: string;
+  Icon: LucideIcon;
   onPress: () => void;
   danger?: boolean;
 }) {
+  const tint = danger ? colors.alert : colors.accent;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+      accessibilityHint={description}
       style={({pressed}) => ({
-        ...glass,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
         borderRadius: radius.card,
-        padding: 16,
-        marginBottom: 12,
+        padding: 14,
+        marginBottom: 10,
+        ...shadow.sm,
       })}>
-      <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
-        <Text
-          style={{
-            ...type.label,
-            flex: 1,
-            color: danger ? colors.alert : colors.ink,
-          }}>
-          {label}
-        </Text>
-        {value ? (
-          <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>{value}</Text>
-        ) : null}
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: radius.pill,
+          backgroundColor: danger ? colors.blush : colors.sageWash,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <Icon size={19} color={tint} />
       </View>
-      <Text style={{...type.small, marginTop: 4}}>{description}</Text>
+      <View style={{flex: 1}}>
+        <Text style={{...type.label, color: danger ? colors.alert : colors.ink}}>{label}</Text>
+        <Text style={{...type.small, marginTop: 2}}>{description}</Text>
+      </View>
+      {value ? (
+        <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>{value}</Text>
+      ) : null}
+      {!danger ? <ChevronRight size={18} color={colors.inkFaint} /> : null}
     </Pressable>
   );
 }
 
 // Where the settings that belong to this phone live. The app lock is the main
 // one: it is device-only by design (FR-AUTH-009), so it has nowhere else to be.
-export default function SettingsScreen({onOpenAppLock, onSignedOut, onBack}: Props) {
+export default function SettingsScreen({
+  name,
+  onOpenName,
+  onOpenAppLock,
+  onOpenReminders,
+  onOpenDeleteAccount,
+  onSignedOut,
+  onBack,
+}: Props) {
   const [locked, setLocked] = useState<boolean | null>(null);
+  const [reminder, setReminderAt] = useState<number | null | undefined>(undefined);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
   const refresh = useCallback(() => {
     isLockSet().then(setLocked);
+    getReminder()
+      .then(setReminderAt)
+      .catch(() => setReminderAt(null));
   }, []);
 
   useEffect(() => {
@@ -88,9 +142,20 @@ export default function SettingsScreen({onOpenAppLock, onSignedOut, onBack}: Pro
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 30}}>
-        <Text style={{...type.title, marginBottom: 20}}>Settings</Text>
+        <Text accessibilityRole="header" style={{...type.title, marginBottom: 4}}>
+          Settings
+        </Text>
 
-        <Text style={{...type.small, marginBottom: 10}}>This phone</Text>
+        <Section>Profile</Section>
+        <Row
+          label="Your name"
+          description="What the home screen greets you with."
+          value={name ?? 'Not set'}
+          Icon={UserRound}
+          onPress={onOpenName}
+        />
+
+        <Section>Privacy on this phone</Section>
         <Row
           label="App lock"
           description={
@@ -99,22 +164,63 @@ export default function SettingsScreen({onOpenAppLock, onSignedOut, onBack}: Pro
               : 'Ask for a PIN before the app opens.'
           }
           value={locked === null ? '' : locked ? 'On' : 'Off'}
+          Icon={LockKeyhole}
           onPress={onOpenAppLock}
         />
+        {remindersAvailable ? (
+          <Row
+            label="Daily reminder"
+            description="A gentle nudge once a day. It never shows what you wrote."
+            value={reminder === undefined ? '' : reminder === null ? 'Off' : formatTime(reminder)}
+            Icon={Bell}
+            onPress={onOpenReminders}
+          />
+        ) : null}
 
-        <Text style={{...type.small, marginTop: 16, marginBottom: 10}}>Account</Text>
+        <Section>Help and support</Section>
+        <Row
+          label="Crisis resources"
+          description="Helplines and what to do if you are not safe right now."
+          Icon={LifeBuoy}
+          onPress={() => setResourcesOpen(true)}
+        />
+
+        <Section>Account</Section>
         <Row
           label="Sign out"
           description="Your entries stay safe — they live on the server, not on this phone."
+          Icon={LogOut}
           onPress={signOut}
           danger
         />
+        <Row
+          label="Delete my account"
+          description="Delete your account and every entry, for good."
+          Icon={Trash2}
+          onPress={onOpenDeleteAccount}
+          danger
+        />
 
+        {/* About: what the app is, and what it is not. */}
         <View style={{alignItems: 'center', marginTop: 34}}>
-          <Logo size={56} />
-          <Text style={{...type.small, marginTop: 8}}>Mind Doc</Text>
+          <Logo size={64} />
+          <View style={{marginTop: 10}}>
+            <Wordmark />
+          </View>
+          <Text style={{...type.small, textAlign: 'center', marginTop: 14, lineHeight: 19, maxWidth: 300}}>
+            Mind Doc is a space for reflection and self-help. Echo, its AI companion, is not a
+            therapist and cannot diagnose. If you need care, please reach out to a qualified
+            professional.
+          </Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={resourcesOpen}
+        animationType="slide"
+        onRequestClose={() => setResourcesOpen(false)}>
+        <CrisisResourcesScreen onClose={() => setResourcesOpen(false)} />
+      </Modal>
     </SafeAreaView>
   );
 }

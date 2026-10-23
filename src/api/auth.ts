@@ -1,4 +1,18 @@
 import {apiRequest} from './client';
+import {getAccessToken} from '../storage/tokens';
+
+// What the user would like to be called in the greeting; empty clears it.
+export async function setPreferredName(name: string): Promise<{preferred_name: string | null}> {
+  const token = await getAccessToken();
+  return apiRequest('/onboarding/name', {method: 'PUT', body: {name}, token: token ?? undefined});
+}
+
+// SRS 4.12: the account and everything in it, gone for good. Asks for the
+// password again.
+export async function deleteAccount(password: string) {
+  const token = await getAccessToken();
+  return apiRequest('/auth/delete-account', {method: 'POST', body: {password}, token: token ?? undefined});
+}
 
 export function signupEmail(email: string) {
   return apiRequest('/auth/signup', {

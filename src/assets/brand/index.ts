@@ -8,6 +8,8 @@ export const brandImages = {
   landscape: require('./landscape.jpg'),
   // A woman writing at a window: journalling.
   journaling: require('./journaling.jpg'),
+  // The same scene cropped wide (5:3) around her face, for banners.
+  journalingWide: require('./journaling-wide.jpg'),
   // A lavender sprig on transparent: decoration.
   lavender: require('./lavender.png'),
 };

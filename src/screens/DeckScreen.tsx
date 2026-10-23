@@ -1,9 +1,22 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, Text, TextInput, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  ImageSourcePropType,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ChevronLeft, EyeOff, Sparkles} from 'lucide-react-native';
+import {ChevronLeft, EyeOff, Plus, Sparkles} from 'lucide-react-native';
 
+import {brandImages} from '../assets/brand';
 import Flashcard from '../components/Flashcard';
+import Illustration from '../components/illustrations/Illustration';
+import {IllustrationName} from '../components/illustrations/art';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
 import LibraryPicker from '../components/chat/LibraryPicker';
@@ -24,7 +37,7 @@ import {
   submitCapture,
 } from '../api/entries';
 import {quickExit} from '../storage/appLock';
-import {colors, radius, shadow, space, type} from '../theme';
+import {colors, font, radius, shadow, space, type} from '../theme';
 
 type DeckJournal = 'check_in' | 'savouring' | 'thought';
 
@@ -39,11 +52,24 @@ type Props = {
   onContinueInThread: (entryId: string, journalType: JournalType) => void;
 };
 
+// The brand brief's names.
 const TITLES: Record<DeckJournal, string> = {
   check_in: 'Check-in',
-  savouring: 'A good moment',
-  thought: 'Thought record',
+  savouring: 'Saving Journal',
+  thought: 'Thought Journal',
 };
+
+// A picture and one quiet line above the first card only, so a journal opens
+// gently and then gets out of the way.
+const INTROS: Record<DeckJournal, {line: string; image?: ImageSourcePropType; art?: IllustrationName}> = {
+  check_in: {line: 'Take a moment. Your feelings matter.', image: brandImages.landscape},
+  savouring: {line: 'Notice what made today a little better.', art: 'mindfulness'},
+  thought: {line: 'Slow the thought down, one step at a time.', art: 'thoughts'},
+};
+
+// Starters for the Saving Journal's first answer, shown while it is empty.
+// Tapping one begins the sentence; the rest is the user's own.
+const SAVING_STARTERS = ['A small joy', 'A kind moment', 'A good conversation', 'Something I did well'];
 
 // Short labels for the review card and the headings. The questions themselves
 // are worded by the model and are whole sentences; these are only row headings.
@@ -82,6 +108,7 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [expanded, setExpanded] = useState(false);
   const [emergencyText, setEmergencyText] = useState<string | null>(null);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const [seenCrisis, setSeenCrisis] = useState<string[]>([]);
   // A value she has gone back to. While this is set, the card edits that answer
   // instead of asking the next question.
@@ -108,7 +135,7 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
         setEmergencyText(next.crisis_event.text);
       }
       return next;
-    } catch (e) {
+    } catch {
       retry.current = action;
       setError(SEND_FAILED);
       return null;
@@ -197,7 +224,7 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
     setError('');
     try {
       setEntry(await askPerspective(entry.id));
-    } catch (e) {
+    } catch {
       // Her own answer was never waiting on this, so the card stays as it is.
       setError(NO_PERSPECTIVE);
     } finally {
@@ -311,6 +338,11 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
               setExpanded={setExpanded}
               busy={busy}
               onContinue={() => answer(text.trim() || null, !text.trim())}
+              starters={
+                journalType === 'savouring' && spec.value_id === 'event' && !editing
+                  ? SAVING_STARTERS
+                  : undefined
+              }
               // Another way of reading the thought, if she asks for one. It is
               // labelled as Echo's and goes nowhere near her answer.
               perspective={
@@ -408,34 +440,46 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
             paddingHorizontal: space.screen,
             paddingTop: 6,
           }}>
-          {canGoBack ? (
+          <View style={{flex: 1, alignItems: 'flex-start'}}>
+            {canGoBack ? (
+              <Pressable
+                onPress={() => setEditing(previousValue)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Back to your last answer"
+                style={{flexDirection: 'row', alignItems: 'center'}}>
+                <ChevronLeft size={18} color={colors.inkSoft} />
+                <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={editing ? () => setEditing(null) : leave}
+                hitSlop={10}
+                accessibilityRole="button"
+                style={{flexDirection: 'row', alignItems: 'center'}}>
+                {editing ? null : <ChevronLeft size={18} color={colors.inkSoft} />}
+                <Text style={{...type.small, color: colors.inkSoft}}>
+                  {editing ? 'Cancel' : 'Leave'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+          <Text style={type.heading} accessibilityRole="header">
+            {TITLES[journalType]}
+          </Text>
+          <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 16}}>
             <Pressable
-              onPress={() => setEditing(previousValue)}
+              onPress={quickExit}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Back to your last answer"
-              style={{flexDirection: 'row', alignItems: 'center'}}>
-              <ChevronLeft size={16} color={colors.inkSoft} />
-              <Text style={{...type.small, color: colors.inkSoft}}>Back</Text>
+              accessibilityLabel="Close the app quickly">
+              <EyeOff size={18} color={colors.inkSoft} />
             </Pressable>
-          ) : (
-            <Pressable
-              onPress={editing ? () => setEditing(null) : leave}
-              hitSlop={10}
-              accessibilityRole="button">
-              <Text style={{...type.small, color: colors.inkSoft}}>
-                {editing ? 'Cancel' : 'Leave'}
-              </Text>
+            {/* FR-CRIS-009: crisis resources one tap away, here as everywhere. */}
+            <Pressable onPress={() => setResourcesOpen(true)} hitSlop={10} accessibilityRole="button">
+              <Text style={{...type.link, color: colors.alert}}>Get help</Text>
             </Pressable>
-          )}
-          <Text style={{...type.label, fontSize: 17}}>{TITLES[journalType]}</Text>
-          <Pressable
-            onPress={quickExit}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Close the app quickly">
-            <EyeOff size={18} color={colors.inkSoft} />
-          </Pressable>
+          </View>
         </View>
 
         {/* One dot per answer given, and a hollow one for the card she is on.
@@ -478,6 +522,9 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
             paddingBottom: 40,
           }}
           keyboardShouldPersistTaps="handled">
+          {entry && spec && !editing && !crisisMessage && answered.length === 0 ? (
+            <Intro journal={journalType} />
+          ) : null}
           {card()}
 
           {error ? (
@@ -518,6 +565,43 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
       {emergencyText !== null && (
         <CrisisResourcesScreen onClose={() => setEmergencyText(null)} />
       )}
+
+      <Modal
+        visible={resourcesOpen}
+        animationType="slide"
+        onRequestClose={() => setResourcesOpen(false)}>
+        <CrisisResourcesScreen onClose={() => setResourcesOpen(false)} />
+      </Modal>
+    </View>
+  );
+}
+
+function Intro({journal}: {journal: DeckJournal}) {
+  const intro = INTROS[journal];
+  return (
+    <View
+      style={{
+        borderRadius: radius.card,
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+        marginBottom: 16,
+        ...shadow.sm,
+      }}>
+      {intro.image ? (
+        <Image
+          source={intro.image}
+          resizeMode="cover"
+          accessible={false}
+          style={{width: '100%', height: 118}}
+        />
+      ) : intro.art ? (
+        <Illustration name={intro.art} height={118} />
+      ) : null}
+      <Text style={{...type.small, color: colors.inkSoft, textAlign: 'center', paddingVertical: 10}}>
+        {intro.line}
+      </Text>
     </View>
   );
 }
@@ -537,6 +621,8 @@ type WritingProps = {
   busy: boolean;
   onContinue: () => void;
   perspective: {text: string | null; onAsk: () => void} | null;
+  // Optional ways to begin, offered while nothing is written yet.
+  starters?: string[];
 };
 
 // A written answer: typed, or spoken and then read over. What she sends is
@@ -550,6 +636,7 @@ function WritingCard({
   busy,
   onContinue,
   perspective,
+  starters,
 }: WritingProps) {
   const recorder = useVoiceNote(spoken => {
     const joined = text.trim() ? `${text.trimEnd()} ${spoken}` : spoken;
@@ -599,6 +686,35 @@ function WritingCard({
 
       {recorder.error ? (
         <Text style={{...type.small, color: colors.alert, marginTop: 8}}>{recorder.error}</Text>
+      ) : null}
+
+      {starters && !speaking && !text.trim() ? (
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12}}>
+          {starters.map(starter => (
+            <Pressable
+              key={starter}
+              onPress={() => {
+                setText(`${starter}: `);
+                setExpanded(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Start with: ${starter}`}
+              style={({pressed}) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                minHeight: 36,
+                paddingHorizontal: 12,
+                borderRadius: radius.pill,
+                backgroundColor: pressed ? colors.accentWash : colors.sageWash,
+              })}>
+              <Plus size={13} color={colors.accent} />
+              <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>
+                {starter}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       ) : null}
 
       {perspective && (

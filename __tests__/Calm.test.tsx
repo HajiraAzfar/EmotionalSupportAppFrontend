@@ -18,6 +18,7 @@ import {
   useBreathingSession,
 } from '../src/calm/hooks/useBreathingSession';
 import {useGroundingFlow} from '../src/calm/hooks/useGroundingFlow';
+import {ACTIVITIES, matchActivities} from '../src/calm/hooks/useGroundYourself';
 
 const {act} = ReactTestRenderer;
 
@@ -139,6 +140,25 @@ describe('useGroundingFlow', () => {
   });
 });
 
+describe('matchActivities', () => {
+  const ids = (need: Parameters<typeof matchActivities>[1], time: Parameters<typeof matchActivities>[2]) =>
+    matchActivities(ACTIVITIES, need, time).map(a => a.id);
+
+  it('keeps what fits the feeling and the time, shortest first', () => {
+    expect(ids('any', 0)).toHaveLength(ACTIVITIES.length);
+    expect(ids('low', 1)).toEqual(['affirmations']);
+    expect(ids('anxious', 3)).toEqual(['breathing', 'feet', 'affirmations', 'senses']);
+    expect(ids('disconnected', 5)).toContain('bodyScan');
+    expect(ids('disconnected', 5)).not.toContain('pmr');
+  });
+
+  it('always has something for every feeling at the shortest time', () => {
+    for (const need of ['anxious', 'overwhelmed', 'low', 'disconnected'] as const) {
+      expect(ids(need, 1).length).toBeGreaterThan(0);
+    }
+  });
+});
+
 describe('CalmModule', () => {
   const flatten = (c: any): string =>
     Array.isArray(c) ? c.map(flatten).join('') : c == null || c === false ? '' : String(c);
@@ -175,6 +195,43 @@ describe('CalmModule', () => {
     expect(allText(root.root)).toContain('5-4-3-2-1');
     expect(onExit).not.toHaveBeenCalled();
 
+    await act(async () => {
+      backHandler();
+    });
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('Ground yourself filters by feeling and time, and Back returns to that list', async () => {
+    let backHandler: () => boolean = () => false;
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, handler) => {
+      backHandler = handler as () => boolean;
+      return {remove: jest.fn()};
+    });
+    const onExit = jest.fn();
+    let root!: ReactTestRenderer.ReactTestRenderer;
+    await act(async () => {
+      root = ReactTestRenderer.create(<CalmModule onExit={onExit} initial="groundYourself" />);
+    });
+    const radio = (label: string) =>
+      root.root.findAll(n => n.props.accessibilityLabel === label && n.props.accessibilityRole === 'radio' && typeof n.props.onPress === 'function')[0];
+
+    await act(async () => radio('Low').props.onPress());
+    await act(async () => radio('1 min').props.onPress());
+    const text = allText(root.root);
+    expect(text).toContain('Kind words');
+    expect(text).not.toContain('Mindful breathing');
+
+    await act(async () => pressable(root.root, 'Kind words').props.onPress());
+    expect(allText(root.root)).toContain('Step 1 of 5');
+
+    await act(async () => {
+      backHandler();
+    });
+    expect(allText(root.root)).toContain('I feel');
+    await act(async () => {
+      backHandler();
+    });
+    expect(allText(root.root)).toContain('Exercises');
     await act(async () => {
       backHandler();
     });

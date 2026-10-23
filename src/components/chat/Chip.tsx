@@ -37,20 +37,21 @@ export default function Chip({label, on, onPress, onLongPress, removable}: Props
         gap: 6,
         paddingHorizontal: 14,
         borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: on ? colors.accent : colors.line,
-        backgroundColor: on ? colors.accent : colors.surface,
+        // Picked: a soft lavender fill with a purple edge, as in the brand brief.
+        borderWidth: 1.5,
+        borderColor: on ? colors.accent : colors.muted,
+        backgroundColor: on ? colors.sageWash : colors.surface,
         marginRight: 8,
         marginBottom: 8,
       }}>
       {on ? (
-        removable ? <X size={14} color={colors.onAccent} /> : <Check size={14} color={colors.onAccent} />
+        removable ? <X size={14} color={colors.accent} /> : <Check size={14} color={colors.accent} />
       ) : null}
       <Text
         style={{
           ...type.small,
           fontFamily: on ? font.semibold : font.medium,
-          color: on ? colors.onAccent : colors.ink,
+          color: on ? colors.accent : colors.ink,
         }}>
         {label}
       </Text>

@@ -11,9 +11,11 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Footprints} from 'lucide-react-native';
 
 import Logo from '../components/Logo';
 import PrimaryButton from '../components/PrimaryButton';
+import Illustration from '../components/illustrations/Illustration';
 import ScreenBackground from '../components/ScreenBackground';
 import LibraryPicker from '../components/chat/LibraryPicker';
 import MessageBubble from '../components/chat/MessageBubble';
@@ -40,7 +42,7 @@ import {
   submitCapture,
 } from '../api/entries';
 import {quickExit} from '../storage/appLock';
-import {colors, glass, radius, shadow, space, type} from '../theme';
+import {colors, font, glass, radius, shadow, space, type} from '../theme';
 
 // What a blank AI Chat opens with. Shown, never stored, so the model never reads it.
 const CHAT_GREETING: EntryMessage = {
@@ -52,6 +54,15 @@ const CHAT_GREETING: EntryMessage = {
   sequence: 0,
   created_at: '',
 };
+
+// Ways to begin a blank chat. Tapping one sends it as the first message, in
+// the user's voice, so Echo answers it like anything typed.
+const CHAT_STARTERS = [
+  "I'm feeling anxious",
+  'I keep overthinking something',
+  'I had a hard day',
+  'I want to talk through a thought',
+];
 
 // Same limit as the server's message (MessageCreate).
 const MAX_MESSAGE = 5000;
@@ -73,6 +84,8 @@ type Props = {
   // The AI Chat tab calls leaving "New chat", and offers its own second action.
   exitLabel?: string;
   secondaryAction?: {label: string; onPress: () => void};
+  // AI Chat offers a grounding exercise before the first message.
+  onOpenCalm?: () => void;
 };
 
 // FR-ENT-002: the whole entry is one scrolling thread; every control sits
@@ -86,6 +99,7 @@ export default function ChatEntryScreen({
   onExit,
   exitLabel,
   secondaryAction,
+  onOpenCalm,
 }: Props) {
   const [entry, setEntry] = useState<EntryState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -472,8 +486,84 @@ export default function ChatEntryScreen({
           }}>
           {!entry && !error && !blankChat && <ActivityIndicator color={colors.sage} />}
 
+          {/* What Echo is, said plainly where every chat starts. */}
+          {journalType === 'chat' && (
+            <Text style={{...type.tiny, textAlign: 'center', lineHeight: 16, marginBottom: 14}}>
+              Echo is an AI support companion, not a therapist, and can get things wrong. If you
+              are in danger, tap Get help.
+            </Text>
+          )}
+
           {journalType === 'chat' && !readOnly && !entry?.messages.length && !pending && (
-            <MessageBubble message={CHAT_GREETING} />
+            <>
+              <MessageBubble message={CHAT_GREETING} />
+              <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12}}>
+                {CHAT_STARTERS.map(starter => (
+                  <Pressable
+                    key={starter}
+                    onPress={() => say(starter)}
+                    disabled={busy}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Say: ${starter}`}
+                    style={({pressed}) => ({
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
+                      borderRadius: radius.pill,
+                      borderWidth: 1.5,
+                      borderColor: colors.accentSoft,
+                      backgroundColor: pressed ? colors.sageWash : colors.surface,
+                    })}>
+                    <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>
+                      {starter}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {onOpenCalm ? (
+                <Pressable
+                  onPress={onOpenCalm}
+                  accessibilityRole="button"
+                  style={({pressed}) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    alignSelf: 'flex-start',
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    borderRadius: radius.pill,
+                    backgroundColor: pressed ? colors.accentWash : colors.sageWash,
+                  })}>
+                  <Footprints size={16} color={colors.accent} />
+                  <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>
+                    Try a grounding exercise first
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
+          )}
+
+          {/* Exposure asks the most of the user, so it opens with how to keep it safe. */}
+          {journalType === 'exposure' && !readOnly && (
+            <View
+              style={{
+                borderRadius: radius.card,
+                overflow: 'hidden',
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+                marginBottom: 18,
+                ...shadow.sm,
+              }}>
+              <Illustration name="growth" height={110} />
+              <View style={{padding: 14, paddingTop: 4}}>
+                <Text style={type.label}>Build confidence, one small step at a time</Text>
+                <Text style={{...type.small, marginTop: 6, lineHeight: 19}}>
+                  Go at your own pace and only take steps that feel safe. You can pause at any
+                  point. If the fear feels overwhelming, or a situation could put you at risk,
+                  plan this with a therapist or someone you trust.
+                </Text>
+              </View>
+            </View>
           )}
 
           {entry?.messages.map(m => (

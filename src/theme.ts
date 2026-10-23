@@ -68,13 +68,16 @@ export const gradient = {
   primary: `linear-gradient(90deg, ${palette.accent}, ${palette.accentLight})`,
   // A dawn wash for headers that have no illustration.
   dawn: 'linear-gradient(180deg, #E8DDF3 0%, #F6E7E9 60%, #FFF9F6 100%)',
+  // Soft card fills: the featured card (lavender) and a quiet note (blush).
+  lavender: 'linear-gradient(135deg, #E8DDF3 0%, #F1EAF8 55%, #F6E7E9 100%)',
+  blush: 'linear-gradient(135deg, #F6E7E9 0%, #FBF1F1 60%, #FFF9F6 100%)',
 };
 
 // The five points of the mood scale, in order: cool at the low end, warm at
 // the high end. Used by the chart, the calendar and anywhere a recorded mood
 // is shown as a colour. Light enough for ink text to sit on them.
+// Each point's face is drawn by components/MoodFace in the same colour.
 export const moodColours = ['#D3CDE0', '#BBAAE2', '#D8C6EF', '#F2CBD4', '#F4B2BF'];
-export const moodFaces = ['😞', '🙁', '😐', '🙂', '😊'];
 
 // The learning library's cards: soft pastels on the page (lavender, blush,
 // sage, peach). Tints cycle, so a library of any length keeps its rhythm.

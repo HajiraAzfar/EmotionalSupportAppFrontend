@@ -2,8 +2,9 @@ import React, {useState} from 'react';
 import {LayoutChangeEvent, Pressable, Text, View} from 'react-native';
 import Svg, {Circle, Defs, Line, LinearGradient, Path, Stop} from 'react-native-svg';
 
+import MoodFace from '../MoodFace';
 import {MoodPoint} from '../../api/insights';
-import {colors, glass, moodFaces, radius, type} from '../../theme';
+import {colors, glass, radius, type} from '../../theme';
 
 type Props = {
   points: MoodPoint[];
@@ -141,13 +142,11 @@ export default function MoodAreaChart({points, min, max, labels, height = 210, o
             })}
           </Svg>
 
-          {/* The faces sit outside the Svg, where emoji render as text. */}
+          {/* A face beside each level of the axis. */}
           {steps.map(value => (
-            <Text
-              key={value}
-              style={{position: 'absolute', left: 6, top: yOf(value) - 9, fontSize: 14}}>
-              {moodFaces[value - 1] ?? ''}
-            </Text>
+            <View key={value} style={{position: 'absolute', left: 4, top: yOf(value) - 9}}>
+              <MoodFace level={value} size={18} />
+            </View>
           ))}
 
           {/* Finger-sized targets over each dot. */}

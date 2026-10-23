@@ -1,8 +1,9 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
+import MoodFace from '../MoodFace';
 import {ScaleOption} from '../../api/entries';
-import {colors, glass, moodFaces, radius, type} from '../../theme';
+import {colors, glass, radius, type} from '../../theme';
 
 // Up to this many options fit side by side with their labels (the 1-5 mood scale).
 // More than that (the 0-10 distress scale) wraps as numbers, with the ends labelled.
@@ -31,8 +32,28 @@ export default function MoodScaleControl({options, busy, onSelect, faces}: Props
             key={option.value}
             disabled={busy}
             onPress={() => onSelect(option.value)}
+            accessibilityRole="button"
+            accessibilityLabel={faces ? option.label : `${option.value}, ${option.label}`}
             style={{flex: 1, alignItems: 'center', opacity: busy ? 0.5 : 1}}>
-            {({pressed}) => (
+            {({pressed}) =>
+              faces ? (
+                <>
+                  {/* A ring shows the face being pressed; it is always there,
+                      only its colour changes. */}
+                  <View
+                    style={{
+                      padding: 3,
+                      borderRadius: radius.pill,
+                      borderWidth: 2,
+                      borderColor: pressed ? colors.accent : 'transparent',
+                    }}>
+                    <MoodFace level={index + 1} size={50} />
+                  </View>
+                  <Text style={{...type.tiny, textAlign: 'center', marginTop: 6}}>
+                    {option.label}
+                  </Text>
+                </>
+              ) : (
               <>
                 <View
                   style={{
@@ -45,11 +66,7 @@ export default function MoodScaleControl({options, busy, onSelect, faces}: Props
                     backgroundColor: pressed ? colors.accentWash : colors.glass,
                     borderColor: pressed ? colors.accent : colors.glassEdge,
                   }}>
-                  {faces && moodFaces[index] ? (
-                    <Text style={{fontSize: 24}}>{moodFaces[index]}</Text>
-                  ) : (
-                    <Text style={type.heading}>{option.value}</Text>
-                  )}
+                  <Text style={type.heading}>{option.value}</Text>
                 </View>
                 <Text style={{...type.tiny, textAlign: 'center', marginTop: 6}}>
                   {option.label}

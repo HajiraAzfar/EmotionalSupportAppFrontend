@@ -2,6 +2,14 @@
   "name": "EmotionalSupportApp",
   "version": "0.0.1",
   "private": true,
+  "codegenConfig": {
+    "name": "MindDocSpecs",
+    "type": "modules",
+    "jsSrcsDir": "src/specs",
+    "android": {
+      "javaPackageName": "com.emotionalsupportapp.reminders"
+    }
+  },
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",

@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Download} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import BackButton from '../components/BackButton';
@@ -26,10 +27,11 @@ import {
   QuestionnaireState,
   Streak,
   declineQuestionnaire,
+  downloadReport,
   rememberPeriod,
   rememberedPeriod,
 } from '../api/insights';
-import {colors, font, glass, gradient, radius, space, type} from '../theme';
+import {colors, font, glass, gradient, radius, shadow, space, type} from '../theme';
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 
@@ -59,12 +61,19 @@ function Card({
   return (
     <View
       style={{
-        ...glass,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
         borderRadius: radius.card,
         padding: 16,
         marginBottom: 14,
+        ...shadow.sm,
       }}>
-      {title ? <Text style={type.heading}>{title}</Text> : null}
+      {title ? (
+        <Text accessibilityRole="header" style={type.heading}>
+          {title}
+        </Text>
+      ) : null}
       {subtitle ? <Text style={{...type.small, marginTop: 2}}>{subtitle}</Text> : null}
       <View style={{marginTop: title ? 14 : 0}}>{children}</View>
     </View>
@@ -100,7 +109,6 @@ function EntriesCard({streak, onStartEntry}: {streak: Streak; onStartEntry: () =
             <Text style={{color: colors.ink}}>
               {streak.current} {streak.current === 1 ? 'day' : 'days'}
             </Text>
-            {streak.current > 0 ? ' 🔥' : ''}
           </Text>
           {streak.longest > streak.current ? (
             <Text style={type.small}>Your longest so far is {streak.longest} days.</Text>
@@ -125,6 +133,64 @@ function EntriesCard({streak, onStartEntry}: {streak: Streak; onStartEntry: () =
         })}>
         <Text style={{...type.label, color: colors.onAccent}}>Start new entry</Text>
       </Pressable>
+    </Card>
+  );
+}
+
+// Phase B: this period as a PDF, saved to the phone's Downloads, to keep or to
+// share with someone who offers support.
+function ReportCard({period}: {period: Period}) {
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState('');
+  const [failed, setFailed] = useState('');
+
+  async function save() {
+    setBusy(true);
+    setSaved('');
+    setFailed('');
+    try {
+      setSaved(await downloadReport(period));
+    } catch (e) {
+      setFailed((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="Keep a copy" subtitle="A PDF of this period: what you recorded, counted. Not a diagnosis.">
+      <Pressable
+        onPress={save}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityState={{busy}}
+        style={({pressed}) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          minHeight: 46,
+          borderRadius: radius.pill,
+          borderWidth: 1.5,
+          borderColor: colors.accent,
+          backgroundColor: pressed ? colors.accentWash : colors.surface,
+          opacity: busy ? 0.6 : 1,
+        })}>
+        {busy ? (
+          <ActivityIndicator color={colors.accent} />
+        ) : (
+          <>
+            <Download size={18} color={colors.accent} />
+            <Text style={{...type.label, color: colors.accent}}>Download PDF report</Text>
+          </>
+        )}
+      </Pressable>
+      {saved ? (
+        <Text style={{...type.small, marginTop: 10}}>Saved to your Downloads as {saved}.</Text>
+      ) : null}
+      {failed ? (
+        <Text style={{...type.small, color: colors.alert, marginTop: 10}}>{failed}</Text>
+      ) : null}
     </Card>
   );
 }
@@ -333,7 +399,12 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 40}}>
-        <Text style={{...type.title, marginBottom: 16}}>Your emotional journey</Text>
+        <Text style={type.title}>Your emotional journey</Text>
+        {/* FR-INS-020/022: what is shown is counted, not concluded. */}
+        <Text style={{...type.small, marginTop: 6, marginBottom: 16}}>
+          Everything here is counted from what you recorded. It describes your entries; it does
+          not diagnose or judge.
+        </Text>
 
         {/* The week, read as a report. The views below stay as they are: this
             is a different way in, not a replacement for them. */}
@@ -365,12 +436,17 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
                   rememberPeriod(option.value);
                   setPeriod(option.value);
                 }}
+                accessibilityRole="button"
+                accessibilityState={{selected: on}}
                 style={{
                   flex: 1,
                   alignItems: 'center',
                   paddingVertical: 9,
                   borderRadius: radius.pill,
-                  ...(on ? {backgroundImage: gradient.primary} : {backgroundColor: colors.surfaceRaised}),
+                  // Same properties in both states (see Chip.tsx).
+                  borderWidth: 1.5,
+                  borderColor: on ? colors.accent : colors.muted,
+                  backgroundColor: on ? colors.accent : colors.surface,
                 }}>
                 <Text
                   style={{
@@ -469,6 +545,8 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
             </Card>
 
             <EntriesCard streak={data.streak} onStartEntry={onStartEntry} />
+
+            <ReportCard period={period} />
 
             {/* The design shows four cards. These are the other views the SRS
                 asks for (FR-INS-006/008/013/016/019) — one tap away, so the

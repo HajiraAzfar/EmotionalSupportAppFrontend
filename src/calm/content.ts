@@ -10,10 +10,12 @@
 // so this marker is a reminder, not a gate.)
 
 export const calm = {
-  // The card on the home screen that opens the module.
+  // The home screen's quick tools that open the module.
   entry: {
     title: 'Calm',
     blurb: 'Breathing and grounding, a few minutes at a time.',
+    grounding: 'Grounding',
+    groundYourself: 'Ground yourself',
   },
   common: {
     back: 'Back',
@@ -35,6 +37,52 @@ export const calm = {
         title: 'Feet on the floor',
         blurb: 'Five gentle steps to feel steady where you are.',
       },
+      bodyScan: {
+        title: 'Body scan',
+        blurb: 'Move your attention slowly through your body, from feet to face.',
+      },
+      pmr: {
+        title: 'Release tension',
+        blurb: 'Tense and let go, one part of the body at a time (progressive muscle relaxation).',
+      },
+    },
+    groundYourself: {
+      title: 'Ground yourself',
+      blurb: 'Not sure what you need? Choose by how you feel and the time you have.',
+    },
+    exercisesLabel: 'Exercises',
+  },
+  // Short activities for heavy moments, picked by need and by time.
+  groundYourself: {
+    title: 'Ground yourself',
+    intro: 'Pick how you feel and how much time you have. Every activity can be stopped at any point.',
+    needLabel: 'I feel',
+    timeLabel: 'I have',
+    needs: {
+      any: 'Anything',
+      anxious: 'Anxious',
+      overwhelmed: 'Overwhelmed',
+      low: 'Low',
+      disconnected: 'Disconnected',
+    },
+    times: {
+      0: 'Any time',
+      1: '1 min',
+      3: '3 min',
+      5: '5 min',
+    },
+    // "Notice your surroundings · about 3 min"
+    meta: (blurb: string, minutes: number) => `${blurb} · about ${minutes} min`,
+    none: 'Nothing that short fits this feeling. Try a little more time.',
+    activities: {
+      breathing: {title: 'Mindful breathing', blurb: 'Slow your breath with a guide'},
+      senses: {title: 'Notice your surroundings', blurb: 'The 5-4-3-2-1 senses walk'},
+      feet: {title: 'Feet on the floor', blurb: 'Feel steady where you are'},
+      movement: {title: 'Gentle movement', blurb: 'Loosen up, slowly'},
+      affirmations: {title: 'Kind words', blurb: 'A few lines to say to yourself'},
+      support: {title: 'Reach for support', blurb: 'Think of someone you can turn to'},
+      bodyScan: {title: 'Body scan', blurb: 'Rest your attention, feet to face'},
+      pmr: {title: 'Release tension', blurb: 'Tense, then let go'},
     },
   },
   breathing: {
@@ -132,6 +180,135 @@ export const calm = {
           {
             title: 'Look around',
             prompt: 'Name one thing you can see, and remind yourself where you are right now.',
+          },
+        ],
+      },
+      bodyScan: {
+        title: 'Body scan',
+        steps: [
+          {
+            title: 'Get comfortable',
+            prompt: 'Sit or lie down. Let your eyes close, or rest your gaze on one spot.',
+          },
+          {
+            title: 'Feet and legs',
+            prompt: 'Bring your attention to your feet, then slowly up your legs. Notice warmth, weight or tingling. Nothing needs to change.',
+          },
+          {
+            title: 'Belly and chest',
+            prompt: 'Notice your belly and chest rising and falling as you breathe.',
+          },
+          {
+            title: 'Hands and arms',
+            prompt: 'Move your attention to your hands, then your arms. Let them feel heavy.',
+          },
+          {
+            title: 'Shoulders, neck and face',
+            prompt: 'If something feels tight, breathe out slowly and let it soften a little.',
+          },
+          {
+            title: 'Your whole body',
+            prompt: 'Feel your whole body at once, resting here. Open your eyes when you are ready.',
+          },
+        ],
+      },
+      pmr: {
+        title: 'Release tension',
+        steps: [
+          {
+            title: 'Before you start',
+            prompt: 'Find a comfortable seat. You will tense each part for about five seconds, then let go. Skip any part that hurts or is injured.',
+          },
+          {
+            title: 'Hands',
+            prompt: 'Make fists and squeeze gently. Hold, then let go, and notice the difference.',
+          },
+          {
+            title: 'Arms and shoulders',
+            prompt: 'Bend your arms and lift your shoulders towards your ears. Hold, then let them drop.',
+          },
+          {
+            title: 'Face',
+            prompt: 'Scrunch your face gently: eyes, nose and mouth. Hold, then soften everything.',
+          },
+          {
+            title: 'Legs and feet',
+            prompt: 'Press your feet into the floor and tighten your legs. Hold, then release.',
+          },
+          {
+            title: 'Rest',
+            prompt: 'Take one slow breath and notice how your body feels now.',
+          },
+        ],
+      },
+      movement: {
+        title: 'Gentle movement',
+        steps: [
+          {
+            title: 'Sit or stand tall',
+            prompt: 'If it feels okay, stand up or sit tall. Move only in ways that feel comfortable.',
+          },
+          {
+            title: 'Roll your shoulders',
+            prompt: 'Roll your shoulders slowly back five times, then forward five times.',
+          },
+          {
+            title: 'Stretch up',
+            prompt: 'Reach your arms up and stretch gently, then lower them with a slow breath out.',
+          },
+          {
+            title: 'Turn gently',
+            prompt: 'Turn your head slowly to look over one shoulder, then the other.',
+          },
+          {
+            title: 'Shake it out',
+            prompt: 'Shake out your hands and arms for a few seconds, then let them rest.',
+          },
+        ],
+      },
+      affirmations: {
+        title: 'Kind words',
+        steps: [
+          {
+            title: 'This will pass',
+            prompt: 'Say it slowly, out loud or in your head: "This is hard, and it will pass."',
+          },
+          {
+            title: 'I am doing my best',
+            prompt: '"I am doing the best I can with what I have today."',
+          },
+          {
+            title: 'I can be kind to myself',
+            prompt: '"I can speak to myself the way I would speak to a friend."',
+          },
+          {
+            title: 'One step is enough',
+            prompt: '"I don\'t have to fix everything. One small step is enough for now."',
+          },
+          {
+            title: 'Your own words',
+            prompt: 'Is there a line that helps you? Say it to yourself once more.',
+          },
+        ],
+      },
+      support: {
+        title: 'Reach for support',
+        steps: [
+          {
+            title: 'Think of someone',
+            prompt: 'Who is one person you feel safe with? A friend, someone in your family, a teacher, or someone at work.',
+          },
+          {
+            title: 'How to reach them',
+            prompt: 'Would a message, a call, or meeting in person feel easiest right now?',
+          },
+          {
+            title: 'What to say',
+            prompt: 'You don\'t need the perfect words. "I\'m having a hard day. Can we talk?" is enough.',
+          },
+          {
+            title: 'If no one comes to mind',
+            prompt: 'That is okay. Helplines are there for exactly this. Tap Get help at the top of the screen to see who you can contact.',
           },
         ],
       },
