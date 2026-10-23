@@ -18,7 +18,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import Wordmark from '../components/Wordmark';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {isLockSet} from '../storage/appLock';
-import {formatTime, getReminder, remindersAvailable} from '../storage/reminders';
+import {getReminders, remindersAvailable} from '../storage/reminders';
 import {clearTokens} from '../storage/tokens';
 import {colors, font, radius, shadow, space, type} from '../theme';
 
@@ -109,14 +109,15 @@ export default function SettingsScreen({
   onBack,
 }: Props) {
   const [locked, setLocked] = useState<boolean | null>(null);
-  const [reminder, setReminderAt] = useState<number | null | undefined>(undefined);
+  // How many of the three check-in reminders are on; undefined while loading.
+  const [remindersOn, setRemindersOn] = useState<number | undefined>(undefined);
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
   const refresh = useCallback(() => {
     isLockSet().then(setLocked);
-    getReminder()
-      .then(setReminderAt)
-      .catch(() => setReminderAt(null));
+    getReminders()
+      .then(all => setRemindersOn(Object.values(all).filter(minutes => minutes !== null).length))
+      .catch(() => setRemindersOn(0));
   }, []);
 
   useEffect(() => {
@@ -169,9 +170,9 @@ export default function SettingsScreen({
         />
         {remindersAvailable ? (
           <Row
-            label="Daily reminder"
-            description="A gentle nudge once a day. It never shows what you wrote."
-            value={reminder === undefined ? '' : reminder === null ? 'Off' : formatTime(reminder)}
+            label="Check-in reminders"
+            description="A gentle nudge when a check-in opens. It never shows what you wrote."
+            value={remindersOn === undefined ? '' : remindersOn === 0 ? 'Off' : `${remindersOn} of 3 on`}
             Icon={Bell}
             onPress={onOpenReminders}
           />

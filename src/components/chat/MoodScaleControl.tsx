@@ -21,8 +21,40 @@ type Props = {
 
 // FR-ENT-025: the control comes from the capture schedule, so only these
 // values can be submitted.
+// A handful of named answers (Yes / No, Yes / Partly / Not really, the weekly
+// questionnaire's four) are choices, not points on a line: their numbers mean
+// nothing to her, so they are shown as words only.
+const CHOICE_LIMIT = 4;
+
 export default function MoodScaleControl({options, busy, onSelect, faces}: Props) {
   const compact = options.length > LABELLED_LIMIT;
+
+  if (!faces && options.length <= CHOICE_LIMIT) {
+    return (
+      <View style={{gap: 8}}>
+        {options.map(option => (
+          <Pressable
+            key={option.value}
+            disabled={busy}
+            onPress={() => onSelect(option.value)}
+            accessibilityRole="button"
+            accessibilityLabel={option.label}
+            style={({pressed}) => ({
+              minHeight: 50,
+              justifyContent: 'center',
+              paddingHorizontal: 16,
+              borderRadius: radius.input,
+              borderWidth: 1.5,
+              borderColor: pressed ? colors.accent : colors.muted,
+              backgroundColor: pressed ? colors.sageWash : colors.surface,
+              opacity: busy ? 0.5 : 1,
+            })}>
+            <Text style={{...type.label, color: colors.ink}}>{option.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    );
+  }
 
   if (!compact) {
     return (
@@ -104,9 +136,12 @@ export default function MoodScaleControl({options, busy, onSelect, faces}: Props
             borderColor: pressed ? colors.accent : colors.glassEdge,
             opacity: busy ? 0.5 : 1,
           })}>
-          <Text style={{...type.label, width: 24, textAlign: 'center', color: colors.accent}}>
-            {option.value}
-          </Text>
+          {/* A label that already says its number ("About 7 hours") needs no second one. */}
+          {/\d/.test(option.label) ? null : (
+            <Text style={{...type.label, width: 24, textAlign: 'center', color: colors.accent}}>
+              {option.value}
+            </Text>
+          )}
           <Text style={{...type.body, flex: 1, color: colors.ink}}>{option.label}</Text>
         </Pressable>
       ))}

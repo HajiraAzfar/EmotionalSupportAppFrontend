@@ -13,23 +13,26 @@ class MindDocRemindersModule(reactContext: ReactApplicationContext) :
 
   override fun getName() = NAME
 
-  override fun schedule(minutesOfDay: Double, promise: Promise) {
+  override fun schedule(slot: String, minutesOfDay: Double, promise: Promise) {
     val minutes = minutesOfDay.toInt()
-    if (minutes !in 0 until 24 * 60) {
-      promise.reject("E_TIME", "A reminder time is minutes after midnight.")
+    if (!ReminderScheduler.isSlot(slot) || minutes !in 0 until 24 * 60) {
+      promise.reject("E_TIME", "A reminder is a slot and minutes after midnight.")
       return
     }
-    ReminderScheduler.schedule(reactApplicationContext, minutes)
+    ReminderScheduler.schedule(reactApplicationContext, slot, minutes)
     promise.resolve(null)
   }
 
-  override fun cancel(promise: Promise) {
-    ReminderScheduler.cancel(reactApplicationContext)
+  override fun cancel(slot: String, promise: Promise) {
+    if (ReminderScheduler.isSlot(slot)) {
+      ReminderScheduler.cancel(reactApplicationContext, slot)
+    }
     promise.resolve(null)
   }
 
-  override fun scheduledAt(promise: Promise) {
-    promise.resolve(ReminderScheduler.scheduledAt(reactApplicationContext).toDouble())
+  override fun scheduledAt(slot: String, promise: Promise) {
+    val minutes = if (ReminderScheduler.isSlot(slot)) ReminderScheduler.scheduledAt(reactApplicationContext, slot) else -1
+    promise.resolve(minutes.toDouble())
   }
 
   companion object {

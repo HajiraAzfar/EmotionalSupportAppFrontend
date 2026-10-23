@@ -7,8 +7,11 @@ import React from 'react';
 import {Text, TextInput} from 'react-native';
 import ReactTestRenderer, {ReactTestInstance} from 'react-test-renderer';
 
+import {Modal} from 'react-native';
+
 import DeckScreen from '../src/screens/DeckScreen';
 import {
+  acknowledgeCrisis,
   askPerspective,
   createEntry,
   deleteEntry,
@@ -25,6 +28,12 @@ jest.mock('../src/api/entries', () => ({
   deleteEntry: jest.fn(),
   reviseCapture: jest.fn(),
   askPerspective: jest.fn(),
+  acknowledgeCrisis: jest.fn(async () => ({})),
+}));
+// The resources screen loads its helplines; the tests only need it to open.
+jest.mock('../src/api/crisis', () => ({
+  ...jest.requireActual('../src/api/crisis'),
+  getCrisisResources: jest.fn(() => new Promise(() => {})),
 }));
 jest.mock('../src/api/libraries', () => ({
   ...jest.requireActual('../src/api/libraries'),
@@ -402,4 +411,79 @@ test('a suggestion that cannot be written says so and leaves the entry alone', a
   const text = allText(tree.root).join(' ');
   expect(text).toContain("Couldn't think of another angle");
   expect(text).toContain('How would you put it now?');
+});
+
+// --- the three daily check-ins: pre-filled feelings, the safety question, cross-links ---
+
+test('a journal opened from a check-in starts with its feelings ticked', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(
+    entry({value_id: 'feelings', control: 'multi_select', required: false, library: 'feelings', scale: null,
+           max_length: null, repeatable: false, prefer_valence: null, preselected: ['tired']},
+      [prompt('feelings', 'Which feelings are here?')], {journal_type: 'thought'}),
+  );
+  (submitCapture as jest.Mock).mockResolvedValue(noteStep);
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="thought" sourceEntryId="c1" onExit={jest.fn()} onContinueInThread={jest.fn()} />,
+    );
+  });
+  expect(createEntry).toHaveBeenCalledWith('thought', undefined, {slot: undefined, localDate: undefined, sourceEntryId: 'c1'});
+  await press(pressable(tree.root, 'Continue'));
+  expect(submitCapture).toHaveBeenCalledWith('e1', 'feelings', ['tired'], false);
+});
+
+test('a positive safety answer opens the resources at once, and moving on is recorded', async () => {
+  const phq9 = (id: string) => ({value_id: id, control: 'scale' as const, required: false, library: null,
+    scale: [{value: 0, label: 'Not at all'}, {value: 1, label: 'Several days'},
+            {value: 2, label: 'More than half the days'}, {value: 3, label: 'Nearly every day'}],
+    max_length: null, repeatable: false, prefer_valence: null, fixed: true});
+  (createEntry as jest.Mock).mockResolvedValue(entry(phq9('phq9_9'), [prompt('phq9_9', 'Thoughts that you would be better off dead or of hurting yourself in some way')]));
+  (submitCapture as jest.Mock).mockResolvedValue(entry(phq9('gad7_1'),
+    [{id: 'c9', role: 'ai', kind: 'crisis', value_id: null, content: "You don't have to carry this alone.", sequence: 3, created_at: ''},
+     prompt('gad7_1', 'Feeling nervous, anxious or on edge', 'p2')],
+    {crisis_tier: 'danger', crisis_event: {tier: 'danger', variant: 'full', text: "You don't have to carry this alone.", show_resources: true}}));
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" slot="evening" onExit={jest.fn()} onContinueInThread={jest.fn()} />,
+    );
+  });
+  expect(allText(tree.root)).toContain('Evening check-in');
+  // Choices with their own words: no numbers on them.
+  expect(allText(tree.root)).toContain('Several days');
+  await press(pressable(tree.root, 'Several days'));
+
+  expect(tree.root.findAllByType(Modal).some(m => m.props.visible)).toBe(true);
+  expect(allText(tree.root).join(' ')).toContain("You don't have to carry this alone.");
+  expect(allText(tree.root).join(' ')).not.toContain('Feeling nervous');
+  await press(pressable(tree.root, 'Continue'));
+  expect(acknowledgeCrisis).toHaveBeenCalledWith('e1');
+  expect(allText(tree.root).join(' ')).toContain('Feeling nervous');
+});
+
+test("an evening's Yes leads on to its journal, and the weekly answers are not read back", async () => {
+  (createEntry as jest.Mock).mockResolvedValue(
+    entry(null,
+      [answer('mood', '3 — Okay'),
+       answer('bothering_thoughts', '1 — Yes', 'a2'),
+       answer('good_moment', '0 — No', 'a3'),
+       answer('phq9_1', '1 — Several days', 'a4')],
+      {status: 'completed', conversation_status: 'offered'}),
+  );
+  const onOpenJournal = jest.fn();
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" slot="evening" onExit={jest.fn()} onContinueInThread={jest.fn()}
+        onOpenJournal={onOpenJournal} />,
+    );
+  });
+  const text = allText(tree.root).join(' ');
+  expect(text).toContain('Work through that thought (Thought Journal)');
+  expect(text).not.toContain('Saving Journal)');
+  expect(text).not.toContain('1 — Several days');
+  expect(text).toContain("This week's questions are saved. No score is shown.");
+  await press(pressable(tree.root, 'Work through that thought'));
+  expect(onOpenJournal).toHaveBeenCalledWith('thought', 'e1');
 });

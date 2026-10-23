@@ -16,7 +16,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import Chip from '../components/chat/Chip';
 import {deleteAccount} from '../api/auth';
 import {clearLock} from '../storage/appLock';
-import {clearReminder} from '../storage/reminders';
+import {clearAllReminders} from '../storage/reminders';
 import {clearTokens} from '../storage/tokens';
 import {colors, radius, shadow, space, type} from '../theme';
 
@@ -44,7 +44,7 @@ export default function DeleteAccountScreen({onBack, onDeleted}: Props) {
       await deleteAccount(password);
       // Nothing of the account stays on this phone either.
       await clearLock();
-      await clearReminder().catch(() => undefined);
+      await clearAllReminders().catch(() => undefined);
       await clearTokens();
       onDeleted();
     } catch (e) {

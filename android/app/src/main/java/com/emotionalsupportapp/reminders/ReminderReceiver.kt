@@ -4,14 +4,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
-/** The daily alarm went off: show the reminder. */
+/** A slot's daily alarm went off: show that slot's reminder. */
 class ReminderReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
-    ReminderScheduler.show(context)
+    val slot = intent.getStringExtra(ReminderScheduler.EXTRA_SLOT) ?: return
+    if (ReminderScheduler.isSlot(slot)) {
+      ReminderScheduler.show(context, slot)
+    }
   }
 }
 
-/** Alarms do not survive a reboot or an app update; set it again. */
+/** Alarms do not survive a reboot or an app update; set them again. */
 class ReminderRestoreReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action == Intent.ACTION_BOOT_COMPLETED ||

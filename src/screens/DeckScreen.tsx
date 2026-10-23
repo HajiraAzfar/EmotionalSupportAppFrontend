@@ -27,9 +27,12 @@ import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {
   CaptureSpec,
   CaptureValue,
+  CheckInSlot,
   CrisisEvent,
   EntryState,
   JournalType,
+  SLOT_TITLES,
+  acknowledgeCrisis,
   askPerspective,
   createEntry,
   deleteEntry,
@@ -50,7 +53,21 @@ type Props = {
   // Check-in and the thought record offer a reflection when they finish; that
   // happens in the thread, which is the screen built for a conversation.
   onContinueInThread: (entryId: string, journalType: JournalType) => void;
+  // A check-in's slot, and the day it belongs to when adding a past one.
+  slot?: CheckInSlot;
+  localDate?: string;
+  // The check-in this journal was opened from: its feelings come ticked.
+  sourceEntryId?: string;
+  // Cross-links from an evening check-in's review.
+  onOpenJournal?: (journalType: 'thought' | 'savouring' | 'exposure', sourceEntryId: string) => void;
 };
+
+// What an evening's Yes opens, from the review (cross-links).
+const CROSS_LINKS: {valueId: string; journal: 'thought' | 'savouring' | 'exposure'; label: string}[] = [
+  {valueId: 'bothering_thoughts', journal: 'thought', label: 'Work through that thought (Thought Journal)'},
+  {valueId: 'good_moment', journal: 'savouring', label: 'Hold on to the good moment (Saving Journal)'},
+  {valueId: 'faced_avoidance', journal: 'exposure', label: 'Note what you faced (Exposure Journal)'},
+];
 
 // The brand brief's names.
 const TITLES: Record<DeckJournal, string> = {
@@ -90,6 +107,35 @@ const LABELS: Record<string, string> = {
   contradicting_evidence: "What doesn't fit",
   revised_thought: 'How you would put it now',
   emotions_after: 'How they sit now',
+  // The three daily check-ins.
+  anxiety: 'Stress',
+  energy: 'Energy',
+  feeling_ratings: 'How strong',
+  sleep_hours: 'Sleep',
+  sleep_quality: 'Sleep',
+  intention: 'For today',
+  dread_triggers: 'On your mind',
+  dread_note: 'Your note',
+  activities: 'So far today',
+  pleasure: 'Enjoyment',
+  achievement: 'Getting things done',
+  stress_event: 'Today',
+  stress_triggers: 'What it was about',
+  stress_note: 'Your note',
+  coping: 'What helped you cope',
+  day_rating: 'Your day',
+  day_activities: 'Today included',
+  plan_completed: 'Your plan',
+  what_helped: 'What helped',
+  what_was_hard: 'What was hard',
+  bothering_thoughts: 'Thoughts',
+  good_moment: 'A good moment',
+  faced_avoidance: 'Facing things',
+  win: 'One good thing',
+  ...Object.fromEntries(
+    [...Array.from({length: 9}, (_, i) => `phq9_${i + 1}`), ...Array.from({length: 7}, (_, i) => `gad7_${i + 1}`)]
+      .map(id => [id, 'Over the last 2 weeks']),
+  ),
 };
 
 const SEND_FAILED = "Couldn't send that. Nothing you wrote is lost.";
@@ -99,7 +145,15 @@ const NO_PERSPECTIVE = "Couldn't think of another angle just now. What you write
 // thought, offered while she is writing how she would put it now.
 const PERSPECTIVE_AT = 'revised_thought';
 
-export default function DeckScreen({journalType, onExit, onContinueInThread}: Props) {
+export default function DeckScreen({
+  journalType,
+  onExit,
+  onContinueInThread,
+  slot,
+  localDate,
+  sourceEntryId,
+  onOpenJournal,
+}: Props) {
   const [entry, setEntry] = useState<EntryState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -118,6 +172,8 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
   // again with the control it was given with — the server only ever sends the
   // next one, and going back must not invent a control.
   const seen = useRef<Record<string, CaptureSpec>>({});
+  // The values answered this session, as given (the thread holds only their words).
+  const given = useRef<Record<string, CaptureValue>>({});
 
   const spec = editing ? seen.current[editing] : entry?.next_capture ?? null;
   const asking = spec?.value_id;
@@ -134,6 +190,10 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
       if (next.crisis_event?.tier === 'emergency') {
         setEmergencyText(next.crisis_event.text);
       }
+      // A safety question answered positively: the resources come first, now.
+      if (next.crisis_event?.show_resources) {
+        setResourcesOpen(true);
+      }
       return next;
     } catch {
       retry.current = action;
@@ -145,8 +205,12 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
   }, []);
 
   useEffect(() => {
-    run(() => createEntry(journalType));
-  }, [journalType, run]);
+    run(() =>
+      slot || sourceEntryId
+        ? createEntry(journalType, undefined, {slot, localDate, sourceEntryId})
+        : createEntry(journalType),
+    );
+  }, [journalType, slot, localDate, sourceEntryId, run]);
 
   const answered = (entry?.messages ?? []).filter(m => m.kind === 'capture_answer');
   // Her latest version of each answer: a revision is appended rather than
@@ -156,7 +220,8 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
   const perspective = entry?.messages.find(m => m.kind === 'perspective');
 
   // What she can go back to: answers already given, in the order they were given.
-  const trail = [...latest.keys()].filter(valueId => seen.current[valueId]);
+  // A questionnaire item is not one of them: its answers stay as given.
+  const trail = [...latest.keys()].filter(valueId => seen.current[valueId] && !seen.current[valueId].fixed);
   const previousValue = trail[trail.length - 1];
 
   // Fill the controls from the answer being edited, and clear them between cards.
@@ -188,7 +253,8 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
     if (editing) {
       return;
     }
-    setPicked([]);
+    // A journal opened from a check-in starts with its feelings ticked.
+    setPicked(entry?.next_capture?.preselected ?? []);
     setText('');
     setRatings(carriedRatings(entry?.next_capture));
     setExpanded(false);
@@ -208,12 +274,21 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
       return;
     }
     const valueId = spec.value_id;
+    given.current[valueId] = skipped ? null : value;
     if (editing) {
       setEditing(null);
       run(() => reviseCapture(entry.id, valueId, value, skipped));
       return;
     }
     run(() => submitCapture(entry.id, valueId, value, skipped));
+  }
+
+  // Moving on from crisis content is deliberate, and recorded as read.
+  function moveOnFromCrisis(messageId: string) {
+    setSeenCrisis(ids => [...ids, messageId]);
+    if (entry) {
+      acknowledgeCrisis(entry.id).catch(() => {});
+    }
   }
 
   async function perspectivePlease() {
@@ -252,10 +327,7 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
         <Flashcard cardKey={`crisis-${crisisMessage.id}`}>
           <Text style={{...type.body, color: colors.ink}}>{crisisMessage.content}</Text>
           <View style={{marginTop: 18}}>
-            <PrimaryButton
-              label="Continue"
-              onPress={() => setSeenCrisis(ids => [...ids, crisisMessage.id])}
-            />
+            <PrimaryButton label="Continue" onPress={() => moveOnFromCrisis(crisisMessage.id)} />
           </View>
         </Flashcard>
       );
@@ -357,15 +429,26 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
     }
 
     // Everything is answered: what she put down, read back to her, and open to
-    // changes until Echo has read it.
+    // changes until Echo has read it. The weekly questionnaire is not read
+    // back item by item, and its answers stay as they were given.
     const canChange = !['active', 'closed'].includes(entry.conversation_status ?? '');
+    const isFixed = (valueId: string | null) => Boolean(seen.current[valueId ?? '']?.fixed)
+      || /^(phq9|gad7)_\d$/.test(valueId ?? '');
+    const shownAnswers = [...latest.values()].filter(message => !isFixed(message.value_id));
+    const answeredWeekly = latest.size > shownAnswers.length;
+    // An evening's Yes leads on to the journal it belongs to.
+    const yes = (valueId: string) =>
+      given.current[valueId] === 1 || latest.get(valueId)?.content.startsWith('1 ');
+    const crossLinks = journalType === 'check_in' && onOpenJournal
+      ? CROSS_LINKS.filter(link => yes(link.valueId))
+      : [];
     return (
       <Flashcard cardKey="review">
         <Text style={{...type.heading, fontSize: 21}}>Here is what you put down</Text>
         <Text style={{...type.small, marginTop: 4}}>Already saved, as you went.</Text>
 
         <View style={{marginTop: 16}}>
-          {[...latest.values()].map(message => (
+          {shownAnswers.map(message => (
             <View
               key={message.id}
               style={{borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 12}}>
@@ -384,7 +467,35 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
               <Text style={{...type.body, color: colors.ink, marginTop: 2}}>{message.content}</Text>
             </View>
           ))}
+          {answeredWeekly ? (
+            <Text style={{...type.small, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 12}}>
+              This week's questions are saved. No score is shown.
+            </Text>
+          ) : null}
         </View>
+
+        {crossLinks.length ? (
+          <View style={{marginTop: 14, gap: 8}}>
+            <Text style={type.tiny}>IF YOU'D LIKE TO GO FURTHER</Text>
+            {crossLinks.map(link => (
+              <Pressable
+                key={link.journal}
+                onPress={() => onOpenJournal?.(link.journal, entry.id)}
+                accessibilityRole="button"
+                style={({pressed}) => ({
+                  minHeight: 46,
+                  justifyContent: 'center',
+                  paddingHorizontal: 16,
+                  borderRadius: radius.pill,
+                  borderWidth: 1.5,
+                  borderColor: colors.accentSoft,
+                  backgroundColor: pressed ? colors.sageWash : colors.surface,
+                })}>
+                <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>{link.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
 
         {closing && (
           <View
@@ -465,7 +576,7 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
             )}
           </View>
           <Text style={type.heading} accessibilityRole="header">
-            {TITLES[journalType]}
+            {slot ? SLOT_TITLES[slot] : TITLES[journalType]}
           </Text>
           <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 16}}>
             <Pressable
@@ -563,7 +674,14 @@ export default function DeckScreen({journalType, onExit, onContinueInThread}: Pr
       </SafeAreaView>
 
       {emergencyText !== null && (
-        <CrisisResourcesScreen onClose={() => setEmergencyText(null)} />
+        <CrisisResourcesScreen
+          onClose={() => {
+            setEmergencyText(null);
+            if (entry) {
+              acknowledgeCrisis(entry.id).catch(() => {});
+            }
+          }}
+        />
       )}
 
       <Modal

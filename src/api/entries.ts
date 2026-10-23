@@ -66,6 +66,10 @@ export interface CaptureSpec {
   // the server from her answers: it shrinks when a branch closes, never grows.
   step?: number | null;
   total?: number | null;
+  // A published questionnaire item (PHQ-9, GAD-7): shown as worded, never changed later.
+  fixed?: boolean;
+  // Items to show already ticked: a journal opened from a check-in starts from its feelings.
+  preselected?: string[] | null;
 }
 
 export type ConversationStatus =
@@ -83,6 +87,8 @@ export interface CrisisEvent {
   variant: 'full' | 'abbreviated' | null;
   // Fixed content from the clinical content set; null for mild.
   text: string | null;
+  // A safety question answered positively: open the crisis resources at once.
+  show_resources?: boolean;
 }
 
 export interface EntryState {
@@ -100,6 +106,10 @@ export interface EntryState {
   pending_resume: boolean;
   // FR-JRN-006: the exposure cycle this one continues.
   parent_entry_id: string | null;
+  // A check-in's slot and the day it belongs to; the check-in a journal was opened from.
+  slot?: CheckInSlot | null;
+  local_date?: string | null;
+  source_entry_id?: string | null;
   next_capture: CaptureSpec | null;
   messages: EntryMessage[];
   crisis_event: CrisisEvent | null;
@@ -131,14 +141,71 @@ async function authed(path: string, method = 'GET', body?: unknown) {
   return apiRequest(path, {method, body, token: token ?? undefined});
 }
 
+export type CheckInSlot = 'morning' | 'afternoon' | 'evening';
+
+export const SLOT_TITLES: Record<CheckInSlot, string> = {
+  morning: 'Morning check-in',
+  afternoon: 'Afternoon check-in',
+  evening: 'Evening check-in',
+};
+
+// Minutes east of UTC, and the zone's name, as the phone reports them.
+export function phoneClock() {
+  let timezone: string | null = null;
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
+  } catch {
+    timezone = null;
+  }
+  return {tz_offset: -new Date().getTimezoneOffset(), timezone};
+}
+
+export type CreateOptions = {
+  // A check-in's slot; localDate only for adding a past slot (backfill).
+  slot?: CheckInSlot;
+  localDate?: string;
+  // The check-in this journal is opened from (its feelings come ticked).
+  sourceEntryId?: string;
+};
+
 export function createEntry(
   journalType: JournalType,
   parentEntryId?: string,
+  options: CreateOptions = {},
 ): Promise<EntryState> {
   return authed('/entries', 'POST', {
     journal_type: journalType,
     parent_entry_id: parentEntryId ?? null,
+    ...(options.slot ? {slot: options.slot, local_date: options.localDate ?? null, ...phoneClock()} : {}),
+    ...(options.sourceEntryId ? {source_entry_id: options.sourceEntryId} : {}),
   });
+}
+
+export type SlotState = 'done' | 'started' | 'open' | 'missed' | 'upcoming' | 'closed';
+
+export interface SlotRow {
+  local_date: string;
+  slot: CheckInSlot;
+  state: SlotState;
+  entry_id: string | null;
+  // Local wall-clock times, "YYYY-MM-DDTHH:MM".
+  opens_at: string;
+  closes_at: string;
+}
+
+export interface SlotBoard {
+  current: {slot: CheckInSlot; local_date: string};
+  slots: SlotRow[];
+}
+
+// Yesterday's and today's three check-ins, on the phone's clock.
+export function getCheckInSlots(): Promise<SlotBoard> {
+  return authed(`/entries/check_in/slots?tz_offset=${phoneClock().tz_offset}`);
+}
+
+// She has moved on from crisis content deliberately: the safety flag is read.
+export function acknowledgeCrisis(entryId: string): Promise<EntryState> {
+  return authed(`/entries/${entryId}/crisis/acknowledge`, 'POST', {});
 }
 
 // FR-JRN-007: the user confirms she has read the scope notice.

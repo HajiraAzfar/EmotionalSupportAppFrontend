@@ -23,7 +23,7 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import WorkIssuesScreen from './src/screens/WorkIssuesScreen';
 import {resetPasswordWithCode, setPassword as setPasswordApi} from './src/api/auth';
 import {apiRequest} from './src/api/client';
-import {JournalType} from './src/api/entries';
+import {CheckInSlot, JournalType} from './src/api/entries';
 import {clearTokens, getAccessToken} from './src/storage/tokens';
 import {colors} from './src/theme';
 import ArticleScreen from './src/screens/ArticleScreen';
@@ -41,6 +41,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import NameScreen from './src/screens/NameScreen';
 import DeleteAccountScreen from './src/screens/DeleteAccountScreen';
 import RemindersScreen from './src/screens/RemindersScreen';
+import CheckInSlotsScreen from './src/screens/CheckInSlotsScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
@@ -74,7 +75,8 @@ type Screen =
   | 'name'
   | 'editName'
   | 'deleteAccount'
-  | 'reminders';
+  | 'reminders'
+  | 'checkins';
 
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
@@ -100,7 +102,25 @@ function App(): React.JSX.Element {
     journalType: JournalType;
     entryId?: string;
     readOnly?: boolean;
+    // A check-in's slot, and its day when adding a past one.
+    slot?: CheckInSlot;
+    localDate?: string;
+    // The check-in a journal was opened from (cross-links).
+    sourceEntryId?: string;
+    // Where leaving it goes back to, when not the tabs.
+    returnTo?: Screen;
   }>({journalType: 'check_in'});
+
+  // Check-ins come three times a day, so they start from their own list of
+  // slots; every other journal opens straight away.
+  function startJournal(journalType: JournalType) {
+    if (journalType === 'check_in') {
+      setScreen('checkins');
+      return;
+    }
+    setJournal({journalType});
+    setScreen('journal');
+  }
   // SRS 4.11: which article the reader screen is showing.
   const [articleSlug, setArticleSlug] = useState('');
   // Which of the four areas is showing. The tab bar is the only way between them.
@@ -351,10 +371,7 @@ function App(): React.JSX.Element {
                   setUserName(null);
                   setScreen('welcome');
                 }}
-                onStartJournal={type => {
-                  setJournal({journalType: type});
-                  setScreen('journal');
-                }}
+                onStartJournal={startJournal}
                 onResumeDraft={draft => {
                   setJournal({journalType: draft.journal_type, entryId: draft.id});
                   setScreen('journal');
@@ -372,10 +389,7 @@ function App(): React.JSX.Element {
 
             {tab === 'journal' && (
               <JournalScreen
-                onStartJournal={type => {
-                  setJournal({journalType: type});
-                  setScreen('journal');
-                }}
+                onStartJournal={startJournal}
                 onResumeDraft={draft => {
                   setJournal({journalType: draft.journal_type, entryId: draft.id});
                   setScreen('journal');
@@ -398,10 +412,7 @@ function App(): React.JSX.Element {
             {tab === 'insights' && (
               <InsightsScreen
                 onBack={() => setTab('home')}
-                onStartEntry={() => {
-                  setJournal({journalType: 'check_in'});
-                  setScreen('journal');
-                }}
+                onStartEntry={() => startJournal('check_in')}
                 onOpenArticle={slug => {
                   setArticleSlug(slug);
                   setScreen('article');
@@ -436,13 +447,21 @@ function App(): React.JSX.Element {
       {screen === 'journal' && !journal.entryId && DECK_JOURNALS.includes(journal.journalType) && (
         <ErrorBoundary>
           <DeckScreen
+            // A new deck for each journal, slot or cross-link: nothing carries over.
+            key={`${journal.journalType}-${journal.slot ?? ''}-${journal.localDate ?? ''}-${journal.sourceEntryId ?? ''}`}
             journalType={journal.journalType as 'check_in' | 'savouring' | 'thought'}
+            slot={journal.slot}
+            localDate={journal.localDate}
+            sourceEntryId={journal.sourceEntryId}
             onExit={() => {
               setStartMood(null);
-              setScreen('tabs');
+              setScreen(journal.returnTo ?? 'tabs');
             }}
             onContinueInThread={(entryId, journalType) => {
               setJournal({journalType, entryId});
+            }}
+            onOpenJournal={(journalType, sourceEntryId) => {
+              setJournal({journalType, sourceEntryId, returnTo: 'checkins'});
             }}
           />
         </ErrorBoundary>
@@ -453,14 +472,32 @@ function App(): React.JSX.Element {
         // A rendering bug in the thread shows a retry; every message is already saved.
         <ErrorBoundary>
           <ChatEntryScreen
-            key={journal.entryId ?? 'new'}
+            key={journal.entryId ?? `new-${journal.journalType}-${journal.sourceEntryId ?? ''}`}
             journalType={journal.journalType}
             entryId={journal.entryId}
+            sourceEntryId={journal.sourceEntryId}
             readOnly={journal.readOnly}
             startMood={startMood ?? undefined}
             onExit={() => {
               setStartMood(null);
-              setScreen(journal.readOnly ? 'entries' : 'tabs');
+              setScreen(journal.returnTo ?? (journal.readOnly ? 'entries' : 'tabs'));
+            }}
+          />
+        </ErrorBoundary>
+      )}
+
+      {/* The day's three check-ins, and yesterday's, to start, carry on or read. */}
+      {screen === 'checkins' && (
+        <ErrorBoundary>
+          <CheckInSlotsScreen
+            onBack={() => setScreen('tabs')}
+            onStart={(slot, localDate) => {
+              setJournal({journalType: 'check_in', slot, localDate, returnTo: 'checkins'});
+              setScreen('journal');
+            }}
+            onOpenEntry={entryId => {
+              setJournal({journalType: 'check_in', entryId, readOnly: true, returnTo: 'checkins'});
+              setScreen('journal');
             }}
           />
         </ErrorBoundary>

@@ -75,6 +75,8 @@ type Props = {
   entryId?: string;
   // FR-JRN-006: start a further exposure cycle from this completed one.
   parentEntryId?: string;
+  // Cross-links: the check-in this journal was opened from.
+  sourceEntryId?: string;
   // FR-ENT-028: a retrieved entry is shown without any input or continue control.
   readOnly?: boolean;
   onExit: () => void;
@@ -94,6 +96,7 @@ export default function ChatEntryScreen({
   journalType,
   entryId,
   parentEntryId,
+  sourceEntryId,
   readOnly = false,
   startMood,
   onExit,
@@ -165,8 +168,14 @@ export default function ChatEntryScreen({
     if (blankChat) {
       return;
     }
-    run(() => (entryId ? getEntry(entryId) : createEntry(journalType, parentEntryId)));
-  }, [blankChat, entryId, journalType, parentEntryId, run]);
+    run(() =>
+      entryId
+        ? getEntry(entryId)
+        : sourceEntryId
+        ? createEntry(journalType, parentEntryId, {sourceEntryId})
+        : createEntry(journalType, parentEntryId),
+    );
+  }, [blankChat, entryId, journalType, parentEntryId, sourceEntryId, run]);
 
   useEffect(() => {
     load();

@@ -4,58 +4,53 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import BackButton from '../components/BackButton';
 import ScreenBackground from '../components/ScreenBackground';
-import {clearReminder, formatTime, getReminder, setReminder} from '../storage/reminders';
+import {CheckInSlot, SLOT_TITLES} from '../api/entries';
+import {
+  Reminders,
+  SLOTS,
+  SLOT_TIMES,
+  clearReminder,
+  formatTime,
+  getReminders,
+  setReminder,
+} from '../storage/reminders';
 import {colors, font, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onBack: () => void;
 };
 
-// A few times that cover a day; the reminder is a nudge, not an appointment.
-const TIMES = [
-  {label: 'Morning', minutes: 9 * 60},
-  {label: 'Midday', minutes: 13 * 60},
-  {label: 'Evening', minutes: 19 * 60},
-  {label: 'Night', minutes: 21 * 60 + 30},
-];
-const DEFAULT_TIME = 19 * 60;
-
 /**
- * One gentle reminder a day, at a time the user picks, or none. It never says
- * anything about what was written, and missing a day costs nothing.
+ * A reminder when each check-in opens, each on or off and at a time the user
+ * picks. It never says anything about what was written, and missing one
+ * costs nothing.
  */
 export default function RemindersScreen({onBack}: Props) {
-  const [minutes, setMinutes] = useState<number | null | undefined>(undefined);
+  const [reminders, setReminders] = useState<Reminders | null>(null);
   const [denied, setDenied] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getReminder()
-      .then(setMinutes)
-      .catch(() => setMinutes(null));
+    getReminders()
+      .then(setReminders)
+      .catch(() => setReminders({morning: null, afternoon: null, evening: null}));
   }, []);
 
-  async function choose(value: number | null) {
+  async function choose(slot: CheckInSlot, value: number | null) {
     setError('');
     setDenied(false);
     try {
       if (value === null) {
-        await clearReminder();
-        setMinutes(null);
-        return;
-      }
-      const result = await setReminder(value);
-      if (result === 'denied') {
+        await clearReminder(slot);
+      } else if ((await setReminder(slot, value)) === 'denied') {
         setDenied(true);
         return;
       }
-      setMinutes(value);
+      setReminders(current => (current ? {...current, [slot]: value} : current));
     } catch (e) {
       setError((e as Error).message);
     }
   }
-
-  const on = minutes !== null && minutes !== undefined;
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -65,100 +60,100 @@ export default function RemindersScreen({onBack}: Props) {
       </View>
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}}>
         <Text accessibilityRole="header" style={type.title}>
-          Daily reminder
+          Check-in reminders
         </Text>
         <Text style={{...type.body, marginTop: 10}}>
-          A gentle nudge once a day to take a moment for yourself. It never shows anything you
-          wrote, and missing a day is fine.
+          A gentle nudge when a check-in opens. They never show anything you wrote, and missing one
+          is fine.
         </Text>
 
-        {minutes === undefined ? (
+        {reminders === null ? (
           <ActivityIndicator color={colors.accent} style={{marginTop: 30}} />
         ) : (
-          <>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 24,
-                padding: 16,
-                borderRadius: radius.card,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.line,
-                ...shadow.sm,
-              }}>
-              <View style={{flex: 1}}>
-                <Text style={type.label}>Remind me</Text>
-                <Text style={{...type.small, marginTop: 2}}>
-                  {on ? `Every day at ${formatTime(minutes)}` : 'Off'}
-                </Text>
-              </View>
-              <Switch
-                value={on}
-                onValueChange={next => choose(next ? DEFAULT_TIME : null)}
-                accessibilityLabel="Daily reminder"
-                trackColor={{false: colors.muted, true: colors.accentSoft}}
-                thumbColor={on ? colors.accent : colors.surface}
-              />
-            </View>
-
-            {on ? (
-              <>
-                <Text style={{...type.small, marginTop: 22, marginBottom: 10}}>At about</Text>
-                <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-                  {TIMES.map(time => {
-                    const picked = time.minutes === minutes;
-                    return (
-                      <Pressable
-                        key={time.label}
-                        onPress={() => choose(time.minutes)}
-                        accessibilityRole="radio"
-                        accessibilityState={{checked: picked}}
-                        accessibilityLabel={`${time.label}, ${formatTime(time.minutes)}`}
-                        style={{
-                          paddingHorizontal: 16,
-                          paddingVertical: 10,
-                          borderRadius: radius.pill,
-                          // Same properties in both states (see Chip.tsx).
-                          borderWidth: 1.5,
-                          borderColor: picked ? colors.accent : colors.muted,
-                          backgroundColor: picked ? colors.sageWash : colors.surface,
-                        }}>
-                        <Text
-                          style={{
-                            ...type.small,
-                            fontFamily: font.semibold,
-                            color: picked ? colors.accent : colors.inkSoft,
-                          }}>
-                          {time.label} · {formatTime(time.minutes)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+          SLOTS.map(slot => {
+            const minutes = reminders[slot];
+            const on = minutes !== null;
+            return (
+              <View
+                key={slot}
+                style={{
+                  marginTop: 16,
+                  padding: 16,
+                  borderRadius: radius.card,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.line,
+                  ...shadow.sm,
+                }}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <View style={{flex: 1}}>
+                    <Text style={type.label}>{SLOT_TITLES[slot]}</Text>
+                    <Text style={{...type.small, marginTop: 2}}>
+                      {on ? `Every day at ${formatTime(minutes)}` : 'Off'}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={on}
+                    onValueChange={next => choose(slot, next ? SLOT_TIMES[slot][0] : null)}
+                    accessibilityLabel={`${SLOT_TITLES[slot]} reminder`}
+                    trackColor={{false: colors.muted, true: colors.accentSoft}}
+                    thumbColor={on ? colors.accent : colors.surface}
+                  />
                 </View>
-                <Text style={{...type.tiny, marginTop: 12}}>
-                  Phones save battery by grouping alarms, so it can arrive a few minutes late.
-                </Text>
-              </>
-            ) : null}
-
-            {denied ? (
-              <View style={{marginTop: 18}}>
-                <Text style={{...type.small, color: colors.alert}}>
-                  Notifications are turned off for Mind Doc, so the reminder could not be set.
-                </Text>
-                <Pressable onPress={() => Linking.openSettings()} hitSlop={8} accessibilityRole="button">
-                  <Text style={{...type.link, marginTop: 6}}>Open phone settings</Text>
-                </Pressable>
+                {on ? (
+                  <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12}}>
+                    {[...SLOT_TIMES[slot]].sort((a, b) => a - b).map(time => {
+                      const picked = time === minutes;
+                      return (
+                        <Pressable
+                          key={time}
+                          onPress={() => choose(slot, time)}
+                          accessibilityRole="radio"
+                          accessibilityState={{checked: picked}}
+                          accessibilityLabel={`${SLOT_TITLES[slot]} at ${formatTime(time)}`}
+                          style={{
+                            paddingHorizontal: 14,
+                            paddingVertical: 8,
+                            borderRadius: radius.pill,
+                            // Same properties in both states (see Chip.tsx).
+                            borderWidth: 1.5,
+                            borderColor: picked ? colors.accent : colors.muted,
+                            backgroundColor: picked ? colors.sageWash : colors.surface,
+                          }}>
+                          <Text
+                            style={{
+                              ...type.small,
+                              fontFamily: font.semibold,
+                              color: picked ? colors.accent : colors.inkSoft,
+                            }}>
+                            {formatTime(time)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
               </View>
-            ) : null}
-
-            {error ? (
-              <Text style={{...type.small, color: colors.alert, marginTop: 16}}>{error}</Text>
-            ) : null}
-          </>
+            );
+          })
         )}
+
+        <Text style={{...type.tiny, marginTop: 14}}>
+          Phones save battery by grouping alarms, so a reminder can arrive a few minutes late.
+        </Text>
+
+        {denied ? (
+          <View style={{marginTop: 18}}>
+            <Text style={{...type.small, color: colors.alert}}>
+              Notifications are turned off for Mind Doc, so the reminder could not be set.
+            </Text>
+            <Pressable onPress={() => Linking.openSettings()} hitSlop={8} accessibilityRole="button">
+              <Text style={{...type.link, marginTop: 6}}>Open phone settings</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {error ? <Text style={{...type.small, color: colors.alert, marginTop: 16}}>{error}</Text> : null}
       </ScrollView>
     </SafeAreaView>
   );
