@@ -182,19 +182,16 @@ export async function getInsights(period: Period): Promise<Insights> {
   });
 }
 
-// Phase B: this period's insights as a PDF, saved to the phone's Downloads.
-// Returns the file's name there.
-export async function downloadReport(period: Period): Promise<string> {
+// A PDF from the backend, saved to the phone's Downloads. Returns the file's name there.
+async function savePdf(urlPath: string, name: string): Promise<string> {
   // A small authorised call first, so an expired access token is refreshed the
   // usual way before the download, which cannot refresh it itself.
   await apiRequest('/auth/me', {token: (await getAccessToken()) ?? undefined});
   const token = await getAccessToken();
-  const tzOffset = -new Date().getTimezoneOffset();
-  const name = `mind-doc-report-${new Date().toISOString().slice(0, 10)}.pdf`;
   const path = `${Dirs.CacheDir}/${name}`;
   let result;
   try {
-    result = await FileSystem.fetch(apiUrl(`/insights/report.pdf?period=${period}&tz_offset=${tzOffset}`), {
+    result = await FileSystem.fetch(apiUrl(urlPath), {
       path,
       headers: {Authorization: `Bearer ${token}`},
     });
@@ -208,6 +205,49 @@ export async function downloadReport(period: Period): Promise<string> {
   // The copy in Downloads is the one to keep; the cached one goes.
   await FileSystem.unlink(path).catch(() => undefined);
   return name;
+}
+
+// Phase B: this period's insights as a PDF.
+export function downloadReport(period: Period): Promise<string> {
+  const tzOffset = -new Date().getTimezoneOffset();
+  return savePdf(
+    `/insights/report.pdf?period=${period}&tz_offset=${tzOffset}`,
+    `mind-doc-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+  );
+}
+
+// The check-in reports: a day once it is over (05:00 the next morning), a
+// week (Monday to Sunday) the Monday after, a month on the 1st.
+export type CheckInReportKind = 'daily' | 'weekly' | 'monthly';
+
+export interface CheckInReportItem {
+  kind: CheckInReportKind;
+  start: string;
+  end: string;
+  title: string;
+  check_ins: number;
+}
+
+export interface CheckInReports {
+  // The day before the one she is in: shown on top until today is over.
+  latest_daily: CheckInReportItem;
+  daily: CheckInReportItem[];
+  weekly: CheckInReportItem[];
+  monthly: CheckInReportItem[];
+}
+
+export async function getCheckInReports(): Promise<CheckInReports> {
+  const token = await getAccessToken();
+  const tzOffset = -new Date().getTimezoneOffset();
+  return apiRequest(`/insights/check-ins/reports?tz_offset=${tzOffset}`, {token: token ?? undefined});
+}
+
+export function downloadCheckInReport(kind: CheckInReportKind, start: string): Promise<string> {
+  const tzOffset = -new Date().getTimezoneOffset();
+  return savePdf(
+    `/insights/check-ins/report.pdf?kind=${kind}&start=${start}&tz_offset=${tzOffset}`,
+    `mind-doc-${kind}-${start}.pdf`,
+  );
 }
 
 export async function getQuestionnaire(): Promise<QuestionnaireSpec> {

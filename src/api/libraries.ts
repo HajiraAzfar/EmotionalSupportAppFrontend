@@ -13,6 +13,8 @@ export interface LibraryCategory {
   id: string;
   name: string;
   items: LibraryItem[];
+  // Feelings only: "positive" or "negative". Her own words ("my_words") have none.
+  valence?: string;
 }
 
 // Libraries come either grouped (feelings, triggers) or flat (thinking traps).

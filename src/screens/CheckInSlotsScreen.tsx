@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Check, ChevronRight, CloudSun, Moon, Sun} from 'lucide-react-native';
+import {Check, ChevronRight, CloudSun, FileText, Moon, Sun} from 'lucide-react-native';
 
 import BackButton from '../components/BackButton';
 import PrimaryButton from '../components/PrimaryButton';
@@ -13,10 +13,12 @@ import {colors, font, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onBack: () => void;
-  // Start (or carry on) a slot's check-in; localDate when adding a past one.
+  // Start (or carry on) the slot open now, on the day it belongs to.
   onStart: (slot: CheckInSlot, localDate: string) => void;
   // Read a finished check-in.
   onOpenEntry: (entryId: string) => void;
+  // The day, week and month reports.
+  onOpenReports: () => void;
 };
 
 const NAMES: Record<CheckInSlot, string> = {morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening'};
@@ -27,8 +29,8 @@ function clock(local: string) {
   return new Date(local).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
 }
 
-// What each state says. Never a reproach: a slot not filled in is simply open
-// to add, and one that has closed is not mentioned at all.
+// What each state says. Never a reproach: a slot whose time has passed without
+// a check-in is not mentioned at all.
 function describe(row: SlotRow): {text: string; action?: string} {
   switch (row.state) {
     case 'done':
@@ -37,8 +39,6 @@ function describe(row: SlotRow): {text: string; action?: string} {
       return {text: 'Started', action: 'Continue'};
     case 'open':
       return {text: `Open until ${clock(row.closes_at)}`, action: 'Start'};
-    case 'missed':
-      return {text: 'Not filled in', action: 'Add it'};
     case 'upcoming':
       return {text: `From ${clock(row.opens_at)}`};
     default:
@@ -47,10 +47,10 @@ function describe(row: SlotRow): {text: string; action?: string} {
 }
 
 /**
- * Three short check-ins a day. The one open now leads; the rest of today and
- * yesterday are listed so a missed one can still be added (up to a day late).
+ * Three short check-ins a day, each only while it is open. The one open now
+ * leads; today's others and yesterday's finished ones are listed to read.
  */
-export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry}: Props) {
+export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry, onOpenReports}: Props) {
   const [board, setBoard] = useState<SlotBoard | null>(null);
   const [error, setError] = useState('');
   const [resourcesOpen, setResourcesOpen] = useState(false);
@@ -75,12 +75,16 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry}: Props
     row => row.slot === board.current.slot && row.local_date === board.current.local_date,
   );
   const next = board?.slots.find(row => row.state === 'upcoming');
-  const days = board ? [...new Set(board.slots.map(row => row.local_date))].reverse() : [];
+  const shown = board?.slots.filter(row => row.state !== 'closed') ?? [];
+  // The board runs oldest first, so its last day is the calendar's today.
+  const today = board?.slots[board.slots.length - 1]?.local_date;
+  // Today first; yesterday only when something of it is left to read.
+  const days = [...new Set(shown.map(row => row.local_date))].reverse();
 
   function act(row: SlotRow) {
     if (row.state === 'done' && row.entry_id) {
       onOpenEntry(row.entry_id);
-    } else if (['open', 'started', 'missed'].includes(row.state)) {
+    } else if (row.state === 'open' || row.state === 'started') {
       onStart(row.slot, row.local_date);
     }
   }
@@ -103,8 +107,8 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry}: Props
           Check-ins
         </Text>
         <Text style={{...type.body, marginTop: 6}}>
-          Three short check-ins a day, a minute or two each. Do the ones that suit you; one you miss
-          can still be added until the end of the next day.
+          Three short check-ins a day, a minute or two each. Each one can be done while it is open;
+          do the ones that suit you.
         </Text>
 
         {error ? (
@@ -145,13 +149,37 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry}: Props
               )}
             </View>
 
-            {days.map((day, index) => (
+            <Pressable
+              onPress={onOpenReports}
+              accessibilityRole="button"
+              accessibilityLabel="Reports"
+              style={({pressed}) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                marginTop: 12,
+                minHeight: 56,
+                paddingHorizontal: 14,
+                borderRadius: radius.card,
+                borderWidth: 1,
+                borderColor: colors.line,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+              })}>
+              <FileText size={18} color={colors.accent} />
+              <View style={{flex: 1}}>
+                <Text style={type.label}>Reports</Text>
+                <Text style={type.small}>Your day, week and month, as a PDF</Text>
+              </View>
+              <ChevronRight size={18} color={colors.inkFaint} />
+            </Pressable>
+
+            {days.map(day => (
               <View key={day} style={{marginTop: 24}}>
                 <Text accessibilityRole="header" style={{...type.small, marginBottom: 8}}>
-                  {index === 0 ? 'Today' : 'Yesterday'}
+                  {day === today ? 'Today' : 'Yesterday'}
                 </Text>
-                {board.slots
-                  .filter(row => row.local_date === day && row.state !== 'closed')
+                {shown
+                  .filter(row => row.local_date === day)
                   .map(row => {
                     const {text, action} = describe(row);
                     const Icon = ICONS[row.slot];

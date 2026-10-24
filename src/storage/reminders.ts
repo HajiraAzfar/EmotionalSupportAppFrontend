@@ -9,6 +9,10 @@ import {CheckInSlot} from '../api/entries';
 
 export const SLOTS: CheckInSlot[] = ['morning', 'afternoon', 'evening'];
 
+// The Saving Journal's one opt-in reminder sits beside the check-ins' three.
+export type ReminderSlot = CheckInSlot | 'savoring';
+export const SAVORING_TIMES = [20 * 60, 13 * 60, 17 * 60, 21 * 60 + 30];
+
 // The times offered for each slot, all inside its window; the first is the default.
 export const SLOT_TIMES: Record<CheckInSlot, number[]> = {
   morning: [8 * 60, 7 * 60, 9 * 60, 10 * 60],
@@ -37,7 +41,7 @@ export async function getReminders(): Promise<Reminders> {
 export type SetResult = 'set' | 'denied';
 
 // Android 13 and later ask before an app may notify. A "no" leaves nothing set.
-export async function setReminder(slot: CheckInSlot, minutesOfDay: number): Promise<SetResult> {
+export async function setReminder(slot: ReminderSlot, minutesOfDay: number): Promise<SetResult> {
   if (!NativeReminders) {
     return 'denied';
   }
@@ -51,13 +55,22 @@ export async function setReminder(slot: CheckInSlot, minutesOfDay: number): Prom
   return 'set';
 }
 
-export async function clearReminder(slot: CheckInSlot) {
+export async function clearReminder(slot: ReminderSlot) {
   await NativeReminders?.cancel(slot);
 }
 
-// A check-in finished for its day: that slot's reminder stays quiet that day.
+// The Saving Journal's reminder time, or null when it is off (the default).
+export async function getSavoringReminder(): Promise<number | null> {
+  if (!NativeReminders) {
+    return null;
+  }
+  const minutes = await NativeReminders.scheduledAt('savoring');
+  return minutes >= 0 ? minutes : null;
+}
+
+// A check-in (or a good moment) done for its day: that reminder stays quiet that day.
 // A mark that fails only costs one reminder too many, so it never surfaces.
-export async function markSlotDone(slot: CheckInSlot, localDate: string) {
+export async function markSlotDone(slot: ReminderSlot, localDate: string) {
   try {
     await NativeReminders?.markDone(slot, localDate);
   } catch {
@@ -67,7 +80,7 @@ export async function markSlotDone(slot: CheckInSlot, localDate: string) {
 
 // Every reminder off: deleting the account leaves none behind.
 export async function clearAllReminders() {
-  for (const slot of SLOTS) {
+  for (const slot of [...SLOTS, 'savoring' as const]) {
     await clearReminder(slot);
   }
 }

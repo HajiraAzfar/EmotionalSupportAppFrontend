@@ -30,12 +30,14 @@ object ReminderScheduler {
   const val EXTRA_SLOT = "slot"
 
   // Each slot's own alarm and notification ids, so they never replace each other.
-  private val SLOTS = listOf("morning", "afternoon", "evening")
+  // "savoring" is the Saving Journal's one opt-in reminder (off by default).
+  private val SLOTS = listOf("morning", "afternoon", "evening", "savoring")
   private val TITLES =
       mapOf(
           "morning" to "Your morning check-in",
           "afternoon" to "Your afternoon check-in",
           "evening" to "Your evening check-in",
+          "savoring" to "Any good moment today?",
       )
 
   // The single daily reminder from before slots: cleared on the first restore.

@@ -493,6 +493,18 @@ test("an evening's Yes leads on to its journal, and the weekly answers are not r
   expect(onOpenJournal).toHaveBeenCalledWith('thought', 'e1');
 });
 
+test('a finished slot check-in is read back without a way to change it', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(
+    entry(null, [answer('mood', '3 — Okay'), answer('intention', 'Rest a little', 'a2')],
+      {status: 'completed', slot: 'morning', local_date: '2026-10-22', conversation_status: 'offered'}),
+  );
+  const tree = await render();
+  const text = allText(tree.root).join(' ');
+  expect(text).toContain('Rest a little');
+  expect(text).toContain('Saved as you went, and kept as it is.');
+  expect(text).not.toContain('Change');
+});
+
 test("a slot's reminder is quieted for its day only once the check-in is finished", async () => {
   const morning = {slot: 'morning' as const, local_date: '2026-10-22'};
   (createEntry as jest.Mock).mockResolvedValue({...moodStep, ...morning});

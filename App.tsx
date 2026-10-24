@@ -42,6 +42,8 @@ import NameScreen from './src/screens/NameScreen';
 import DeleteAccountScreen from './src/screens/DeleteAccountScreen';
 import RemindersScreen from './src/screens/RemindersScreen';
 import CheckInSlotsScreen from './src/screens/CheckInSlotsScreen';
+import CheckInReportsScreen from './src/screens/CheckInReportsScreen';
+import SavoringModule from './src/savoring/SavoringModule';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
@@ -76,7 +78,8 @@ type Screen =
   | 'editName'
   | 'deleteAccount'
   | 'reminders'
-  | 'checkins';
+  | 'checkins'
+  | 'checkinReports';
 
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
@@ -88,7 +91,7 @@ const SCREENS_WITHOUT_HELP: Screen[] = [
 
 // Short enough to answer a card at a time. Thought and exposure keep the
 // thread: they are long, and a pause, a resume and a conversation all live there.
-const DECK_JOURNALS: JournalType[] = ['check_in', 'savouring', 'thought'];
+const DECK_JOURNALS: JournalType[] = ['check_in', 'thought'];
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -467,8 +470,22 @@ function App(): React.JSX.Element {
         </ErrorBoundary>
       )}
 
+      {/* The Saving Journal is its own module: new moments, and any moment reopened. */}
+      {screen === 'journal' && journal.journalType === 'savouring' && (
+        <ErrorBoundary>
+          <SavoringModule
+            key={`${journal.entryId ?? ''}-${journal.sourceEntryId ?? ''}`}
+            entryId={journal.entryId}
+            sourceEntryId={journal.sourceEntryId}
+            onExit={() => setScreen(journal.returnTo ?? (journal.readOnly ? 'entries' : 'tabs'))}
+          />
+        </ErrorBoundary>
+      )}
+
       {/* Everything else — and every entry reopened — stays a thread. */}
-      {screen === 'journal' && !(!journal.entryId && DECK_JOURNALS.includes(journal.journalType)) && (
+      {screen === 'journal' &&
+        journal.journalType !== 'savouring' &&
+        !(!journal.entryId && DECK_JOURNALS.includes(journal.journalType)) && (
         // A rendering bug in the thread shows a retry; every message is already saved.
         <ErrorBoundary>
           <ChatEntryScreen
@@ -499,7 +516,15 @@ function App(): React.JSX.Element {
               setJournal({journalType: 'check_in', entryId, readOnly: true, returnTo: 'checkins'});
               setScreen('journal');
             }}
+            onOpenReports={() => setScreen('checkinReports')}
           />
+        </ErrorBoundary>
+      )}
+
+      {/* The check-in reports: a finished day, week or month, as a PDF. */}
+      {screen === 'checkinReports' && (
+        <ErrorBoundary>
+          <CheckInReportsScreen onBack={() => setScreen('checkins')} />
         </ErrorBoundary>
       )}
 

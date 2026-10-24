@@ -161,7 +161,8 @@ export function phoneClock() {
 }
 
 export type CreateOptions = {
-  // A check-in's slot; localDate only for adding a past slot (backfill).
+  // A check-in's slot, and the day it belongs to (an evening after midnight is
+  // still the day before). Only a slot open now can be started.
   slot?: CheckInSlot;
   localDate?: string;
   // The check-in this journal is opened from (its feelings come ticked).
@@ -181,7 +182,8 @@ export function createEntry(
   });
 }
 
-export type SlotState = 'done' | 'started' | 'open' | 'missed' | 'upcoming' | 'closed';
+// closed: its time has passed without it being finished; nothing can be added.
+export type SlotState = 'done' | 'started' | 'open' | 'upcoming' | 'closed';
 
 export interface SlotRow {
   local_date: string;

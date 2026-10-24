@@ -105,8 +105,29 @@ export async function apiRequest(path: string, options: RequestOptions = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data?.detail || "Couldn't reach Echo just now. Please try again in a moment.");
+    // A detail is either words for her, or {code, message} when the app needs
+    // to know which rule it was (the Saving Journal's daily cap, for one).
+    const detail = data?.detail;
+    const message = typeof detail === 'string' ? detail : detail?.message;
+    throw new ApiError(
+      message || "Couldn't reach Echo just now. Please try again in a moment.",
+      response.status,
+      typeof detail === 'object' && detail ? detail.code : undefined,
+    );
   }
 
   return data;
+}
+
+// A request the server answered with a refusal: its words, its status, and its rule's code if any.
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
 }

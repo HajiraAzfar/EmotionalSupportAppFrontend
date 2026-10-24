@@ -435,8 +435,9 @@ export default function DeckScreen({
 
     // Everything is answered: what she put down, read back to her, and open to
     // changes until Echo has read it. The weekly questionnaire is not read
-    // back item by item, and its answers stay as they were given.
-    const canChange = !['active', 'closed'].includes(entry.conversation_status ?? '');
+    // back item by item, and its answers stay as they were given. A slot
+    // check-in is kept exactly as it was finished: its reports are made from it.
+    const canChange = !entry.slot && !['active', 'closed'].includes(entry.conversation_status ?? '');
     const isFixed = (valueId: string | null) => Boolean(seen.current[valueId ?? '']?.fixed)
       || /^(phq9|gad7)_\d$/.test(valueId ?? '');
     const shownAnswers = [...latest.values()].filter(message => !isFixed(message.value_id));
@@ -450,7 +451,9 @@ export default function DeckScreen({
     return (
       <Flashcard cardKey="review">
         <Text style={{...type.heading, fontSize: 21}}>Here is what you put down</Text>
-        <Text style={{...type.small, marginTop: 4}}>Already saved, as you went.</Text>
+        <Text style={{...type.small, marginTop: 4}}>
+          {entry.slot ? 'Saved as you went, and kept as it is.' : 'Already saved, as you went.'}
+        </Text>
 
         <View style={{marginTop: 16}}>
           {shownAnswers.map(message => (
