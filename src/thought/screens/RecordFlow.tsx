@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Modal, Pressable, ScrollView, Text, TextInput, View} from 'react-native';
+import {Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Heart} from 'lucide-react-native';
 
@@ -8,7 +8,7 @@ import PrimaryButton from '../../components/PrimaryButton';
 import ScoreScale from '../../components/ScoreScale';
 import ScreenBackground from '../../components/ScreenBackground';
 import Chip from '../../components/chat/Chip';
-import {MicButton, RecordingBar, useVoiceNote} from '../../components/chat/VoiceNote';
+import VoiceField from '../../components/VoiceField';
 import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
 import {CrisisEvent} from '../../api/entries';
 import {LibraryItem, getLibrary} from '../../api/libraries';
@@ -55,7 +55,11 @@ type Props = {
   onDone: () => void;
   onOpenSavoring?: () => void;
   onOpenGrounding?: () => void;
+  onOpenExposure?: (sourceEntryId: string) => void;
 };
+
+// Patterns that point at something avoided: a record with one of them can lead on to an exposure.
+export const AVOIDANCE_TRAPS = ['fortune_telling', 'catastrophising', 'what_if'];
 
 export function stepsFor(mode: RecordMode, asksEvidenceFor: boolean): Step[] {
   if (mode === 'quick') {
@@ -74,63 +78,6 @@ export function stepsFor(mode: RecordMode, asksEvidenceFor: boolean): Step[] {
     'rerate',
     'next',
   ];
-}
-
-const inputStyle = {
-  ...type.input,
-  flex: 1,
-  color: colors.ink,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderColor: colors.line,
-  borderRadius: radius.input,
-  padding: 14,
-  minHeight: 90,
-  textAlignVertical: 'top' as const,
-};
-
-// A text answer she can also speak; spoken words are added to what is there.
-function VoiceField({
-  value,
-  onChange,
-  label,
-  placeholder,
-  maxLength = 2000,
-}: {
-  value: string | null;
-  onChange: (text: string) => void;
-  label: string;
-  placeholder?: string;
-  maxLength?: number;
-}) {
-  const recorder = useVoiceNote(spoken => {
-    const joined = value?.trim() ? `${value.trimEnd()} ${spoken}` : spoken;
-    onChange(joined.slice(0, maxLength));
-  });
-  if (recorder.phase !== 'idle') {
-    return <RecordingBar phase={recorder.phase} seconds={recorder.seconds} onCancel={recorder.cancel} onDone={recorder.finish} />;
-  }
-  return (
-    <>
-      <View style={{flexDirection: 'row', alignItems: 'flex-end', gap: 8}}>
-        <TextInput
-          value={value ?? ''}
-          onChangeText={text => {
-            onChange(text);
-            recorder.clearError();
-          }}
-          multiline
-          maxLength={maxLength}
-          placeholder={placeholder ?? 'However you want to put it.'}
-          placeholderTextColor={colors.inkFaint}
-          accessibilityLabel={label}
-          style={inputStyle}
-        />
-        <MicButton disabled={false} onPress={recorder.start} />
-      </View>
-      {recorder.error ? <Text style={{...type.small, color: colors.alert, marginTop: 8}}>{recorder.error}</Text> : null}
-    </>
-  );
 }
 
 const text = (value: string | null) => (value && value.trim() ? value : null);
@@ -155,6 +102,7 @@ export default function RecordFlow({
   onDone,
   onOpenSavoring,
   onOpenGrounding,
+  onOpenExposure,
 }: Props) {
   const steps = stepsFor(mode, asksEvidenceFor);
   const [index, setIndex] = useState(Math.min(initialStep, steps.length - 1));
@@ -362,6 +310,11 @@ export default function RecordFlow({
           ) : null}
           <View style={{marginTop: 24, gap: 12}}>
             <PrimaryButton label={DONE.finish} onPress={onDone} />
+            {onOpenExposure && record && !editing && content.thinking_traps.some(t => AVOIDANCE_TRAPS.includes(t)) ? (
+              <Pressable onPress={() => onOpenExposure(record.id)} accessibilityRole="button" style={{paddingVertical: 10}}>
+                <Text style={{...type.link, textAlign: 'center'}}>{DONE.exposure}</Text>
+              </Pressable>
+            ) : null}
             {onOpenSavoring && !editing ? (
               <Pressable onPress={onOpenSavoring} accessibilityRole="button" style={{paddingVertical: 10}}>
                 <Text style={{...type.link, textAlign: 'center'}}>{DONE.savoring}</Text>

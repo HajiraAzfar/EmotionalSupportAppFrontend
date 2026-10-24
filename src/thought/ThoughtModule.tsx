@@ -39,13 +39,15 @@ type Props = {
   entryId?: string;
   onOpenSavoring?: () => void;
   onOpenGrounding?: () => void;
+  // A record that shows avoidance can lead on to planning an exposure from it.
+  onOpenExposure?: (sourceEntryId: string) => void;
 };
 
 /**
  * The Thought Journal, with its own small navigation. Back goes one step back
  * and leaves the module only from where it was opened.
  */
-export default function ThoughtModule({onExit, sourceEntryId, entryId, onOpenSavoring, onOpenGrounding}: Props) {
+export default function ThoughtModule({onExit, sourceEntryId, entryId, onOpenSavoring, onOpenGrounding, onOpenExposure}: Props) {
   const [stack, setStack] = useState<View_[]>(() => (entryId || sourceEntryId ? [] : [{name: 'home'}]));
   // Whether this account gets the trauma variant, for a flow opened from anywhere.
   const [flags, setFlags] = useState<{asks_evidence_for: boolean; situation_required: boolean} | null>(null);
@@ -136,6 +138,7 @@ export default function ThoughtModule({onExit, sourceEntryId, entryId, onOpenSav
           onDone={back}
           onOpenSavoring={onOpenSavoring}
           onOpenGrounding={onOpenGrounding}
+          onOpenExposure={onOpenExposure}
         />
       );
     case 'history':

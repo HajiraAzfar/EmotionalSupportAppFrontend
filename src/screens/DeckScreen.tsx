@@ -73,6 +73,7 @@ const CROSS_LINKS: {valueId: string; journal: 'thought' | 'savouring' | 'exposur
 const HIGH_STRESS = 7;
 const LOW_MOOD = 2;
 const HARD_CHECKIN_LINK = 'If a thought is weighing on you, work through it (Thought Journal)';
+const HARD_CHECKIN_EXPOSURE = 'If you are avoiding something, plan a small step (Exposure Journal)';
 
 // The brand brief's names.
 const TITLES: Record<DeckJournal, string> = {
@@ -465,7 +466,13 @@ export default function DeckScreen({
     const linked = CROSS_LINKS.filter(link => yes(link.valueId));
     const crossLinks = journalType === 'check_in' && onOpenJournal
       ? hard && !linked.some(link => link.journal === 'thought')
-        ? [{valueId: 'anxiety', journal: 'thought' as const, label: HARD_CHECKIN_LINK}, ...linked]
+        ? [
+            {valueId: 'anxiety', journal: 'thought' as const, label: HARD_CHECKIN_LINK},
+            ...(linked.some(link => link.journal === 'exposure')
+              ? []
+              : [{valueId: 'anxiety', journal: 'exposure' as const, label: HARD_CHECKIN_EXPOSURE}]),
+            ...linked,
+          ]
         : linked
       : [];
     return (

@@ -10,6 +10,9 @@ export interface Spec extends TurboModule {
   cancel(slot: string): Promise<void>;
   scheduledAt(slot: string): Promise<number>;
   markDone(slot: string, localDate: string): Promise<void>;
+  // A one-off reminder (a planned exposure): at epoch milliseconds, by its own key.
+  scheduleOnce(key: string, atMillis: number): Promise<void>;
+  cancelOnce(key: string): Promise<void>;
 }
 
 // `get`, not `getEnforcing`: on a phone without the module (iOS, tests) the

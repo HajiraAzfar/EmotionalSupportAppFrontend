@@ -37,6 +37,20 @@ class MindDocRemindersModule(reactContext: ReactApplicationContext) :
     promise.resolve(null)
   }
 
+  override fun scheduleOnce(key: String, atMillis: Double, promise: Promise) {
+    if (key.isBlank() || key.length > 64 || atMillis <= System.currentTimeMillis()) {
+      promise.reject("E_TIME", "A one-off reminder needs a key and a time still to come.")
+      return
+    }
+    ReminderScheduler.scheduleOnce(reactApplicationContext, key, atMillis.toLong())
+    promise.resolve(null)
+  }
+
+  override fun cancelOnce(key: String, promise: Promise) {
+    ReminderScheduler.cancelOnce(reactApplicationContext, key)
+    promise.resolve(null)
+  }
+
   override fun scheduledAt(slot: String, promise: Promise) {
     val minutes = if (ReminderScheduler.isSlot(slot)) ReminderScheduler.scheduledAt(reactApplicationContext, slot) else -1
     promise.resolve(minutes.toDouble())

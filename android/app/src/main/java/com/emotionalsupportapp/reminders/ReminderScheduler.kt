@@ -111,6 +111,7 @@ object ReminderScheduler {
         arm(context, slot, minutes)
       }
     }
+    restoreOnce(context)
   }
 
   // ponytail: inexact daily alarms, so one can arrive some minutes late; exact
@@ -140,6 +141,57 @@ object ReminderScheduler {
     if (doneToday(context, slot)) {
       return
     }
+    post(context, requestCode(slot), TITLES[slot] ?: "A moment for yourself", "A minute or two, whenever you're ready.")
+  }
+
+  // ---- One-off reminders: an exposure she scheduled, at the time she chose ----
+
+  private const val ONCE = "once_"
+  const val EXTRA_ONCE = "once"
+
+  // Clear of the slots' 4211-4214.
+  private fun onceCode(key: String) = 5000 + (key.hashCode() and 0x7fff)
+
+  /** One reminder at [atMillis] for [key] (the exposure's id), kept so a reboot can set it again. */
+  fun scheduleOnce(context: Context, key: String, atMillis: Long) {
+    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putLong(ONCE + key, atMillis).apply()
+    armOnce(context, key, atMillis)
+  }
+
+  fun cancelOnce(context: Context, key: String) {
+    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(ONCE + key).apply()
+    alarms(context).cancel(onceIntent(context, key))
+    NotificationManagerCompat.from(context).cancel(onceCode(key))
+  }
+
+  fun showOnce(context: Context, key: String) {
+    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(ONCE + key).apply()
+    post(context, onceCode(key), "The step you planned", "When you're ready. You can pause or stop at any point.")
+  }
+
+  // ponytail: inexact, like the daily ones: it can come a few minutes late.
+  private fun armOnce(context: Context, key: String, atMillis: Long) {
+    alarms(context).set(AlarmManager.RTC_WAKEUP, atMillis, onceIntent(context, key))
+  }
+
+  private fun onceIntent(context: Context, key: String): PendingIntent =
+      PendingIntent.getBroadcast(
+          context,
+          onceCode(key),
+          Intent(context, ReminderReceiver::class.java).putExtra(EXTRA_ONCE, key),
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      )
+
+  private fun restoreOnce(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    val now = System.currentTimeMillis()
+    for ((name, value) in prefs.all) {
+      if (!name.startsWith(ONCE) || value !is Long) continue
+      if (value > now) armOnce(context, name.removePrefix(ONCE), value) else prefs.edit().remove(name).apply()
+    }
+  }
+
+  private fun post(context: Context, code: Int, title: String, text: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED) {
@@ -159,7 +211,7 @@ object ReminderScheduler {
     val tap =
         PendingIntent.getActivity(
             context,
-            requestCode(slot),
+            code,
             open,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
@@ -173,15 +225,15 @@ object ReminderScheduler {
     val notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_reminder)
-            .setContentTitle(TITLES[slot] ?: "A moment for yourself")
-            .setContentText("A minute or two, whenever you're ready.")
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(tap)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
-    NotificationManagerCompat.from(context).notify(requestCode(slot), notification)
+    NotificationManagerCompat.from(context).notify(code, notification)
   }
 
   private fun alarms(context: Context) = context.getSystemService(AlarmManager::class.java)

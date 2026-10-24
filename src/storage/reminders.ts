@@ -41,18 +41,40 @@ export async function getReminders(): Promise<Reminders> {
 export type SetResult = 'set' | 'denied';
 
 // Android 13 and later ask before an app may notify. A "no" leaves nothing set.
-export async function setReminder(slot: ReminderSlot, minutesOfDay: number): Promise<SetResult> {
+async function mayNotify(): Promise<boolean> {
   if (!NativeReminders) {
-    return 'denied';
+    return false;
   }
   if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
     const answer = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-    if (answer !== PermissionsAndroid.RESULTS.GRANTED) {
-      return 'denied';
-    }
+    return answer === PermissionsAndroid.RESULTS.GRANTED;
   }
-  await NativeReminders.schedule(slot, minutesOfDay);
+  return true;
+}
+
+export async function setReminder(slot: ReminderSlot, minutesOfDay: number): Promise<SetResult> {
+  if (!(await mayNotify())) {
+    return 'denied';
+  }
+  await NativeReminders!.schedule(slot, minutesOfDay);
   return 'set';
+}
+
+// One reminder at a moment (a planned exposure), by its own key.
+export async function setOnce(key: string, atMillis: number): Promise<SetResult> {
+  if (!(await mayNotify())) {
+    return 'denied';
+  }
+  await NativeReminders!.scheduleOnce(key, atMillis);
+  return 'set';
+}
+
+export async function clearOnce(key: string) {
+  try {
+    await NativeReminders?.cancelOnce(key);
+  } catch {
+    // nothing to show her
+  }
 }
 
 export async function clearReminder(slot: ReminderSlot) {

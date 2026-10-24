@@ -45,6 +45,7 @@ import CheckInSlotsScreen from './src/screens/CheckInSlotsScreen';
 import CheckInReportsScreen from './src/screens/CheckInReportsScreen';
 import SavoringModule from './src/savoring/SavoringModule';
 import ThoughtModule from './src/thought/ThoughtModule';
+import ExposureModule from './src/exposure/ExposureModule';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
@@ -94,7 +95,7 @@ const SCREENS_WITHOUT_HELP: Screen[] = [
 // thread: they are long, and a pause, a resume and a conversation all live there.
 const DECK_JOURNALS: JournalType[] = ['check_in'];
 // Journals that are their own modules: new entries, and any entry reopened.
-const MODULE_JOURNALS: JournalType[] = ['savouring', 'thought'];
+const MODULE_JOURNALS: JournalType[] = ['savouring', 'thought', 'exposure'];
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -494,10 +495,24 @@ function App(): React.JSX.Element {
             sourceEntryId={journal.sourceEntryId}
             onExit={() => setScreen(journal.returnTo ?? (journal.readOnly ? 'entries' : 'tabs'))}
             onOpenSavoring={() => setJournal({journalType: 'savouring', returnTo: journal.returnTo})}
+            onOpenExposure={sourceEntryId => setJournal({journalType: 'exposure', sourceEntryId, returnTo: journal.returnTo})}
             onOpenGrounding={() => {
               setCalmStart('groundYourself');
               setScreen('calm');
             }}
+          />
+        </ErrorBoundary>
+      )}
+
+      {/* The Exposure Journal: ladders, plans, and exposures reopened. */}
+      {screen === 'journal' && journal.journalType === 'exposure' && (
+        <ErrorBoundary>
+          <ExposureModule
+            key={`${journal.entryId ?? ''}-${journal.sourceEntryId ?? ''}`}
+            entryId={journal.entryId}
+            sourceEntryId={journal.sourceEntryId}
+            onExit={() => setScreen(journal.returnTo ?? (journal.readOnly ? 'entries' : 'tabs'))}
+            onOpenSavoring={() => setJournal({journalType: 'savouring', returnTo: journal.returnTo})}
           />
         </ErrorBoundary>
       )}

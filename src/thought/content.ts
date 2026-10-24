@@ -96,6 +96,7 @@ export const DONE = {
   favorite: 'Keep as a favourite',
   favorited: 'A favourite',
   savoring: 'Hold on to something good too? (Saving Journal)',
+  exposure: 'Is it something you avoid? Plan a step towards it (Exposure Journal)',
   finish: 'Done',
 };
 
