@@ -4,8 +4,8 @@ import {ActivityIndicator, ScrollView, Text, View} from 'react-native';
 import {colors, type} from '../../theme';
 import {Heatmap as HeatmapData, getHeatmap, localDay} from '../api';
 import {STREAK} from '../content';
-import Heatmap, {HeatmapLegend} from '../components/Heatmap';
-import Screen from '../components/Screen';
+import Heatmap, {HeatmapLegend} from '../../components/Heatmap';
+import Screen from '../../components/ModuleScreen';
 
 /** The whole year of good-moment days, scrolled sideways, months named. */
 export default function YearScreen({onBack, onOpenDay}: {onBack: () => void; onOpenDay: (date: string) => void}) {

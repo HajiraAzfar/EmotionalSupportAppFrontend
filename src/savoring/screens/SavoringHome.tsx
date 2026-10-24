@@ -9,10 +9,10 @@ import {colors, type} from '../../theme';
 import {DayRoom, Heatmap as HeatmapData, MomentType, SavoringHome as HomeData, getHeatmap, getHome, localDay, setActual} from '../api';
 import {CAP_MESSAGE, FOLLOW_UP, HOME, MEMORY, OFFLINE, STREAK, SUPPORT, TITLE, TYPES} from '../content';
 import {Pending, letGo, moveToToday, syncPending} from '../storage';
-import Heatmap, {HeatmapLegend} from '../components/Heatmap';
+import Heatmap, {HeatmapLegend} from '../../components/Heatmap';
 import MomentCard, {shortDate} from '../components/MomentCard';
-import ScoreScale from '../components/ScoreScale';
-import Screen, {Card, LinkRow} from '../components/Screen';
+import ScoreScale from '../../components/ScoreScale';
+import Screen, {Card, LinkRow} from '../../components/ModuleScreen';
 
 type Props = {
   onBack: () => void;

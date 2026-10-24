@@ -6,7 +6,7 @@ import PrimaryButton from '../../components/PrimaryButton';
 import {colors, type} from '../../theme';
 import {exportCsv, localDay} from '../api';
 import {EXPORT, INSIGHTS} from '../content';
-import Screen, {Card} from '../components/Screen';
+import Screen, {Card} from '../../components/ModuleScreen';
 
 /**
  * Consent first: what the file holds, her written notes left out unless she

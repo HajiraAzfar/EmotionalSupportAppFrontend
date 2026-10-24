@@ -2,10 +2,10 @@ import React, {useState} from 'react';
 import {Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import BackButton from '../../components/BackButton';
-import ScreenBackground from '../../components/ScreenBackground';
-import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
-import {colors, space, type} from '../../theme';
+import BackButton from './BackButton';
+import ScreenBackground from './ScreenBackground';
+import CrisisResourcesScreen from '../screens/CrisisResourcesScreen';
+import {colors, space, type} from '../theme';
 
 type Props = {
   title?: string;
@@ -14,7 +14,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-/** A Saving Journal screen: back, Get help (FR-CRIS-009), a title and a scrolling body. */
+/** A journal module's screen: back, Get help (FR-CRIS-009), a title and a scrolling body. */
 export default function Screen({title, onBack, right, children}: Props) {
   const [resourcesOpen, setResourcesOpen] = useState(false);
   return (

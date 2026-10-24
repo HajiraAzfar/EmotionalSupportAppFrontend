@@ -69,6 +69,10 @@ const CROSS_LINKS: {valueId: string; journal: 'thought' | 'savouring' | 'exposur
   {valueId: 'good_moment', journal: 'savouring', label: 'Hold on to the good moment (Saving Journal)'},
   {valueId: 'faced_avoidance', journal: 'exposure', label: 'Note what you faced (Exposure Journal)'},
 ];
+// Any slot's check-in this hard offers the Thought Journal too (core/thought.py has the same numbers).
+const HIGH_STRESS = 7;
+const LOW_MOOD = 2;
+const HARD_CHECKIN_LINK = 'If a thought is weighing on you, work through it (Thought Journal)';
 
 // The brand brief's names.
 const TITLES: Record<DeckJournal, string> = {
@@ -445,8 +449,24 @@ export default function DeckScreen({
     // An evening's Yes leads on to the journal it belongs to.
     const yes = (valueId: string) =>
       given.current[valueId] === 1 || latest.get(valueId)?.content.startsWith('1 ');
+    // A rating as given, or read back from its "7 — A lot" wording.
+    const rated = (valueId: string): number | null => {
+      const value = given.current[valueId];
+      if (typeof value === 'number') {
+        return value;
+      }
+      const lead = latest.get(valueId)?.content.match(/^(\d+)/);
+      return lead ? Number(lead[1]) : null;
+    };
+    const stress = rated('anxiety');
+    const mood = rated('mood');
+    // A hard check-in (stress 7 or more, mood 2 or less) offers the Thought Journal, never pushes it.
+    const hard = Boolean(slot) && ((stress !== null && stress >= HIGH_STRESS) || (mood !== null && mood <= LOW_MOOD));
+    const linked = CROSS_LINKS.filter(link => yes(link.valueId));
     const crossLinks = journalType === 'check_in' && onOpenJournal
-      ? CROSS_LINKS.filter(link => yes(link.valueId))
+      ? hard && !linked.some(link => link.journal === 'thought')
+        ? [{valueId: 'anxiety', journal: 'thought' as const, label: HARD_CHECKIN_LINK}, ...linked]
+        : linked
       : [];
     return (
       <Flashcard cardKey="review">

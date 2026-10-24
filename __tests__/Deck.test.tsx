@@ -493,6 +493,23 @@ test("an evening's Yes leads on to its journal, and the weekly answers are not r
   expect(onOpenJournal).toHaveBeenCalledWith('thought', 'e1');
 });
 
+test('a hard check-in offers the Thought Journal, without pushing it', async () => {
+  const onOpenJournal = jest.fn();
+  (createEntry as jest.Mock).mockResolvedValue(
+    entry(null, [answer('mood', '3 — Okay'), answer('anxiety', '8 — A great deal', 'a2')],
+      {status: 'completed', slot: 'afternoon', local_date: '2026-10-22', conversation_status: 'offered'}),
+  );
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" slot="afternoon" onExit={jest.fn()} onContinueInThread={jest.fn()}
+        onOpenJournal={onOpenJournal} />,
+    );
+  });
+  await press(pressable(tree.root, 'If a thought is weighing on you'));
+  expect(onOpenJournal).toHaveBeenCalledWith('thought', 'e1');
+});
+
 test('a finished slot check-in is read back without a way to change it', async () => {
   (createEntry as jest.Mock).mockResolvedValue(
     entry(null, [answer('mood', '3 — Okay'), answer('intention', 'Rest a little', 'a2')],

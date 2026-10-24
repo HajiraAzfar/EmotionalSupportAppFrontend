@@ -7,8 +7,8 @@ import {colors, type} from '../../theme';
 import {Moment, deleteMoment, getMoment, setActual, setFavorite} from '../api';
 import {DONE, ENTRY, FOLLOW_UP, TYPES} from '../content';
 import {moodChange, shortDate} from '../components/MomentCard';
-import ScoreScale from '../components/ScoreScale';
-import Screen, {Card, LinkRow} from '../components/Screen';
+import ScoreScale from '../../components/ScoreScale';
+import Screen, {Card, LinkRow} from '../../components/ModuleScreen';
 
 type Props = {
   id: string;

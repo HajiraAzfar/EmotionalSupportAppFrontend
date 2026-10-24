@@ -6,7 +6,7 @@ import {colors, type} from '../../theme';
 import {Moment, MomentType, listMoments, localDay} from '../api';
 import {HISTORY, TYPES} from '../content';
 import MomentCard, {shortDate} from '../components/MomentCard';
-import Screen from '../components/Screen';
+import Screen from '../../components/ModuleScreen';
 
 type Props = {
   onBack: () => void;

@@ -44,6 +44,7 @@ import RemindersScreen from './src/screens/RemindersScreen';
 import CheckInSlotsScreen from './src/screens/CheckInSlotsScreen';
 import CheckInReportsScreen from './src/screens/CheckInReportsScreen';
 import SavoringModule from './src/savoring/SavoringModule';
+import ThoughtModule from './src/thought/ThoughtModule';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
@@ -91,7 +92,9 @@ const SCREENS_WITHOUT_HELP: Screen[] = [
 
 // Short enough to answer a card at a time. Thought and exposure keep the
 // thread: they are long, and a pause, a resume and a conversation all live there.
-const DECK_JOURNALS: JournalType[] = ['check_in', 'thought'];
+const DECK_JOURNALS: JournalType[] = ['check_in'];
+// Journals that are their own modules: new entries, and any entry reopened.
+const MODULE_JOURNALS: JournalType[] = ['savouring', 'thought'];
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -482,9 +485,26 @@ function App(): React.JSX.Element {
         </ErrorBoundary>
       )}
 
+      {/* The Thought Journal is its own module too: new records, drafts and finished ones. */}
+      {screen === 'journal' && journal.journalType === 'thought' && (
+        <ErrorBoundary>
+          <ThoughtModule
+            key={`${journal.entryId ?? ''}-${journal.sourceEntryId ?? ''}`}
+            entryId={journal.entryId}
+            sourceEntryId={journal.sourceEntryId}
+            onExit={() => setScreen(journal.returnTo ?? (journal.readOnly ? 'entries' : 'tabs'))}
+            onOpenSavoring={() => setJournal({journalType: 'savouring', returnTo: journal.returnTo})}
+            onOpenGrounding={() => {
+              setCalmStart('groundYourself');
+              setScreen('calm');
+            }}
+          />
+        </ErrorBoundary>
+      )}
+
       {/* Everything else — and every entry reopened — stays a thread. */}
       {screen === 'journal' &&
-        journal.journalType !== 'savouring' &&
+        !MODULE_JOURNALS.includes(journal.journalType) &&
         !(!journal.entryId && DECK_JOURNALS.includes(journal.journalType)) && (
         // A rendering bug in the thread shows a retry; every message is already saved.
         <ErrorBoundary>

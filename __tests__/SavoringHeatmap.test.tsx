@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
-import Heatmap, {LAVENDER_LIGHT} from '../src/savoring/components/Heatmap';
+import Heatmap, {LAVENDER_LIGHT} from '../src/components/Heatmap';
 
 const days = [
   // 2026-10-21 is a Wednesday: the first column starts with two empty places.

@@ -13,7 +13,7 @@ import {
 } from '../../storage/reminders';
 import {SETTINGS} from '../content';
 import {DefaultMode, getDefaultMode, setDefaultMode} from '../storage';
-import Screen, {Card} from '../components/Screen';
+import Screen, {Card} from '../../components/ModuleScreen';
 
 /** The journal's own settings: one opt-in reminder (off by default) and how a moment starts. */
 export default function SettingsScreen({onBack}: {onBack: () => void}) {

@@ -29,7 +29,7 @@ import {
 } from '../api';
 import {CAPTURE, CAP_MESSAGE, DONE, OFFLINE, PAUSE, SMALL_MOMENTS, TYPES, WHEN} from '../content';
 import {saveOrQueue} from '../storage';
-import ScoreScale from '../components/ScoreScale';
+import ScoreScale from '../../components/ScoreScale';
 import {moodChange} from '../components/MomentCard';
 
 type Step = 'what' | 'before' | 'feelings' | 'pause' | 'after';

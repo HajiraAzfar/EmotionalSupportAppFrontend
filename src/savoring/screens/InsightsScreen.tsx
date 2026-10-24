@@ -7,7 +7,7 @@ import {colors, radius, type} from '../../theme';
 import {Counted, SavoringReport, getReport, localDay} from '../api';
 import {INSIGHTS} from '../content';
 import MomentCard, {shortDate} from '../components/MomentCard';
-import Screen, {Card} from '../components/Screen';
+import Screen, {Card} from '../../components/ModuleScreen';
 
 type Props = {
   onBack: () => void;

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
-import {type} from '../../theme';
+import {type} from '../theme';
 
 export interface HeatmapCell {
   date: string;
