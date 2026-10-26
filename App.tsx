@@ -382,7 +382,6 @@ function App(): React.JSX.Element {
                   setScreen('journal');
                 }}
                 onOpenInsights={() => setTab('insights')}
-                onOpenEntries={() => setScreen('entries')}
                 onOpenCalm={start => {
                   setCalmStart(start ?? 'home');
                   setScreen('calm');

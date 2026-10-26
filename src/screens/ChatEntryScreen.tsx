@@ -40,7 +40,6 @@ import {
   sendMessage,
   submitCapture,
 } from '../api/entries';
-import {quickExit} from '../storage/appLock';
 import {colors, font, glass, radius, shadow, space, type} from '../theme';
 
 // What a blank AI Chat opens with. Shown, never stored, so the model never reads it.
@@ -437,29 +436,17 @@ export default function ChatEntryScreen({
           paddingVertical: 12,
         }}>
         {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept.
-            AI Chat's header is only this and Get help: Exit goes back where she came from. */}
+            Exit goes back where she came from (no quick exit here: she found
+            it jumping out of the app). The two chats, both called AI Chat,
+            carry no title: only Exit and Get help. */}
         <Pressable onPress={onExit} hitSlop={12}>
-          <Text style={{...type.link, color: colors.inkSoft}}>
-            {journalType === 'chat' ? 'Exit' : readOnly ? 'Back' : 'Leave'}
-          </Text>
+          <Text style={{...type.link, color: colors.inkSoft}}>{readOnly ? 'Back' : 'Exit'}</Text>
         </Pressable>
-        <View
-          style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8}}>
-          {journalType !== 'chat' ? <Text style={type.heading}>{JOURNAL_TITLES[journalType]}</Text> : null}
+        <View style={{flex: 1, alignItems: 'center'}}>
+          {journalType !== 'chat' && journalType !== 'free_write' ? (
+            <Text style={type.heading}>{JOURNAL_TITLES[journalType]}</Text>
+          ) : null}
         </View>
-        {/* Quick exit: one tap to a neutral page; the PIN is asked on return. */}
-        {journalType !== 'chat' ? (
-          <Pressable
-            onPress={() => {
-              onExit();
-              quickExit();
-            }}
-            hitSlop={12}
-            accessibilityLabel="Quick exit"
-            style={{marginRight: 14}}>
-            <Text style={{...type.link, color: colors.inkSoft}}>Exit</Text>
-          </Pressable>
-        ) : null}
         {/* FR-CRIS-009: crisis resources are always one tap away. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>

@@ -319,6 +319,7 @@ export const JOURNAL_TITLES: Record<JournalType, string> = {
   savouring: 'Saving Journal',
   thought: 'Thought Journal',
   exposure: 'Exposure Journal',
-  free_write: 'Free write',
+  // Free write is shown as AI Chat too (her choice): it is written, then talked through.
+  free_write: 'AI Chat',
   chat: 'AI Chat',
 };

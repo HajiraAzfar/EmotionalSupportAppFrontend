@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Brain, ChevronRight, CloudSun, Leaf, LucideIcon, Mountain, PenLine} from 'lucide-react-native';
+import {Brain, ChevronRight, CloudSun, History, Leaf, LucideIcon, Mountain} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {brandImages} from '../assets/brand';
@@ -14,17 +14,14 @@ type Props = {
   onOpenEntries: () => void;
 };
 
-// The four structured journals. Free write is not here: it lives in AI Chat,
-// because it is a conversation rather than a form.
+// The four structured journals, also Home's grid. Free write is no longer
+// offered (her choice, 26 Oct); old free write entries stay in History.
 // Ordered by expected completion time, shortest first (FR-HOME-001).
-// The home screen's grid reuses these (all but free write).
 export const JOURNALS: {type: JournalType; blurb: string; minutes: string; Icon: LucideIcon}[] = [
   {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', Icon: CloudSun},
   {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Leaf},
   {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: Brain},
   {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: Mountain},
-  // FR-JRN-003: the AI Chat tab is a plain chat now, so the free write journal lives here.
-  {type: 'free_write', blurb: 'Write whatever is on your mind, then talk it through.', minutes: 'Any length', Icon: PenLine},
 ];
 
 // Each journal's icon sits on its own soft tint, matching its card on Home.
@@ -33,7 +30,6 @@ const ICON_TINTS: Partial<Record<JournalType, string>> = {
   savouring: cardTints[2].icon,
   thought: cardTints[0].icon,
   exposure: cardTints[1].icon,
-  free_write: cardTints[3].icon,
 };
 
 export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntries}: Props) {
@@ -61,6 +57,26 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
           <Text style={type.title}>Journals</Text>
           <Text style={{...type.small, marginTop: 2}}>Small steps. Big shifts.</Text>
         </View>
+        {/* Everything she has written: the History list. */}
+        <Pressable
+          onPress={onOpenEntries}
+          accessibilityRole="button"
+          style={({pressed}) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+            marginRight: 14,
+            borderRadius: radius.pill,
+            borderWidth: 1,
+            borderColor: colors.line,
+            backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+            ...shadow.sm,
+          })}>
+          <History size={15} color={colors.accent} />
+          <Text style={type.link}>History</Text>
+        </Pressable>
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>
@@ -140,12 +156,6 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
             <ChevronRight size={18} color={colors.inkFaint} />
           </Pressable>
         ))}
-
-        <Pressable onPress={onOpenEntries} style={{paddingVertical: 18}}>
-          <Text style={{...type.label, color: colors.accent, textAlign: 'center'}}>
-            Everything you have written
-          </Text>
-        </Pressable>
       </ScrollView>
 
       <Modal

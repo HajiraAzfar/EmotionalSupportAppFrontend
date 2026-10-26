@@ -24,14 +24,16 @@ const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 // Wait this long after the last keystroke before searching.
 const SEARCH_DELAY_MS = 350;
 
-// Each journal's icon, as on the Journal tab; a chat has none there.
+// Each journal's icon, as on the Journal tab; the two chats have none there.
 const ICONS = Object.fromEntries(JOURNALS.map(j => [j.type, j.Icon]));
-// What the chips over the list keep. Thoughts are thought records.
+// What the chips over the list keep. Thoughts are thought records; Chats are
+// both kinds shown as AI Chat (chat and free write).
+const CHATS: JournalType[] = ['chat', 'free_write'];
 const FILTERS: {label: string; keep: (type: JournalType) => boolean}[] = [
   {label: 'All', keep: () => true},
-  {label: 'Journals', keep: t => t !== 'thought' && t !== 'chat'},
+  {label: 'Journals', keep: t => t !== 'thought' && !CHATS.includes(t)},
   {label: 'Thoughts', keep: t => t === 'thought'},
-  {label: 'Chats', keep: t => t === 'chat'},
+  {label: 'Chats', keep: t => CHATS.includes(t)},
 ];
 
 type Props = {

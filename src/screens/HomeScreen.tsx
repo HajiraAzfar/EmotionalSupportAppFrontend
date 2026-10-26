@@ -11,7 +11,7 @@ import ProgressRing from '../components/insights/ProgressRing';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
 import {Insights, getInsights} from '../api/insights';
 import {getAccessToken} from '../storage/tokens';
-import {cardTints, colors, font, glass, gradient, radius, shadow, space, type} from '../theme';
+import {cardTints, colors, glass, gradient, radius, shadow, space, type} from '../theme';
 
 type Props = {
   // What the user asked to be called, if anything.
@@ -20,7 +20,6 @@ type Props = {
   onStartJournal: (journalType: JournalType) => void;
   onResumeDraft: (draft: EntrySummary) => void;
   onOpenInsights: () => void;
-  onOpenEntries: () => void;
   // Calm opens on its own list, or on its pick-by-need list.
   onOpenCalm: (start?: 'groundYourself') => void;
   onOpenChat: () => void;
@@ -115,7 +114,6 @@ export default function HomeScreen({
   onStartJournal,
   onResumeDraft,
   onOpenInsights,
-  onOpenEntries,
   onOpenCalm,
   onOpenChat,
 }: Props) {
@@ -321,12 +319,6 @@ export default function HomeScreen({
             <ChevronRight size={18} color={colors.inkFaint} />
           </Pressable>
         ) : null}
-
-        <Pressable onPress={onOpenEntries} style={{paddingVertical: 18, marginTop: 8}}>
-          <Text style={{...type.link, fontFamily: font.semibold, textAlign: 'center'}}>
-            History
-          </Text>
-        </Pressable>
       </ScrollView>
 
       <Modal
