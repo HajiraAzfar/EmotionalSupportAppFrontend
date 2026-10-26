@@ -40,6 +40,14 @@ function SaveButton({article, onToggleSave}: {article: ArticleCard; onToggleSave
   );
 }
 
+function SectionTitle({children}: {children: string}) {
+  return (
+    <Text accessibilityRole="header" style={{...type.heading, paddingHorizontal: space.screen, marginBottom: 10}}>
+      {children}
+    </Text>
+  );
+}
+
 // A featured article: its scene above, then the words, editorial style.
 function Feature({article, onOpen}: {article: ArticleCard; onOpen: () => void}) {
   return (
@@ -237,7 +245,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search articles"
+              placeholder="Search articles, topics…"
               placeholderTextColor={colors.inkFaint}
               accessibilityLabel="Search articles"
               style={{flex: 1, paddingVertical: 12, ...type.input, color: colors.ink}}
@@ -289,6 +297,7 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
           <>
             {data.featured.length ? (
               <View style={{marginTop: 10}}>
+                <SectionTitle>Featured</SectionTitle>
                 <ScrollView
                   horizontal
                   pagingEnabled
@@ -322,7 +331,10 @@ export default function LibraryScreen({onOpenArticle, onBack}: Props) {
               </View>
             ) : null}
 
-            <View style={{paddingHorizontal: space.screen, marginTop: 18}}>
+            <View style={{marginTop: 18}}>
+              {data.articles.length ? <SectionTitle>More to explore</SectionTitle> : null}
+            </View>
+            <View style={{paddingHorizontal: space.screen}}>
               {data.articles.map(article => (
                 <Row
                   key={article.slug}

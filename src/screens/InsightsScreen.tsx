@@ -41,6 +41,15 @@ import {colors, font, glass, gradient, radius, shadow, space, type} from '../the
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 
+// The board's third view is "Grounding", but Calm keeps nothing it could
+// count, so the third view is the journals themselves.
+type Segment = 'mood' | 'traps' | 'journals';
+const SEGMENTS: {key: Segment; label: string}[] = [
+  {key: 'mood', label: 'Mood Trends'},
+  {key: 'traps', label: 'Thinking Traps'},
+  {key: 'journals', label: 'Journals'},
+];
+
 type Props = {
   onOpenEntry: (entryId: string) => void;
   onStartEntry: () => void;
@@ -405,7 +414,7 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
   const [formOpen, setFormOpen] = useState(false);
   const [savingChoice, setSavingChoice] = useState(false);
   const [allTraps, setAllTraps] = useState(false);
-  const [showMore, setShowMore] = useState(false);
+  const [segment, setSegment] = useState<Segment>('mood');
 
   const load = useCallback((chosen: Period) => {
     setError('');
@@ -468,43 +477,87 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
           not diagnose or judge.
         </Text>
 
-        <JournalsCard />
+        {/* Three views of the same entries, as on the brand board. */}
+        <View
+          accessibilityRole="tablist"
+          style={{
+            flexDirection: 'row',
+            padding: 4,
+            marginBottom: 16,
+            borderRadius: radius.pill,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.line,
+          }}>
+          {SEGMENTS.map(option => {
+            const on = option.key === segment;
+            return (
+              <Pressable
+                key={option.key}
+                onPress={() => setSegment(option.key)}
+                accessibilityRole="tab"
+                accessibilityState={{selected: on}}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: 9,
+                  borderRadius: radius.pill,
+                  backgroundColor: on ? colors.sageWash : colors.surface,
+                }}>
+                <Text
+                  style={{
+                    ...type.small,
+                    fontFamily: on ? font.semibold : font.medium,
+                    color: on ? colors.accent : colors.inkSoft,
+                  }}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-        {/* The week, read as a report. The views below stay as they are: this
-            is a different way in, not a replacement for them. */}
-        <Pressable
-          onPress={onOpenWeekly}
-          accessibilityRole="button"
-          style={({pressed}) => ({
-            ...glass,
-            borderRadius: radius.card,
-            padding: 16,
-            marginBottom: 18,
-            opacity: pressed ? 0.85 : 1,
-          })}>
-          <Text style={type.heading}>Your Week in Reflection</Text>
-          <Text style={{...type.small, marginTop: 4}}>
-            A little time to understand what your week was really like.
-          </Text>
-          <Text style={{...type.link, marginTop: 10}}>Open this week</Text>
-        </Pressable>
+        {segment === 'journals' ? (
+          <>
+            <JournalsCard />
 
-        <Pressable
-          onPress={onOpenReports}
-          accessibilityRole="button"
-          style={({pressed}) => ({
-            ...glass,
-            borderRadius: radius.card,
-            padding: 16,
-            marginBottom: 18,
-            opacity: pressed ? 0.85 : 1,
-          })}>
-          <Text style={type.heading}>Reports</Text>
-          <Text style={{...type.small, marginTop: 4}}>
-            A PDF of each day, week and month, with all four of your journals.
-          </Text>
-          <Text style={{...type.link, marginTop: 10}}>Open reports</Text>
-        </Pressable>
+            {/* The week, read as a report: a different way in, not a
+                replacement for the views below. */}
+            <Pressable
+              onPress={onOpenWeekly}
+              accessibilityRole="button"
+              style={({pressed}) => ({
+                ...glass,
+                borderRadius: radius.card,
+                padding: 16,
+                marginBottom: 18,
+                opacity: pressed ? 0.85 : 1,
+              })}>
+              <Text style={type.heading}>Your Week in Reflection</Text>
+              <Text style={{...type.small, marginTop: 4}}>
+                A little time to understand what your week was really like.
+              </Text>
+              <Text style={{...type.link, marginTop: 10}}>Open this week</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={onOpenReports}
+              accessibilityRole="button"
+              style={({pressed}) => ({
+                ...glass,
+                borderRadius: radius.card,
+                padding: 16,
+                marginBottom: 18,
+                opacity: pressed ? 0.85 : 1,
+              })}>
+              <Text style={type.heading}>Reports</Text>
+              <Text style={{...type.small, marginTop: 4}}>
+                A PDF of each day, week and month, with all four of your journals.
+              </Text>
+              <Text style={{...type.link, marginTop: 10}}>Open reports</Text>
+            </Pressable>
+          </>
+        ) : null}
 
         {/* FR-INS-001: one control, applied to every view below. */}
         <View style={{flexDirection: 'row', gap: 8, marginBottom: 18}}>
@@ -558,210 +611,206 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
               />
             )}
 
-            <Card title="Weekly mood trends" subtitle="Tap a point to open that entry.">
-              {data.mood.points.length < data.min_points ? (
-                <NotEnough needed={data.mood.needed} what="check-in" />
-              ) : (
-                <>
-                  <MoodAreaChart
-                    points={data.mood.points}
-                    min={data.mood.min}
-                    max={data.mood.max}
-                    labels={MOOD_LABELS.slice(1)}
-                    onOpenEntry={onOpenEntry}
-                  />
-                  <Text style={{...type.small, marginTop: 10}}>
-                    {data.mood.points.length} moods recorded
-                    {data.from ? ` since ${shortDate(data.from)}` : ' in all your history'}.
-                  </Text>
-                </>
-              )}
-            </Card>
-
-            <Card title="Thinking traps frequency" subtitle="Recognise your patterns">
-              {data.thinking_traps.length ? (
-                <>
-                  <CountGrid
-                    rows={data.thinking_traps}
-                    icons={TRAP_ICONS}
-                    limit={allTraps ? data.thinking_traps.length : 4}
-                    onPress={row => openTrapArticle(row.id)}
-                  />
-                  <Text style={{...type.tiny, marginTop: 10}}>
-                    Tap a pattern to read about it.
-                  </Text>
-                  {data.thinking_traps.length > 4 && (
-                    <Pressable
-                      onPress={() => setAllTraps(current => !current)}
-                      style={{
-                        marginTop: 14,
-                        alignItems: 'center',
-                        paddingVertical: 11,
-                        borderRadius: radius.pill,
-                        borderWidth: 1,
-                        borderColor: colors.line,
-                        backgroundColor: colors.surface,
-                      }}>
-                      <Text style={type.link}>
-                        {allTraps ? 'Show fewer' : `View all ${data.thinking_traps.length} traps`}
-                      </Text>
-                    </Pressable>
-                  )}
-                  <View style={{marginTop: 18}}>
-                    <Text style={{...type.small, marginBottom: 10}}>Week by week</Text>
-                    <Trend trend={data.trap_trend} minWeeks={data.trend_min_weeks} />
-                  </View>
-                </>
-              ) : (
-                <Text style={type.body}>Nothing recorded yet.</Text>
-              )}
-            </Card>
-
-            <Card title="Mood summary calendar">
-              {data.calendar.days.length ? (
-                <MoodCalendar days={data.calendar.days} labels={MOOD_LABELS.slice(1)} />
-              ) : (
-                <Text style={type.body}>No finished entries in this period yet.</Text>
-              )}
-            </Card>
-
-            <EntriesCard streak={data.streak} onStartEntry={onStartEntry} />
-
-            <ReportCard period={period} />
-
-            {/* The design shows four cards. These are the other views the SRS
-                asks for (FR-INS-006/008/013/016/019) — one tap away, so the
-                page stays as drawn without dropping a requirement. */}
-            <Pressable
-              onPress={() => setShowMore(current => !current)}
-              style={{alignItems: 'center', paddingVertical: 14}}>
-              <Text style={type.link}>
-                {showMore ? 'Show less' : 'Everything else you recorded'}
-              </Text>
-            </Pressable>
-
-            {showMore ? (
+            {segment === 'mood' ? (
               <>
-            <Card title="How strong the feelings were" subtitle="Where you named a feeling.">
-              {data.feeling_intensity.points.length < data.min_points ? (
-                <NotEnough needed={data.feeling_intensity.needed} what="entry" plural="entries" />
-              ) : (
-                <LineChart
-                  points={data.feeling_intensity.points}
-                  min={data.feeling_intensity.min}
-                  max={data.feeling_intensity.max}
-                  lowLabel="barely there"
-                  highLabel="as strong as it gets"
-                  onSelect={point => {
-                    if (point.entry_id) {
-                      onOpenEntry(point.entry_id);
-                    }
-                  }}
-                />
-              )}
-            </Card>
+                <Card title="Weekly mood trends" subtitle="Tap a point to open that entry.">
+                  {data.mood.points.length < data.min_points ? (
+                    <NotEnough needed={data.mood.needed} what="check-in" />
+                  ) : (
+                    <>
+                      <MoodAreaChart
+                        points={data.mood.points}
+                        min={data.mood.min}
+                        max={data.mood.max}
+                        labels={MOOD_LABELS.slice(1)}
+                        onOpenEntry={onOpenEntry}
+                      />
+                      <Text style={{...type.small, marginTop: 10}}>
+                        {data.mood.points.length} moods recorded
+                        {data.from ? ` since ${shortDate(data.from)}` : ' in all your history'}.
+                      </Text>
+                    </>
+                  )}
+                </Card>
 
-            <Card title="Mood, week by week" subtitle="The average of each week you wrote in.">
-              {data.mood_trend.points.length < data.trend_min_weeks ? (
-                <Text style={type.body}>
-                  {data.mood_trend.needed === 1
-                    ? 'Another week of check-ins will show the trend.'
-                    : `Another ${data.mood_trend.needed} weeks of check-ins will show the trend.`}
-                </Text>
-              ) : (
-                <LineChart
-                  points={data.mood_trend.points.map(point => ({
-                    date: point.week_start,
-                    value: point.value,
-                  }))}
-                  min={data.mood_trend.min}
-                  max={data.mood_trend.max}
-                  lowLabel={MOOD_LABELS[data.mood_trend.min]}
-                  highLabel={MOOD_LABELS[data.mood_trend.max]}
-                />
-              )}
-            </Card>
+                <Card title="Mood summary calendar">
+                  {data.calendar.days.length ? (
+                    <MoodCalendar days={data.calendar.days} labels={MOOD_LABELS.slice(1)} />
+                  ) : (
+                    <Text style={type.body}>No finished entries in this period yet.</Text>
+                  )}
+                </Card>
 
-            <Card title="How your mood was spread" subtitle="How many entries sat at each point.">
-              {data.completed_entries ? (
-                <BarChart
-                  bars={data.mood_distribution.map(row => ({
-                    key: String(row.value),
-                    label: String(row.value),
-                    count: row.count,
-                  }))}
-                />
-              ) : (
-                <Text style={type.body}>Nothing recorded yet.</Text>
-              )}
-            </Card>
-
-            <Card title="What you noted as triggers" subtitle="Week by week, then how often in total.">
-              <Trend trend={data.trigger_trend} minWeeks={data.trend_min_weeks} />
-              <View style={{marginTop: 16}}>
-                {data.triggers.length ? (
-                  <Counts rows={data.triggers} />
-                ) : (
-                  <Text style={type.body}>Nothing recorded yet.</Text>
-                )}
-              </View>
-            </Card>
-
-            <Card title="Feelings you chose">
-              {data.feelings.length ? (
-                <Counts rows={data.feelings} />
-              ) : (
-                <Text style={type.body}>Nothing recorded yet.</Text>
-              )}
-            </Card>
-
-            {data.exposure.length ? (
-              <Card title="Distress you recorded, cycle by cycle">
-                {data.exposure.map(group => (
-                  <Exposure key={group.feared_outcome} group={group} />
-                ))}
-              </Card>
-            ) : null}
-
-            <Card
-              title="Your answers over time"
-              subtitle="From the short questionnaire. No score is shown — only how your answers have moved.">
-              <QuestionnaireTrend state={data.questionnaire} />
-            </Card>
-
-            <Card title="When you write" subtitle="Which part of the day your entries were finished in.">
-              {data.completed_entries ? (
-                <BarChart
-                  bars={data.writing_times.map(row => ({
-                    key: row.part,
-                    label: row.label,
-                    count: row.count,
-                  }))}
-                />
-              ) : (
-                <Text style={type.body}>Nothing recorded yet.</Text>
-              )}
-            </Card>
-
-            <Card title="Which journals you used">
-              {data.journal_types.length ? (
-                data.journal_types.map(row => (
-                  <View key={row.journal_type} style={{flexDirection: 'row', marginBottom: 6}}>
-                    <Text style={{...type.body, color: colors.ink, flex: 1}}>
-                      {JOURNAL_TITLES[row.journal_type] ?? row.journal_type}
+                <Card title="Mood, week by week" subtitle="The average of each week you wrote in.">
+                  {data.mood_trend.points.length < data.trend_min_weeks ? (
+                    <Text style={type.body}>
+                      {data.mood_trend.needed === 1
+                        ? 'Another week of check-ins will show the trend.'
+                        : `Another ${data.mood_trend.needed} weeks of check-ins will show the trend.`}
                     </Text>
-                    <Text style={type.small}>
-                      {row.count} {row.count === 1 ? 'entry' : 'entries'}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={type.body}>Nothing finished yet.</Text>
-              )}
-            </Card>
+                  ) : (
+                    <LineChart
+                      points={data.mood_trend.points.map(point => ({
+                        date: point.week_start,
+                        value: point.value,
+                      }))}
+                      min={data.mood_trend.min}
+                      max={data.mood_trend.max}
+                      lowLabel={MOOD_LABELS[data.mood_trend.min]}
+                      highLabel={MOOD_LABELS[data.mood_trend.max]}
+                    />
+                  )}
+                </Card>
+
+                <Card title="How your mood was spread" subtitle="How many entries sat at each point.">
+                  {data.completed_entries ? (
+                    <BarChart
+                      bars={data.mood_distribution.map(row => ({
+                        key: String(row.value),
+                        label: String(row.value),
+                        count: row.count,
+                      }))}
+                    />
+                  ) : (
+                    <Text style={type.body}>Nothing recorded yet.</Text>
+                  )}
+                </Card>
+
+                <Card title="How strong the feelings were" subtitle="Where you named a feeling.">
+                  {data.feeling_intensity.points.length < data.min_points ? (
+                    <NotEnough needed={data.feeling_intensity.needed} what="entry" plural="entries" />
+                  ) : (
+                    <LineChart
+                      points={data.feeling_intensity.points}
+                      min={data.feeling_intensity.min}
+                      max={data.feeling_intensity.max}
+                      lowLabel="barely there"
+                      highLabel="as strong as it gets"
+                      onSelect={point => {
+                        if (point.entry_id) {
+                          onOpenEntry(point.entry_id);
+                        }
+                      }}
+                    />
+                  )}
+                </Card>
+
+                <Card title="Feelings you chose">
+                  {data.feelings.length ? (
+                    <Counts rows={data.feelings} />
+                  ) : (
+                    <Text style={type.body}>Nothing recorded yet.</Text>
+                  )}
+                </Card>
+
+                <Card
+                  title="Your answers over time"
+                  subtitle="From the short questionnaire. No score is shown — only how your answers have moved.">
+                  <QuestionnaireTrend state={data.questionnaire} />
+                </Card>
               </>
             ) : null}
 
+            {segment === 'traps' ? (
+              <>
+                <Card title="Thinking traps frequency" subtitle="Recognise your patterns">
+                  {data.thinking_traps.length ? (
+                    <>
+                      <CountGrid
+                        rows={data.thinking_traps}
+                        icons={TRAP_ICONS}
+                        limit={allTraps ? data.thinking_traps.length : 4}
+                        onPress={row => openTrapArticle(row.id)}
+                      />
+                      <Text style={{...type.tiny, marginTop: 10}}>
+                        Tap a pattern to read about it.
+                      </Text>
+                      {data.thinking_traps.length > 4 && (
+                        <Pressable
+                          onPress={() => setAllTraps(current => !current)}
+                          style={{
+                            marginTop: 14,
+                            alignItems: 'center',
+                            paddingVertical: 11,
+                            borderRadius: radius.pill,
+                            borderWidth: 1,
+                            borderColor: colors.line,
+                            backgroundColor: colors.surface,
+                          }}>
+                          <Text style={type.link}>
+                            {allTraps ? 'Show fewer' : `View all ${data.thinking_traps.length} traps`}
+                          </Text>
+                        </Pressable>
+                      )}
+                      <View style={{marginTop: 18}}>
+                        <Text style={{...type.small, marginBottom: 10}}>Week by week</Text>
+                        <Trend trend={data.trap_trend} minWeeks={data.trend_min_weeks} />
+                      </View>
+                    </>
+                  ) : (
+                    <Text style={type.body}>Nothing recorded yet.</Text>
+                  )}
+                </Card>
+
+                <Card title="What you noted as triggers" subtitle="Week by week, then how often in total.">
+                  <Trend trend={data.trigger_trend} minWeeks={data.trend_min_weeks} />
+                  <View style={{marginTop: 16}}>
+                    {data.triggers.length ? (
+                      <Counts rows={data.triggers} />
+                    ) : (
+                      <Text style={type.body}>Nothing recorded yet.</Text>
+                    )}
+                  </View>
+                </Card>
+              </>
+            ) : null}
+
+            {segment === 'journals' ? (
+              <>
+                <EntriesCard streak={data.streak} onStartEntry={onStartEntry} />
+
+                <ReportCard period={period} />
+
+                {data.exposure.length ? (
+                  <Card title="Distress you recorded, cycle by cycle">
+                    {data.exposure.map(group => (
+                      <Exposure key={group.feared_outcome} group={group} />
+                    ))}
+                  </Card>
+                ) : null}
+
+                <Card title="When you write" subtitle="Which part of the day your entries were finished in.">
+                  {data.completed_entries ? (
+                    <BarChart
+                      bars={data.writing_times.map(row => ({
+                        key: row.part,
+                        label: row.label,
+                        count: row.count,
+                      }))}
+                    />
+                  ) : (
+                    <Text style={type.body}>Nothing recorded yet.</Text>
+                  )}
+                </Card>
+
+                <Card title="Which journals you used">
+                  {data.journal_types.length ? (
+                    data.journal_types.map(row => (
+                      <View key={row.journal_type} style={{flexDirection: 'row', marginBottom: 6}}>
+                        <Text style={{...type.body, color: colors.ink, flex: 1}}>
+                          {JOURNAL_TITLES[row.journal_type] ?? row.journal_type}
+                        </Text>
+                        <Text style={type.small}>
+                          {row.count} {row.count === 1 ? 'entry' : 'entries'}
+                        </Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={type.body}>Nothing finished yet.</Text>
+                  )}
+                </Card>
+              </>
+            ) : null}
           </>
         )}
       </ScrollView>

@@ -19,19 +19,19 @@ export interface HeatmapTheme {
   label: string;
 }
 
-export const LAVENDER_LIGHT: HeatmapTheme = {
-  empty: '#ECE9EF',
-  levels: ['#D6CBEF', '#A592D9', '#6A55A6'],
-  grace: '#8E7CC3',
-  label: '#6F6680',
+export const SAGE_LIGHT: HeatmapTheme = {
+  empty: '#ECEEE8',
+  levels: ['#D2E0CE', '#93AF92', '#4F6B53'],
+  grace: '#7E9A7F',
+  label: '#66726A',
 };
 
 // For when the app has a dark mode (it does not yet).
-export const LAVENDER_DARK: HeatmapTheme = {
-  empty: '#2B2633',
-  levels: ['#4A3F6A', '#7965B3', '#B9A9E2'],
-  grace: '#B9A9E2',
-  label: '#B5ABC2',
+export const SAGE_DARK: HeatmapTheme = {
+  empty: '#262B27',
+  levels: ['#3B5240', '#5F8063', '#A9C4A6'],
+  grace: '#A9C4A6',
+  label: '#AEB8AF',
 };
 
 type Props = {
@@ -66,7 +66,7 @@ function spoken(cell: HeatmapCell) {
  * are shown, never what was written; every square says its day and points to
  * a screen reader, and a tap opens that day.
  */
-export default function Heatmap({days, theme = LAVENDER_LIGHT, cell = 14, monthLabels = false, onDayPress}: Props) {
+export default function Heatmap({days, theme = SAGE_LIGHT, cell = 14, monthLabels = false, onDayPress}: Props) {
   if (!days.length) {
     return null;
   }
@@ -151,7 +151,7 @@ export default function Heatmap({days, theme = LAVENDER_LIGHT, cell = 14, monthL
 }
 
 // "Less ▢▢▢▢ More", the shades in order.
-export function HeatmapLegend({theme = LAVENDER_LIGHT, less, more}: {theme?: HeatmapTheme; less: string; more: string}) {
+export function HeatmapLegend({theme = SAGE_LIGHT, less, more}: {theme?: HeatmapTheme; less: string; more: string}) {
   const label = {...type.tiny, color: theme.label};
   return (
     <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}} accessibilityLabel={`${less} to ${more}`}>

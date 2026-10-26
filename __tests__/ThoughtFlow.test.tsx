@@ -163,6 +163,13 @@ test('the trauma variant leaves out "what makes it feel true"', () => {
   expect(stepsFor('quick', true)).toEqual(['situation', 'emotions', 'thought', 'belief', 'balanced', 'rerate']);
 });
 
+test('the step bar groups every record into four stages', async () => {
+  const stage = (root: ReactTestInstance) => root.findAll(n => /^Step \d of 4$/.test(n.props.accessibilityLabel ?? ''))[0].props.accessibilityLabel;
+  expect(stage(await render())).toBe('Step 1 of 4');
+  expect(stage(await render({step: 4}))).toBe('Step 3 of 4');
+  expect(stage(await render({mode: 'full', step: 9}))).toBe('Step 4 of 4');
+});
+
 test('the third record of a day ends with a kind word, not a block', async () => {
   (saveRecord as jest.Mock).mockResolvedValue(saved({gentle: true, record: {id: 'r1', status: 'completed', is_favorite: false}}));
   const root = await render({step: 5, content: {...EMPTY, situation: 'x', automatic_thought: 'y'}});

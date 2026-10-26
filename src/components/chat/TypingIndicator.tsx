@@ -3,7 +3,7 @@ import {Animated, View} from 'react-native';
 
 import {colors, radius, shadow} from '../../theme';
 
-// "Echo is typing": three dots on Echo's side of the thread while a reply is
+// "Reframe is typing": three dots on Reframe's side of the thread while a reply is
 // being written, so the wait reads as someone answering, not as a frozen screen.
 export default function TypingIndicator() {
   const dots = useRef([0, 1, 2].map(() => new Animated.Value(0.3))).current;
@@ -26,7 +26,7 @@ export default function TypingIndicator() {
 
   return (
     <View
-      accessibilityLabel="Echo is typing"
+      accessibilityLabel="Reframe is typing"
       style={{
         alignSelf: 'flex-start',
         flexDirection: 'row',

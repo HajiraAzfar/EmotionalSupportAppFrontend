@@ -8,13 +8,13 @@ type Props = {
   message: EntryMessage;
 };
 
-// The user's in the primary gradient on the right; Echo's on white on the left.
+// The user's in the primary gradient on the right; Reframe's on white on the left.
 export default function MessageBubble({message}: Props) {
   const mine = message.role === 'user';
   const isCrisis = message.kind === 'crisis';
   const isNotice = message.kind === 'notice';
   const isGrounding = message.kind === 'grounding';
-  // A suggestion Echo offered, not something she wrote and not a conclusion
+  // A suggestion Reframe offered, not something she wrote and not a conclusion
   // about her. Reading the entry back weeks later, the line still has to say
   // whose words these were.
   const isSuggestion = message.kind === 'perspective';

@@ -181,7 +181,7 @@ test('the last card reads back what was saved, and never claims to save it again
   expect(text).toContain('Thanks for taking the time.');
   expect(text.join(' ')).toContain('Already saved');
   // Check-in offers a reflection; it happens in the thread, not here.
-  expect(text.join(' ')).toContain('Talk it through with Echo');
+  expect(text.join(' ')).toContain('Talk it through with Reframe');
 });
 
 test('leaving an untouched entry removes it', async () => {

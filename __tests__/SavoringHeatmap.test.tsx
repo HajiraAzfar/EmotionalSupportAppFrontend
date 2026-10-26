@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
-import Heatmap, {LAVENDER_LIGHT} from '../src/components/Heatmap';
+import Heatmap, {SAGE_LIGHT} from '../src/components/Heatmap';
 
 const days = [
   // 2026-10-21 is a Wednesday: the first column starts with two empty places.
@@ -25,9 +25,9 @@ test('shades by level, marks grace days, speaks each day and opens it', async ()
   const cells = tree.root.findAll(n => typeof n.props.onPress === 'function' && n.props.accessibilityRole === 'button');
   expect(cells).toHaveLength(4);
   const style = (i: number) => cells[i].props.style;
-  expect(style(0).backgroundColor).toBe(LAVENDER_LIGHT.empty);
-  expect(style(1).backgroundColor).toBe(LAVENDER_LIGHT.levels[0]);
-  expect(style(3).backgroundColor).toBe(LAVENDER_LIGHT.levels[2]);
+  expect(style(0).backgroundColor).toBe(SAGE_LIGHT.empty);
+  expect(style(1).backgroundColor).toBe(SAGE_LIGHT.levels[0]);
+  expect(style(3).backgroundColor).toBe(SAGE_LIGHT.levels[2]);
   expect(style(2)).toMatchObject({borderStyle: 'dotted', borderWidth: 1.5});
   expect(cells[3].props.accessibilityLabel).toBe('24 Oct: 4 points');
   expect(cells[2].props.accessibilityLabel).toBe('23 Oct: no moments, a rest day');

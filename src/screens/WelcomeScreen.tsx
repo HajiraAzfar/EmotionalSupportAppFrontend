@@ -23,7 +23,7 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
       <View style={{flex: 1, paddingHorizontal: space.screen, alignItems: 'center'}}>
         <View style={{flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'}}>
           <FadeIn order={0} distance={18}>
-            <Logo size={92} />
+            <Logo size={92} badge />
           </FadeIn>
 
           <FadeIn order={1} style={{marginTop: 14}}>

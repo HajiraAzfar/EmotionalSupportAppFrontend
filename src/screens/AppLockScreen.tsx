@@ -81,7 +81,7 @@ export default function AppLockScreen({onUnlocked, onForgot}: Props) {
         <View style={{alignItems: 'center', marginBottom: 12}}>
           <Logo size={56} />
         </View>
-        <Text style={{...type.title, textAlign: 'center'}}>Mind Doc</Text>
+        <Text style={{...type.title, textAlign: 'center'}}>Reframe</Text>
         <Text style={{...type.body, textAlign: 'center', marginTop: 8, marginBottom: 30}}>
           Enter your PIN to continue.
         </Text>

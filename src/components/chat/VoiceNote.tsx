@@ -62,7 +62,7 @@ async function microphoneAllowed(): Promise<'granted' | 'denied' | 'blocked'> {
   const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
     title: 'Use the microphone?',
     message:
-      'Echo turns what you say into text, for you to check before sending. ' +
+      'Reframe turns what you say into text, for you to check before sending. ' +
       'The recording itself is not kept.',
     buttonPositive: 'Allow',
     buttonNegative: 'Not now',

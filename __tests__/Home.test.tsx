@@ -36,7 +36,6 @@ async function renderHome(daysThisWeek: number, name: string | null = null) {
     onResumeDraft: jest.fn(),
     onOpenInsights: jest.fn(),
     onOpenEntries: jest.fn(),
-    onOpenSettings: jest.fn(),
     onOpenCalm: jest.fn(),
     onOpenChat: jest.fn(),
   };

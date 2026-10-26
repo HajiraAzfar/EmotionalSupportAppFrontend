@@ -1,10 +1,12 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
-import {BookOpen, ChartLine, House, MessageCircle, NotebookPen} from 'lucide-react-native';
+import {BookOpen, Brain, ChartLine, House, NotebookPen, UserRound} from 'lucide-react-native';
 
 import {colors, font, radius, shadow, type} from '../theme';
 
-export type Tab = 'home' | 'journal' | 'chat' | 'insights' | 'library';
+// AI Chat is an area without a tab of its own: Home opens it, and the bar
+// stays under it with nothing selected.
+export type Tab = 'home' | 'journal' | 'thoughts' | 'insights' | 'library' | 'profile' | 'chat';
 
 type Props = {
   current: Tab;
@@ -14,21 +16,23 @@ type Props = {
 const TABS: {key: Tab; label: string; Icon: typeof House}[] = [
   {key: 'home', label: 'Home', Icon: House},
   {key: 'journal', label: 'Journal', Icon: NotebookPen},
-  {key: 'chat', label: 'AI Chat', Icon: MessageCircle},
+  // The board calls it Reframe, but that is the app's name now.
+  {key: 'thoughts', label: 'Thoughts', Icon: Brain},
   {key: 'insights', label: 'Insights', Icon: ChartLine},
   {key: 'library', label: 'Library', Icon: BookOpen},
+  {key: 'profile', label: 'Profile', Icon: UserRound},
 ];
 
-// The white bar along the bottom of every main screen, in the brand brief's
-// style: thin icons, the current tab in the primary purple on a lavender pill.
-// It is the only way between the five areas, so nothing here ever disappears.
+// The white bar along the bottom of every main screen, in the brand board's
+// style: thin icons, the current tab in the primary sage on a pale sage pill.
+// It is the only way between the six areas, so nothing here ever disappears.
 export default function TabBar({current, onChange}: Props) {
   return (
     <View
       accessibilityRole="tablist"
       style={{
         flexDirection: 'row',
-        paddingHorizontal: 6,
+        paddingHorizontal: 4,
         paddingTop: 8,
         paddingBottom: 8,
         backgroundColor: colors.surface,
@@ -49,7 +53,7 @@ export default function TabBar({current, onChange}: Props) {
             style={{flex: 1, alignItems: 'center', paddingVertical: 2}}>
             <View
               style={{
-                width: 52,
+                width: 44,
                 height: 30,
                 borderRadius: radius.pill,
                 alignItems: 'center',

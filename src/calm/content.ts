@@ -1,7 +1,7 @@
 // Every word the Calm module shows, in one place, so it can be edited or
 // translated without touching a component.
 //
-// The app's own screens are written in English (Roman Urdu is Echo's, in its
+// The app's own screens are written in English (Roman Urdu is Reframe's, in its
 // replies), so this is English. A translation is a second object of the same
 // shape, picked where the screens import `calm`.
 //

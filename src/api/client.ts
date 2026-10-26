@@ -110,7 +110,7 @@ export async function apiRequest(path: string, options: RequestOptions = {}) {
     const detail = data?.detail;
     const message = typeof detail === 'string' ? detail : detail?.message;
     throw new ApiError(
-      message || "Couldn't reach Echo just now. Please try again in a moment.",
+      message || "Couldn't reach Reframe just now. Please try again in a moment.",
       response.status,
       typeof detail === 'object' && detail ? detail.code : undefined,
     );

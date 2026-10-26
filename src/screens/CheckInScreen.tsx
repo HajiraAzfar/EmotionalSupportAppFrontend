@@ -62,7 +62,7 @@ type Props = {
 const matches = (item: FactorItem, q: string) =>
   [item.label, item.label_ur, item.label_roman].some(l => l.toLowerCase().includes(q));
 
-// The daily check-in: mood → what's behind it → note → Echo's closing reply.
+// The daily check-in: mood → what's behind it → note → Reframe's closing reply.
 // Chips are a local selection; everything is sent once, at the end.
 function CheckIn({startMood, onExit, onOpenChat}: Props) {
   const [saved, setDraft] = useState<CheckInDraft | null>(null);

@@ -12,7 +12,7 @@ import VoiceField from '../../components/VoiceField';
 import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
 import {CrisisEvent} from '../../api/entries';
 import {LibraryItem, getLibrary} from '../../api/libraries';
-import {colors, radius, space, type} from '../../theme';
+import {colors, font, radius, space, type} from '../../theme';
 import {
   RecordContent,
   RecordMode,
@@ -81,6 +81,52 @@ export function stepsFor(mode: RecordMode, asksEvidenceFor: boolean): Step[] {
 }
 
 const text = (value: string | null) => (value && value.trim() ? value : null);
+
+// The record's steps in the four stages of the brand board's step bar: what
+// happened, the thought, weighing it, and how it sits now. Quick and full
+// records both pass through all four.
+const STAGE: Record<Step, number> = {
+  situation: 0,
+  emotions: 0,
+  thought: 1,
+  belief: 1,
+  traps: 1,
+  evidenceFor: 2,
+  evidenceAgainst: 2,
+  balanced: 2,
+  rerate: 3,
+  next: 3,
+};
+
+function StepBar({stage}: {stage: number}) {
+  return (
+    <View
+      accessible
+      accessibilityLabel={`Step ${stage + 1} of 4`}
+      style={{flexDirection: 'row', alignItems: 'center'}}>
+      {[0, 1, 2, 3].map(i => (
+        <React.Fragment key={i}>
+          {i ? <View style={{width: 18, height: 2, backgroundColor: i <= stage ? colors.accent : colors.muted}} /> : null}
+          <View
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: radius.pill,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: i <= stage ? colors.accent : colors.muted,
+              backgroundColor: i <= stage ? colors.accent : colors.surface,
+            }}>
+            <Text style={{...type.tiny, fontFamily: font.semibold, color: i <= stage ? colors.onAccent : colors.inkFaint}}>
+              {i + 1}
+            </Text>
+          </View>
+        </React.Fragment>
+      ))}
+    </View>
+  );
+}
 
 /**
  * One thought record, a step at a time. Each step is kept on the phone and
@@ -209,13 +255,7 @@ export default function RecordFlow({
   const header = (
     <View style={{flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.screen, paddingVertical: 12}}>
       <BackButton onPress={() => (result || index === 0 ? (result ? onDone() : onClose()) : setIndex(i => i - 1))} />
-      <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5}}>
-        {!result
-          ? steps.map((s, i) => (
-              <View key={s} style={{width: 7, height: 7, borderRadius: 4, backgroundColor: i <= index ? colors.accent : colors.muted}} />
-            ))
-          : null}
-      </View>
+      <View style={{flex: 1, alignItems: 'center'}}>{!result ? <StepBar stage={STAGE[step]} /> : null}</View>
       <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12} accessibilityRole="button">
         <Text style={{...type.link, color: colors.alert}}>Get help</Text>
       </Pressable>
@@ -226,7 +266,7 @@ export default function RecordFlow({
     <>
       {/* A flag: a gentle stop, the resources, and her choice whether to go on. */}
       <Modal visible={crisis !== null} transparent animationType="fade" onRequestClose={() => setCrisis(null)}>
-        <View style={{flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(48, 38, 59, 0.35)'}}>
+        <View style={{flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(46, 66, 50, 0.35)'}}>
           <View style={{backgroundColor: colors.surface, borderRadius: radius.card, padding: 20}}>
             <Text style={{...type.body, color: colors.ink}}>{crisis?.text}</Text>
             <View style={{marginTop: 16, gap: 10}}>

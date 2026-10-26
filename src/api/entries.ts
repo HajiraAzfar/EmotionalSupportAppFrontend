@@ -14,7 +14,7 @@ export type MessageKind =
   | 'closing'
   | 'grounding'
   // Thought journal: one other way of reading the thought, offered when she
-  // asks. Labelled as Echo's and never saved as her answer.
+  // asks. Labelled as Reframe's and never saved as her answer.
   | 'perspective';
 
 export interface EntryMessage {
@@ -304,7 +304,7 @@ export function chooseConversation(
 }
 
 // `more` sends the message without asking for a reply yet: an extended free
-// write lets her finish her thought across several messages before Echo answers.
+// write lets her finish her thought across several messages before Reframe answers.
 export function sendMessage(
   entryId: string,
   content: string,

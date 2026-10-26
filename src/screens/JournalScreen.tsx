@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Brain, CloudSun, Leaf, LucideIcon, Mountain, PenLine} from 'lucide-react-native';
+import {Brain, ChevronRight, CloudSun, Leaf, LucideIcon, Mountain, PenLine} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {brandImages} from '../assets/brand';
@@ -57,7 +57,10 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
           paddingHorizontal: space.screen,
           paddingTop: 12,
         }}>
-        <Text style={{...type.title, flex: 1}}>Journals</Text>
+        <View style={{flex: 1}}>
+          <Text style={type.title}>Journals</Text>
+          <Text style={{...type.small, marginTop: 2}}>Small steps. Big shifts.</Text>
+        </View>
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>
@@ -130,14 +133,11 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
               <journal.Icon size={22} color={colors.accent} />
             </View>
             <View style={{flex: 1}}>
-              <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
-                <Text style={{...type.label, flex: 1}}>
-                  {JOURNAL_TITLES[journal.type]}
-                </Text>
-                <Text style={type.small}>{journal.minutes}</Text>
-              </View>
-              <Text style={{...type.body, marginTop: 4}}>{journal.blurb}</Text>
+              <Text style={type.label}>{JOURNAL_TITLES[journal.type]}</Text>
+              <Text style={{...type.body, fontSize: 14, lineHeight: 20, marginTop: 2}}>{journal.blurb}</Text>
+              <Text style={{...type.tiny, marginTop: 4}}>{journal.minutes}</Text>
             </View>
+            <ChevronRight size={18} color={colors.inkFaint} />
           </Pressable>
         ))}
 

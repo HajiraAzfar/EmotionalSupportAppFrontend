@@ -69,7 +69,7 @@ export default function SettingsScreen({onBack}: {onBack: () => void}) {
           ) : null}
           {denied ? (
             <Text style={{...type.small, color: colors.alert, marginTop: 8}}>
-              Notifications are off for Mind Doc in your phone's settings.
+              Notifications are off for Reframe in your phone's settings.
             </Text>
           ) : null}
         </Card>

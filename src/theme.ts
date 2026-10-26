@@ -1,56 +1,56 @@
-// The Mind Doc theme (brand brief, 22 Oct): a warm cream page, white cards
-// with soft plum-tinted shadows, deep plum ink, a muted purple primary, and
-// lavender, blush pink and sage green as the soft accents. Every screen reads
+// The Reframe theme (the "Calmora" brand board, 26 Oct): a warm ivory page, white cards with
+// soft forest-tinted shadows, deep forest ink, a sage green primary, and pale
+// sage, soft peach and muted lavender as the soft accents. Every screen reads
 // its colours, fonts, radii and shadows from here, so this file is the only
 // place a theme change happens.
 //
 // The token names are older than this palette and describe a role, not a hue:
-// `sage` is the medium accent for selected borders, spinners and charts (now
-// lavender), and `leaf` is the actual sage green.
+// `sage` is the medium accent for selected borders, spinners and charts, `sky`
+// is the second tone (muted lavender), and `coral` / `blush` are the peach.
 const palette = {
-  // The page itself: warm cream. ScreenBackground fades it into bgDeep.
-  bg: '#FFF9F6',
-  bgDeep: '#F6EEF4',
+  // The page itself: warm ivory. ScreenBackground fades it into bgDeep.
+  bg: '#FAF6EE',
+  bgDeep: '#EFF1E7',
   // Cards are plain white, set off from the page by a hairline.
   surface: '#FFFFFF',
   // A pressed card, a chip, or a cell set into one: a shade off white.
-  surfaceRaised: '#F8F2F8',
+  surfaceRaised: '#F3F5EF',
   // Frosted glass: translucent white with a brighter edge.
   glass: 'rgba(255, 255, 255, 0.78)',
   glassEdge: 'rgba(255, 255, 255, 0.92)',
-  // Deep plum text.
-  ink: '#30263B',
-  inkSoft: '#54495F',
-  // Deep enough to pass AA as small text on white and on the cream page.
-  inkFaint: '#6F6680',
+  // Deep forest text.
+  ink: '#2E4232',
+  inkSoft: '#4F5F52',
+  // Deep enough to pass AA as small text on white and on the ivory page.
+  inkFaint: '#66726A',
   // A hairline, not a border: the edge of a white card on the page.
-  line: '#EFE6EE',
+  line: '#E7EAE0',
   // Tracks, dividers and empty dots.
-  muted: '#DDD2E3',
-  // Blush pink: soft fills behind cards and notes.
-  blush: '#F6E7E9',
-  // Rose pink: decoration and emphasis. Too light for text on white.
-  coral: '#F4B8C2',
-  coralSoft: '#F6E7E9',
-  // Muted purple primary: buttons, the user's chat bubbles, links. White text
-  // on it passes AA (6.1:1).
-  accent: '#685895',
+  muted: '#D5DCCF',
+  // Soft peach: fills behind cards and notes.
+  blush: '#FCEDE2',
+  // Peach: decoration and emphasis. Too light for text on white.
+  coral: '#F7C9AA',
+  coralSoft: '#FCEDE2',
+  // Sage green primary: buttons, the user's chat bubbles, links. White text
+  // on it passes AA (5.9:1).
+  accent: '#4F6B53',
   // The light end of the primary gradient; white text still passes AA on it.
-  accentLight: '#7E6BAE',
-  // Lavender: disabled buttons, soft fills.
-  accentSoft: '#B7A6DE',
-  accentWash: 'rgba(104, 88, 149, 0.10)',
+  accentLight: '#5A7A5E',
+  // Pale sage: disabled buttons, soft fills.
+  accentSoft: '#B9CBB5',
+  accentWash: 'rgba(79, 107, 83, 0.10)',
   // Text and spinners that sit on top of an accent colour.
   onAccent: '#FFFFFF',
-  // Lavender: selected borders, spinners and charts; the wash is the pill colour.
-  sage: '#A78BE3',
-  sageWash: '#E8DDF3',
+  // Sage: selected borders, spinners and charts; the wash is the pill colour.
+  sage: '#8BA38D',
+  sageWash: '#DCE6D9',
   // Sage green: botanical accents and calm, positive moments.
   leaf: '#C9D8C2',
   // A sage deep enough for icons and large text on white.
   leafDeep: '#5E7A57',
-  // Second cool tone, for the page wash and charts.
-  sky: '#C9D8C2',
+  // Muted lavender: the second tone, for the page wash and charts.
+  sky: '#CDBCE6',
   // A rose deep enough to read as small text.
   alert: '#B03A5B',
 };
@@ -67,25 +67,27 @@ export const colors = {
 export const gradient = {
   primary: `linear-gradient(90deg, ${palette.accent}, ${palette.accentLight})`,
   // A dawn wash for headers that have no illustration.
-  dawn: 'linear-gradient(180deg, #E8DDF3 0%, #F6E7E9 60%, #FFF9F6 100%)',
-  // Soft card fills: the featured card (lavender) and a quiet note (blush).
-  lavender: 'linear-gradient(135deg, #E8DDF3 0%, #F1EAF8 55%, #F6E7E9 100%)',
-  blush: 'linear-gradient(135deg, #F6E7E9 0%, #FBF1F1 60%, #FFF9F6 100%)',
+  dawn: 'linear-gradient(180deg, #DCE6D9 0%, #FCEDE2 60%, #FAF6EE 100%)',
+  // Soft card fills: the featured card (`lavender`, now pale sage; the name is
+  // older than the palette) and a quiet note (peach).
+  lavender: 'linear-gradient(135deg, #DCE6D9 0%, #EAF0E6 55%, #F6F1E6 100%)',
+  blush: 'linear-gradient(135deg, #FCEDE2 0%, #FBF3EA 60%, #FAF6EE 100%)',
 };
 
-// The five points of the mood scale, in order: cool at the low end, warm at
-// the high end. Used by the chart, the calendar and anywhere a recorded mood
-// is shown as a colour. Light enough for ink text to sit on them.
+// The five points of the mood scale, in order from Very low to Great, in the
+// brand's emoji set: rose, lavender, warm yellow, pink, sage. Used by the
+// chart, the calendar and anywhere a recorded mood is shown as a colour.
+// Light enough for ink text to sit on them.
 // Each point's face is drawn by components/MoodFace in the same colour.
-export const moodColours = ['#D3CDE0', '#BBAAE2', '#D8C6EF', '#F2CBD4', '#F4B2BF'];
+export const moodColours = ['#F5C4BC', '#D9CCEE', '#FBE1B6', '#F4D2DC', '#C6DABD'];
 
-// The learning library's cards: soft pastels on the page (lavender, blush,
-// sage, peach). Tints cycle, so a library of any length keeps its rhythm.
+// The learning library's cards: soft pastels on the page (lavender, peach,
+// sage, warm yellow). Tints cycle, so a library of any length keeps its rhythm.
 export const cardTints = [
-  {bg: '#F1EAF8', icon: '#E3D6F2'},
-  {bg: '#FBEFF1', icon: '#F4D9DE'},
-  {bg: '#EEF4EC', icon: '#D9E6D4'},
-  {bg: '#FFF1EA', icon: '#F6DFD2'},
+  {bg: '#F2EEF8', icon: '#E2D9F1'},
+  {bg: '#FDF0E6', icon: '#FADCC7'},
+  {bg: '#EEF3EA', icon: '#DCE6D9'},
+  {bg: '#FBF5E4', icon: '#F3E5BF'},
 ];
 // Text and icons that sit on one of those tints.
 export const onTint = palette.ink;
@@ -134,13 +136,13 @@ export const radius = {
   pill: 999,
 };
 
-// Soft, plum-tinted shadows, drawn natively by React Native's boxShadow.
+// Soft, forest-tinted shadows, drawn natively by React Native's boxShadow.
 export const shadow = {
-  sm: {boxShadow: '0px 2px 8px rgba(48, 38, 59, 0.06)'},
-  md: {boxShadow: '0px 8px 24px rgba(104, 88, 149, 0.10)'},
-  button: {boxShadow: '0px 8px 20px rgba(104, 88, 149, 0.28)'},
+  sm: {boxShadow: '0px 2px 8px rgba(46, 66, 50, 0.06)'},
+  md: {boxShadow: '0px 8px 24px rgba(79, 107, 83, 0.10)'},
+  button: {boxShadow: '0px 8px 20px rgba(79, 107, 83, 0.28)'},
   // Cast upwards, for the tab bar along the bottom edge.
-  bar: {boxShadow: '0px -4px 20px rgba(104, 88, 149, 0.08)'},
+  bar: {boxShadow: '0px -4px 20px rgba(79, 107, 83, 0.08)'},
 };
 
 // Axis labels inside the SVG charts.

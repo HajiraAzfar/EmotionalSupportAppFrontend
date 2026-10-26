@@ -12,9 +12,7 @@ import {
   UserRound,
 } from 'lucide-react-native';
 
-import BackButton from '../components/BackButton';
 import Logo from '../components/Logo';
-import ScreenBackground from '../components/ScreenBackground';
 import Wordmark from '../components/Wordmark';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {isLockSet} from '../storage/appLock';
@@ -29,7 +27,6 @@ type Props = {
   onOpenReminders: () => void;
   onOpenDeleteAccount: () => void;
   onSignedOut: () => void;
-  onBack: () => void;
 };
 
 function Section({children}: {children: string}) {
@@ -97,8 +94,9 @@ function Row({
   );
 }
 
-// Where the settings that belong to this phone live. The app lock is the main
-// one: it is device-only by design (FR-AUTH-009), so it has nowhere else to be.
+// The Profile tab: who she is, then the settings that belong to this phone.
+// The app lock is the main one: it is device-only by design (FR-AUTH-009), so
+// it has nowhere else to be.
 export default function SettingsScreen({
   name,
   onOpenName,
@@ -106,7 +104,6 @@ export default function SettingsScreen({
   onOpenReminders,
   onOpenDeleteAccount,
   onSignedOut,
-  onBack,
 }: Props) {
   const [locked, setLocked] = useState<boolean | null>(null);
   // How many of the three check-in reminders are on; undefined while loading.
@@ -130,22 +127,34 @@ export default function SettingsScreen({
   }
 
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: space.screen,
-          paddingVertical: 12,
-        }}>
-        <BackButton onPress={onBack} />
-      </View>
-
-      <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 30}}>
-        <Text accessibilityRole="header" style={{...type.title, marginBottom: 4}}>
+    <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
+      <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingTop: 12, paddingBottom: 30}}>
+        <Text accessibilityRole="header" style={{...type.title, marginBottom: 14}}>
           Settings
         </Text>
+
+        {/* Who the app greets: her initial in a sage circle, and her name. */}
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 14}}>
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: radius.pill,
+              backgroundColor: colors.sageWash,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {name ? (
+              <Text style={{...type.title, color: colors.accent}}>{name.charAt(0).toUpperCase()}</Text>
+            ) : (
+              <UserRound size={26} color={colors.accent} />
+            )}
+          </View>
+          <View style={{flex: 1}}>
+            <Text style={type.heading}>{name ?? 'Your profile'}</Text>
+            <Text style={{...type.small, marginTop: 2}}>Mindful today, brighter days.</Text>
+          </View>
+        </View>
 
         <Section>Profile</Section>
         <Row
@@ -204,13 +213,13 @@ export default function SettingsScreen({
 
         {/* About: what the app is, and what it is not. */}
         <View style={{alignItems: 'center', marginTop: 34}}>
-          <Logo size={64} />
+          <Logo size={64} badge />
           <View style={{marginTop: 10}}>
             <Wordmark />
           </View>
           <Text style={{...type.small, textAlign: 'center', marginTop: 14, lineHeight: 19, maxWidth: 300}}>
-            Mind Doc is a space for reflection and self-help. Echo, its AI companion, is not a
-            therapist and cannot diagnose. If you need care, please reach out to a qualified
+            Reframe is a space for reflection and self-help. Its AI companion is not a therapist
+            and cannot diagnose. If you need care, please reach out to a qualified
             professional.
           </Text>
         </View>

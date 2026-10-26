@@ -145,7 +145,7 @@ export default function RemindersScreen({onBack}: Props) {
         {denied ? (
           <View style={{marginTop: 18}}>
             <Text style={{...type.small, color: colors.alert}}>
-              Notifications are turned off for Mind Doc, so the reminder could not be set.
+              Notifications are turned off for Reframe, so the reminder could not be set.
             </Text>
             <Pressable onPress={() => Linking.openSettings()} hitSlop={8} accessibilityRole="button">
               <Text style={{...type.link, marginTop: 6}}>Open phone settings</Text>

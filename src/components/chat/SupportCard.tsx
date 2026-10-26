@@ -48,7 +48,7 @@ type Props = {
   prominent: boolean; // present or imminent danger: the same card, more prominent
 };
 
-// Display-only, under Echo's reply and never instead of it; the chat stays open below.
+// Display-only, under Reframe's reply and never instead of it; the chat stays open below.
 export default function SupportCard({prominent: urgent}: Props) {
   const [resources, setResources] = useState<CrisisResource[] | null>(null);
 

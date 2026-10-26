@@ -10,17 +10,29 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Search} from 'lucide-react-native';
+import {MessageCircle, Search} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
+import {JOURNALS} from './JournalScreen';
 import BackButton from '../components/BackButton';
+import Chip from '../components/chat/Chip';
 import ScreenBackground from '../components/ScreenBackground';
-import {deleteEntry, EntrySummary, JOURNAL_TITLES, listEntries} from '../api/entries';
+import {deleteEntry, EntrySummary, JOURNAL_TITLES, JournalType, listEntries} from '../api/entries';
 import {colors, font, glass, radius, shadow, space, type} from '../theme';
 
 const MOOD_LABELS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Very good'];
 // Wait this long after the last keystroke before searching.
 const SEARCH_DELAY_MS = 350;
+
+// Each journal's icon, as on the Journal tab; a chat has none there.
+const ICONS = Object.fromEntries(JOURNALS.map(j => [j.type, j.Icon]));
+// What the chips over the list keep. Thoughts are thought records.
+const FILTERS: {label: string; keep: (type: JournalType) => boolean}[] = [
+  {label: 'All', keep: () => true},
+  {label: 'Journals', keep: t => t !== 'thought' && t !== 'chat'},
+  {label: 'Thoughts', keep: t => t === 'thought'},
+  {label: 'Chats', keep: t => t === 'chat'},
+];
 
 type Props = {
   onOpen: (entry: EntrySummary) => void;
@@ -44,6 +56,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
   const [entries, setEntries] = useState<EntrySummary[] | null>(null);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState(0);
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
   const load = useCallback((search: string) => {
@@ -94,7 +107,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
         }}>
         <BackButton onPress={onBack} />
         <Text style={{...type.heading, flex: 1, textAlign: 'center'}}>
-          Your entries
+          History
         </Text>
         {/* FR-CRIS-009: crisis resources on every screen. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
@@ -119,10 +132,15 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search what you wrote"
+            placeholder="Search your past entries"
             placeholderTextColor={colors.inkFaint}
             style={{flex: 1, paddingVertical: 12, ...type.input, color: colors.ink}}
           />
+        </View>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', marginTop: 12}}>
+          {FILTERS.map((f, i) => (
+            <Chip key={f.label} label={f.label} on={filter === i} onPress={() => setFilter(i)} />
+          ))}
         </View>
       </View>
 
@@ -134,10 +152,10 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
         <ActivityIndicator color={colors.sage} style={{marginTop: 40}} />
       ) : (
         <FlatList
-          data={entries}
+          data={entries.filter(e => FILTERS[filter].keep(e.journal_type))}
           keyExtractor={e => e.id}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{padding: space.screen}}
+          contentContainerStyle={{padding: space.screen, paddingTop: 8}}
           ListEmptyComponent={
             <Text style={{...type.body, textAlign: 'center', marginTop: 40}}>
               {query
@@ -147,6 +165,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
           }
           renderItem={({item}) => {
             const draft = item.status === 'in_progress';
+            const Icon = ICONS[item.journal_type] ?? MessageCircle;
             return (
               <Pressable
                 onPress={() => onOpen(item)}
@@ -158,36 +177,51 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
                   borderRadius: radius.card,
                   padding: 14,
                   marginBottom: 10,
+                  flexDirection: 'row',
+                  gap: 12,
                 })}>
-                <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
-                  <Text style={{...type.label, flex: 1}}>
-                    {item.name ?? JOURNAL_TITLES[item.journal_type] ?? item.journal_type}
-                  </Text>
-                  {draft ? (
-                    <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>Unfinished</Text>
-                  ) : null}
-                  <Pressable onPress={() => confirmDelete(item)} hitSlop={12} style={{paddingLeft: 12}}>
-                    <Text style={{...type.link, color: colors.alert}}>Delete</Text>
-                  </Pressable>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: radius.pill,
+                    backgroundColor: colors.sageWash,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <Icon size={19} color={colors.accent} />
                 </View>
+                <View style={{flex: 1}}>
+                  <View style={{flexDirection: 'row', alignItems: 'baseline'}}>
+                    <Text style={{...type.label, flex: 1}}>
+                      {item.name ?? JOURNAL_TITLES[item.journal_type] ?? item.journal_type}
+                    </Text>
+                    {draft ? (
+                      <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>Unfinished</Text>
+                    ) : null}
+                    <Pressable onPress={() => confirmDelete(item)} hitSlop={12} style={{paddingLeft: 12}}>
+                      <Text style={{...type.link, color: colors.alert}}>Delete</Text>
+                    </Pressable>
+                  </View>
 
-                {item.name ? (
-                  <Text style={type.small}>
-                    {JOURNAL_TITLES[item.journal_type] ?? item.journal_type}
+                  {item.name ? (
+                    <Text style={type.small}>
+                      {JOURNAL_TITLES[item.journal_type] ?? item.journal_type}
+                    </Text>
+                  ) : null}
+
+                  {item.preview ? (
+                    <Text style={{...type.body, marginTop: 4}} numberOfLines={2}>
+                      {item.preview}
+                    </Text>
+                  ) : null}
+
+                  <Text style={{...type.small, marginTop: 4}}>
+                    {formatDate(item.completed_at ?? item.last_activity_at)}
+                    {item.cycle && item.cycle > 1 ? `  ·  Cycle ${item.cycle}` : ''}
+                    {item.mood ? `  ·  Mood ${item.mood} — ${MOOD_LABELS[item.mood]}` : ''}
                   </Text>
-                ) : null}
-
-                {item.preview ? (
-                  <Text style={{...type.body, marginTop: 4}} numberOfLines={2}>
-                    {item.preview}
-                  </Text>
-                ) : null}
-
-                <Text style={{...type.small, marginTop: 4}}>
-                  {formatDate(item.completed_at ?? item.last_activity_at)}
-                  {item.cycle && item.cycle > 1 ? `  ·  Cycle ${item.cycle}` : ''}
-                  {item.mood ? `  ·  Mood ${item.mood} — ${MOOD_LABELS[item.mood]}` : ''}
-                </Text>
+                </View>
               </Pressable>
             );
           }}

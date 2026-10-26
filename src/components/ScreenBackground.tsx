@@ -11,8 +11,8 @@ type Props = {
 };
 
 /**
- * The soft wash behind every screen: a pale periwinkle page fading deeper
- * towards the bottom, with faint pools of pink, sky and lavender, as in the
+ * The soft wash behind every screen: a warm ivory page fading towards pale
+ * sage at the bottom, with faint pools of peach, lavender and sage, as in the
  * design's backdrop. Quiet enough that white cards and dark text sit on it all
  * day.
  *

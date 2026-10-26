@@ -7,20 +7,21 @@ import {latestChat} from '../api/entries';
 import {colors, space, type} from '../theme';
 
 type Props = {
-  onOpenEntries: () => void;
+  // Exit: back to wherever the chat was opened from.
+  onBack: () => void;
   onOpenCalm?: () => void;
 };
 
 /**
- * The AI Chat tab: she writes or speaks, Echo answers, like any chat. There is
- * no journal before the conversation (the free write journal lives in the
+ * AI Chat: she writes or speaks, Reframe answers, like any chat. There is no
+ * journal before the conversation (the free write journal lives in the
  * Journal tab), and the chat is stored as an entry of type "chat".
  *
- * Opening the tab carries on the most recent chat that is still going, because
- * that is what a chat does. "New chat" starts a blank one, which is only saved
- * once she sends something.
+ * Opening it carries on the most recent chat that is still going, because
+ * that is what a chat does. Past chats are in History. A chat that has closed
+ * offers a blank one, which is only saved once she sends something.
  */
-export default function ChatTabScreen({onOpenEntries, onOpenCalm}: Props) {
+export default function ChatTabScreen({onBack, onOpenCalm}: Props) {
   const [entryId, setEntryId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -69,13 +70,12 @@ export default function ChatTabScreen({onOpenEntries, onOpenCalm}: Props) {
         key={`${session}-${entryId ?? 'new'}`}
         journalType="chat"
         entryId={entryId ?? undefined}
-        // "New chat": a blank chat, not the one she just left.
-        onExit={() => {
+        onExit={onBack}
+        // A blank chat, not the one that just closed.
+        onNewChat={() => {
           setEntryId(null);
           setSession(current => current + 1);
         }}
-        exitLabel="New chat"
-        secondaryAction={{label: 'Past chats', onPress: onOpenEntries}}
         onOpenCalm={onOpenCalm}
       />
     </View>

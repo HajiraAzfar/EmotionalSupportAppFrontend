@@ -71,7 +71,6 @@ type Screen =
   | 'article'
   | 'appLockSetup'
   | 'weeklyReport'
-  | 'settings'
   | 'calm'
   | 'intro'
   | 'name'
@@ -85,9 +84,10 @@ type Screen =
 const SCREENS_WITHOUT_HELP: Screen[] = [
   'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
   'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'article',
-  'appLockSetup', 'settings', 'calm', 'intro', 'name', 'editName', 'deleteAccount',
-  'reminders',
+  'appLockSetup', 'calm', 'intro', 'name', 'editName', 'deleteAccount', 'reminders',
 ];
+// Tabs whose screen has no Get help link of its own.
+const TABS_WITHOUT_HELP: Tab[] = ['library', 'profile'];
 
 // Short enough to answer a card at a time. Thought and exposure keep the
 // thread: they are long, and a pause, a resume and a conversation all live there.
@@ -130,7 +130,7 @@ function App(): React.JSX.Element {
   const [articleSlug, setArticleSlug] = useState('');
   // The reports open from the check-ins list and from Insights; back goes to whichever it was.
   const [reportsBack, setReportsBack] = useState<Screen>('checkins');
-  // Which of the four areas is showing. The tab bar is the only way between them.
+  // Which of the six areas (and AI Chat) is showing. The tab bar is the only way between them.
   const [tab, setTab] = useState<Tab>('home');
   // Where Calm opens: its own list, or straight into an exercise (Home's quick tools).
   const [calmStart, setCalmStart] = useState<CalmView>('home');
@@ -383,7 +383,6 @@ function App(): React.JSX.Element {
                 }}
                 onOpenInsights={() => setTab('insights')}
                 onOpenEntries={() => setScreen('entries')}
-                onOpenSettings={() => setScreen('settings')}
                 onOpenCalm={start => {
                   setCalmStart(start ?? 'home');
                   setScreen('calm');
@@ -403,10 +402,32 @@ function App(): React.JSX.Element {
               />
             )}
 
-            {/* AI Chat: a chat with Echo; the free write journal is in the Journal tab. */}
+            {/* Thoughts: the Thought Journal's own home, one tap from anywhere. */}
+            {tab === 'thoughts' && (
+              <ErrorBoundary>
+                <ThoughtModule
+                  onExit={() => setTab('home')}
+                  onOpenSavoring={() => {
+                    setJournal({journalType: 'savouring'});
+                    setScreen('journal');
+                  }}
+                  onOpenExposure={sourceEntryId => {
+                    setJournal({journalType: 'exposure', sourceEntryId});
+                    setScreen('journal');
+                  }}
+                  onOpenGrounding={() => {
+                    setCalmStart('groundYourself');
+                    setScreen('calm');
+                  }}
+                />
+              </ErrorBoundary>
+            )}
+
+            {/* AI Chat: a chat with Reframe, opened from Home, so Exit goes back
+                there; the free write journal is in the Journal tab. */}
             {tab === 'chat' && (
               <ChatTabScreen
-                onOpenEntries={() => setScreen('entries')}
+                onBack={() => setTab('home')}
                 onOpenCalm={() => {
                   setCalmStart('home');
                   setScreen('calm');
@@ -441,6 +462,22 @@ function App(): React.JSX.Element {
                 onOpenArticle={slug => {
                   setArticleSlug(slug);
                   setScreen('article');
+                }}
+              />
+            )}
+
+            {/* Profile: settings. Each one opens over the tabs and comes back here. */}
+            {tab === 'profile' && (
+              <SettingsScreen
+                name={userName}
+                onOpenName={() => setScreen('editName')}
+                onOpenAppLock={() => setScreen('appLockSetup')}
+                onOpenReminders={() => setScreen('reminders')}
+                onOpenDeleteAccount={() => setScreen('deleteAccount')}
+                onSignedOut={() => {
+                  setUserName(null);
+                  setTab('home');
+                  setScreen('welcome');
                 }}
               />
             )}
@@ -589,20 +626,6 @@ function App(): React.JSX.Element {
       {screen === 'article' && (
         <ArticleScreen slug={articleSlug} onBack={() => setScreen('tabs')} />
       )}
-            {screen === 'settings' && (
-        <SettingsScreen
-          name={userName}
-          onOpenName={() => setScreen('editName')}
-          onOpenAppLock={() => setScreen('appLockSetup')}
-          onOpenReminders={() => setScreen('reminders')}
-          onOpenDeleteAccount={() => setScreen('deleteAccount')}
-          onSignedOut={() => {
-            setUserName(null);
-            setScreen('welcome');
-          }}
-          onBack={() => setScreen('tabs')}
-        />
-      )}
 
       {screen === 'editName' && (
         <NameScreen
@@ -610,18 +633,18 @@ function App(): React.JSX.Element {
           initial={userName}
           onDone={name => {
             setUserName(name);
-            setScreen('settings');
+            setScreen('tabs');
           }}
-          onCancel={() => setScreen('settings')}
+          onCancel={() => setScreen('tabs')}
         />
       )}
 
-      {screen === 'reminders' && <RemindersScreen onBack={() => setScreen('settings')} />}
+      {screen === 'reminders' && <RemindersScreen onBack={() => setScreen('tabs')} />}
 
       {/* SRS 4.12: the account and everything in it, deleted for good. */}
       {screen === 'deleteAccount' && (
         <DeleteAccountScreen
-          onBack={() => setScreen('settings')}
+          onBack={() => setScreen('tabs')}
           onDeleted={() => {
             setUserName(null);
             setTab('home');
@@ -634,7 +657,7 @@ function App(): React.JSX.Element {
       {screen === 'calm' && <CalmModule initial={calmStart} onExit={() => setScreen('tabs')} />}
 
       {screen === 'appLockSetup' && (
-        <SetAppLockScreen onDone={() => setScreen('settings')} />
+        <SetAppLockScreen onDone={() => setScreen('tabs')} />
       )}
 
       {screen === 'weeklyReport' && (
@@ -649,7 +672,7 @@ function App(): React.JSX.Element {
 
       {/* FR-CRIS-009: every screen without its own Get help link gets this one,
           including sign-in and onboarding. */}
-      {(SCREENS_WITHOUT_HELP.includes(screen) || (screen === 'tabs' && tab === 'library')) && <GetHelp />}
+      {(SCREENS_WITHOUT_HELP.includes(screen) || (screen === 'tabs' && TABS_WITHOUT_HELP.includes(tab))) && <GetHelp />}
     </SafeAreaProvider>
   );
 }

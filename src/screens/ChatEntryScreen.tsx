@@ -13,7 +13,6 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Footprints} from 'lucide-react-native';
 
-import Logo from '../components/Logo';
 import PrimaryButton from '../components/PrimaryButton';
 import Illustration from '../components/illustrations/Illustration';
 import ScreenBackground from '../components/ScreenBackground';
@@ -50,19 +49,10 @@ const CHAT_GREETING: EntryMessage = {
   role: 'ai',
   kind: 'chat',
   value_id: null,
-  content: "Hi, I'm Echo. What's on your mind? Type, or tap the mic and talk.",
+  content: "Hi, I'm Reframe. What's on your mind? Type, or tap the mic and talk.",
   sequence: 0,
   created_at: '',
 };
-
-// Ways to begin a blank chat. Tapping one sends it as the first message, in
-// the user's voice, so Echo answers it like anything typed.
-const CHAT_STARTERS = [
-  "I'm feeling anxious",
-  'I keep overthinking something',
-  'I had a hard day',
-  'I want to talk through a thought',
-];
 
 // Same limit as the server's message (MessageCreate).
 const MAX_MESSAGE = 5000;
@@ -83,9 +73,8 @@ type Props = {
   // A mood tapped on the home card: recorded as soon as the entry opens, so
   // she does not answer the same question twice.
   startMood?: number;
-  // The AI Chat tab calls leaving "New chat", and offers its own second action.
-  exitLabel?: string;
-  secondaryAction?: {label: string; onPress: () => void};
+  // AI Chat: a chat that has closed offers a new one instead of the way out.
+  onNewChat?: () => void;
   // AI Chat offers a grounding exercise before the first message.
   onOpenCalm?: () => void;
 };
@@ -100,8 +89,7 @@ export default function ChatEntryScreen({
   readOnly = false,
   startMood,
   onExit,
-  exitLabel,
-  secondaryAction,
+  onNewChat,
   onOpenCalm,
 }: Props) {
   const [entry, setEntry] = useState<EntryState | null>(null);
@@ -112,7 +100,7 @@ export default function ChatEntryScreen({
   const [resourcesOpen, setResourcesOpen] = useState(false);
   // FR-CRIS-007: emergency content stays until explicitly acknowledged.
   const [emergencyText, setEmergencyText] = useState<string | null>(null);
-  // A message on its way to Echo: shown at once, with Echo typing under it,
+  // A message on its way to Reframe: shown at once, with Reframe typing under it,
   // and kept with a retry if it could not be sent.
   const [pending, setPending] = useState<{text: string; failed: boolean} | null>(null);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
@@ -194,7 +182,7 @@ export default function ChatEntryScreen({
     run(() => submitCapture(entry.id, 'mood', startMood, false, false));
   }, [entry, startMood, busy, run]);
 
-  // One conversation message that Echo answers.
+  // One conversation message that Reframe answers.
   async function say(text: string) {
     setPending({text, failed: false});
     const next = await run(async () => {
@@ -256,7 +244,7 @@ export default function ChatEntryScreen({
       return (
         <TextComposer
           busy={busy}
-          placeholder="Message Echo…"
+          placeholder="Message Reframe…"
           maxLength={MAX_MESSAGE}
           onSend={say}
           voice
@@ -375,14 +363,14 @@ export default function ChatEntryScreen({
     }
 
     if (entry.conversation_status === 'active') {
-      // AI Chat: a plain chat. Voice messages go straight to Echo, and a chat
+      // AI Chat: a plain chat. Voice messages go straight to Reframe, and a chat
       // ends by starting a new one, so there is no End session control.
       const chat = entry.journal_type === 'chat';
       return (
         <View>
           <TextComposer
             busy={busy}
-            placeholder={chat ? 'Message Echo…' : undefined}
+            placeholder={chat ? 'Message Reframe…' : undefined}
             maxLength={MAX_MESSAGE}
             onSend={say}
             voice
@@ -426,11 +414,11 @@ export default function ChatEntryScreen({
           label={
             entry.journal_type !== 'chat'
               ? 'Return to dashboard'
-              : exitLabel
+              : onNewChat
               ? 'Start a new chat'
               : 'Back'
           }
-          onPress={onExit}
+          onPress={onNewChat ?? onExit}
         />
       </View>
     );
@@ -448,33 +436,30 @@ export default function ChatEntryScreen({
           paddingHorizontal: space.screen,
           paddingVertical: 12,
         }}>
-        {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept. */}
+        {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept.
+            AI Chat's header is only this and Get help: Exit goes back where she came from. */}
         <Pressable onPress={onExit} hitSlop={12}>
           <Text style={{...type.link, color: colors.inkSoft}}>
-            {exitLabel ?? (readOnly ? 'Back' : 'Leave')}
+            {journalType === 'chat' ? 'Exit' : readOnly ? 'Back' : 'Leave'}
           </Text>
         </Pressable>
         <View
           style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8}}>
-          {journalType === 'chat' ? <Logo size={24} /> : null}
-          <Text style={type.heading}>{JOURNAL_TITLES[journalType]}</Text>
+          {journalType !== 'chat' ? <Text style={type.heading}>{JOURNAL_TITLES[journalType]}</Text> : null}
         </View>
-        {secondaryAction ? (
-          <Pressable onPress={secondaryAction.onPress} hitSlop={12} style={{marginRight: 14}}>
-            <Text style={type.link}>{secondaryAction.label}</Text>
+        {/* Quick exit: one tap to a neutral page; the PIN is asked on return. */}
+        {journalType !== 'chat' ? (
+          <Pressable
+            onPress={() => {
+              onExit();
+              quickExit();
+            }}
+            hitSlop={12}
+            accessibilityLabel="Quick exit"
+            style={{marginRight: 14}}>
+            <Text style={{...type.link, color: colors.inkSoft}}>Exit</Text>
           </Pressable>
         ) : null}
-        {/* Quick exit: one tap to a neutral page; the PIN is asked on return. */}
-        <Pressable
-          onPress={() => {
-            onExit();
-            quickExit();
-          }}
-          hitSlop={12}
-          accessibilityLabel="Quick exit"
-          style={{marginRight: 14}}>
-          <Text style={{...type.link, color: colors.inkSoft}}>Exit</Text>
-        </Pressable>
         {/* FR-CRIS-009: crisis resources are always one tap away. */}
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>
@@ -495,10 +480,10 @@ export default function ChatEntryScreen({
           }}>
           {!entry && !error && !blankChat && <ActivityIndicator color={colors.sage} />}
 
-          {/* What Echo is, said plainly where every chat starts. */}
+          {/* What Reframe is, said plainly where every chat starts. */}
           {journalType === 'chat' && (
             <Text style={{...type.tiny, textAlign: 'center', lineHeight: 16, marginBottom: 14}}>
-              Echo is an AI support companion, not a therapist, and can get things wrong. If you
+              Reframe is an AI support companion, not a therapist, and can get things wrong. If you
               are in danger, tap Get help.
             </Text>
           )}
@@ -506,28 +491,6 @@ export default function ChatEntryScreen({
           {journalType === 'chat' && !readOnly && !entry?.messages.length && !pending && (
             <>
               <MessageBubble message={CHAT_GREETING} />
-              <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12}}>
-                {CHAT_STARTERS.map(starter => (
-                  <Pressable
-                    key={starter}
-                    onPress={() => say(starter)}
-                    disabled={busy}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Say: ${starter}`}
-                    style={({pressed}) => ({
-                      paddingHorizontal: 14,
-                      paddingVertical: 9,
-                      borderRadius: radius.pill,
-                      borderWidth: 1.5,
-                      borderColor: colors.accentSoft,
-                      backgroundColor: pressed ? colors.sageWash : colors.surface,
-                    })}>
-                    <Text style={{...type.small, fontFamily: font.semibold, color: colors.accent}}>
-                      {starter}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
               {onOpenCalm ? (
                 <Pressable
                   onPress={onOpenCalm}

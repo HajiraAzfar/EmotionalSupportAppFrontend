@@ -426,7 +426,7 @@ export default function DeckScreen({
                   : undefined
               }
               // Another way of reading the thought, if she asks for one. It is
-              // labelled as Echo's and goes nowhere near her answer.
+              // labelled as Reframe's and goes nowhere near her answer.
               perspective={
                 spec.value_id === PERSPECTIVE_AT && !editing
                   ? {text: perspective?.content ?? null, onAsk: perspectivePlease}
@@ -439,7 +439,7 @@ export default function DeckScreen({
     }
 
     // Everything is answered: what she put down, read back to her, and open to
-    // changes until Echo has read it. The weekly questionnaire is not read
+    // changes until Reframe has read it. The weekly questionnaire is not read
     // back item by item, and its answers stay as they were given. A slot
     // check-in is kept exactly as it was finished: its reports are made from it.
     const canChange = !entry.slot && !['active', 'closed'].includes(entry.conversation_status ?? '');
@@ -555,7 +555,7 @@ export default function DeckScreen({
               onPress={() => onContinueInThread(entry.id, journalType)}
               accessibilityRole="button"
               hitSlop={8}>
-              <Text style={{...type.link, textAlign: 'center'}}>Talk it through with Echo</Text>
+              <Text style={{...type.link, textAlign: 'center'}}>Talk it through with Reframe</Text>
             </Pressable>
           )}
         </View>

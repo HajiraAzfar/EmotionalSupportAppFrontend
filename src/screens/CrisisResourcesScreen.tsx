@@ -47,7 +47,7 @@ export default function CrisisResourcesScreen({onClose, intro, closeLabel = 'Clo
           <Text style={{...type.body, color: colors.ink, marginTop: 10}}>{intro}</Text>
         ) : null}
         <Text style={{...type.body, marginTop: 10, marginBottom: 24}}>
-          These services are free and separate from Echo. You can call any of
+          These services are free and separate from Reframe. You can call any of
           them right now.
         </Text>
 

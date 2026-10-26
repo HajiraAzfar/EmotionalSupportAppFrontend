@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ChevronRight, Footprints, LucideIcon, MessageCircle, Settings, Wind} from 'lucide-react-native';
+import {ChevronRight, Footprints, LucideIcon, MessageCircle, Wind} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {JOURNALS} from './JournalScreen';
@@ -21,7 +21,6 @@ type Props = {
   onResumeDraft: (draft: EntrySummary) => void;
   onOpenInsights: () => void;
   onOpenEntries: () => void;
-  onOpenSettings: () => void;
   // Calm opens on its own list, or on its pick-by-need list.
   onOpenCalm: (start?: 'groundYourself') => void;
   onOpenChat: () => void;
@@ -37,8 +36,9 @@ const LABELS: Partial<Record<JournalType, string>> = {
 };
 const QUICK = JOURNALS.filter(journal => LABELS[journal.type]);
 
-// Each journal card's soft fill. Check-in is the featured card and has its own.
+// Each quick action's soft fill, as on the brand board.
 const TINTS: Partial<Record<JournalType, {bg: string; icon: string}>> = {
+  check_in: cardTints[3],
   savouring: cardTints[2],
   thought: cardTints[0],
   exposure: cardTints[1],
@@ -116,7 +116,6 @@ export default function HomeScreen({
   onResumeDraft,
   onOpenInsights,
   onOpenEntries,
-  onOpenSettings,
   onOpenCalm,
   onOpenChat,
 }: Props) {
@@ -155,39 +154,33 @@ export default function HomeScreen({
   return (
     <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 24}}>
-        <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 12}}>
-          {/* FR-CRIS-009: crisis resources on every screen. */}
+        {/* Greeting: the time of day, the user's chosen name (if any), and the
+            date; crisis resources beside it (FR-CRIS-009). */}
+        <View style={{flexDirection: 'row', alignItems: 'flex-start', marginTop: 16}}>
+          <View style={{flex: 1}}>
+            <Text style={{...type.title, fontSize: 27}}>
+              {greeting(now)}
+              {name ? `, ${name}` : ''}
+            </Text>
+            <Text style={{...type.small, marginTop: 4}}>
+              {now.toLocaleDateString(undefined, {weekday: 'long', day: 'numeric', month: 'long'})}
+            </Text>
+          </View>
           <Pressable
             onPress={() => setResourcesOpen(true)}
             hitSlop={12}
             accessibilityRole="button"
-            style={{flex: 1}}>
+            style={{paddingTop: 6, paddingLeft: 12}}>
             <Text style={{...type.link, color: colors.alert}}>Get help</Text>
-          </Pressable>
-          <Pressable
-            onPress={onOpenSettings}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Settings">
-            <Settings size={22} color={colors.inkSoft} />
           </Pressable>
         </View>
 
-        {/* Greeting: the time of day, the user's chosen name (if any), and the date. */}
-        <Text style={{...type.display, marginTop: 14}}>
-          {greeting(now)}
-          {name ? `, ${name}` : ''}
-        </Text>
-        <Text style={{...type.small, marginTop: 4}}>
-          {now.toLocaleDateString(undefined, {weekday: 'long', day: 'numeric', month: 'long'})}
-        </Text>
-
-        {/* The day's gentle line, with the brand's lavender. */}
+        {/* The day's gentle line, with the brand's sage sprig. */}
         <View
           style={{
             marginTop: 18,
             borderRadius: radius.card,
-            backgroundImage: gradient.blush,
+            backgroundImage: gradient.lavender,
             borderWidth: 1,
             borderColor: colors.glassEdge,
             paddingVertical: 20,
@@ -232,16 +225,15 @@ export default function HomeScreen({
           </View>
         ) : null}
 
-        <SectionTitle>Journals</SectionTitle>
+        <SectionTitle>Quick actions</SectionTitle>
         <View
           style={{
             flexDirection: 'row',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
-            rowGap: 12,
+            rowGap: 10,
           }}>
           {QUICK.map(journal => {
-            const featured = journal.type === 'check_in';
             const tint = TINTS[journal.type];
             return (
               <Pressable
@@ -251,33 +243,35 @@ export default function HomeScreen({
                 accessibilityLabel={LABELS[journal.type]}
                 accessibilityHint={journal.blurb}
                 style={({pressed}) => ({
-                  width: '48%',
-                  minHeight: 132,
+                  width: '48.5%',
+                  minHeight: 96,
                   borderRadius: radius.card,
-                  padding: 14,
+                  padding: 12,
                   borderWidth: 1,
-                  borderColor: featured ? colors.sageWash : colors.glassEdge,
-                  backgroundImage: featured ? gradient.lavender : undefined,
-                  backgroundColor: featured ? undefined : tint?.bg,
+                  borderColor: colors.glassEdge,
+                  backgroundColor: tint?.bg,
                   opacity: pressed ? 0.85 : 1,
                   ...shadow.sm,
                 })}>
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: radius.pill,
-                    backgroundColor: featured ? colors.surface : tint?.icon,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <journal.Icon size={20} color={colors.accent} />
+                {/* Icon and name on one line, the blurb under them at full
+                    width: beside the icon it had room for two words a line. */}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: radius.pill,
+                      backgroundColor: tint?.icon,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <journal.Icon size={17} color={colors.accent} />
+                  </View>
+                  <Text style={{...type.label, fontSize: 14, flex: 1}} numberOfLines={2}>
+                    {LABELS[journal.type]}
+                  </Text>
                 </View>
-                <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 12}}>
-                  <Text style={{...type.label, flex: 1}}>{LABELS[journal.type]}</Text>
-                  <ChevronRight size={16} color={colors.inkFaint} />
-                </View>
-                <Text style={{...type.small, marginTop: 4}} numberOfLines={2}>
+                <Text style={{...type.tiny, fontSize: 12, marginTop: 8, lineHeight: 16}} numberOfLines={2}>
                   {journal.blurb}
                 </Text>
               </Pressable>
@@ -330,7 +324,7 @@ export default function HomeScreen({
 
         <Pressable onPress={onOpenEntries} style={{paddingVertical: 18, marginTop: 8}}>
           <Text style={{...type.link, fontFamily: font.semibold, textAlign: 'center'}}>
-            Your entries
+            History
           </Text>
         </Pressable>
       </ScrollView>

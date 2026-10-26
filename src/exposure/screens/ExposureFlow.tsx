@@ -262,7 +262,7 @@ export default function ExposureFlow({
   const modals = (
     <>
       <Modal visible={crisis !== null} transparent animationType="fade" onRequestClose={() => setCrisis(null)}>
-        <View style={{flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(48, 38, 59, 0.35)'}}>
+        <View style={{flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(46, 66, 50, 0.35)'}}>
           <View style={{backgroundColor: colors.surface, borderRadius: radius.card, padding: 20}}>
             <Text style={{...type.body, color: colors.ink}}>{crisis?.text}</Text>
             <View style={{marginTop: 16, gap: 10}}>

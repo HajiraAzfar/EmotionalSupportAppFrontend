@@ -38,7 +38,7 @@ const SLIDES: Slide[] = [
   },
   {
     title: 'Yours, and private',
-    body: 'Lock the app with a PIN, and leave it in one tap with quick exit. Mind Doc supports you; it is not a replacement for professional care.',
+    body: 'Lock the app with a PIN, and leave it in one tap with quick exit. Reframe supports you; it is not a replacement for professional care.',
     art: 'selfCompassion',
   },
 ];

@@ -37,7 +37,7 @@ export default function Chip({label, on, onPress, onLongPress, removable}: Props
         gap: 6,
         paddingHorizontal: 14,
         borderRadius: radius.pill,
-        // Picked: a soft lavender fill with a purple edge, as in the brand brief.
+        // Picked: a pale sage fill with a sage edge, as on the brand board.
         borderWidth: 1.5,
         borderColor: on ? colors.accent : colors.muted,
         backgroundColor: on ? colors.sageWash : colors.surface,
