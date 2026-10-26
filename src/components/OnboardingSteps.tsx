@@ -9,9 +9,9 @@ type Props = {
   total?: number;
 };
 
-// Where she is in setting the app up. Six screens is not many, but not knowing
+// Where she is in setting the app up. Five screens is not many, but not knowing
 // how many are left is what makes a form feel long.
-export default function OnboardingSteps({step, total = 6}: Props) {
+export default function OnboardingSteps({step, total = 5}: Props) {
   return (
     <FadeIn order={0}>
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18}}>

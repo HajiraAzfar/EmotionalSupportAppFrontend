@@ -5,6 +5,7 @@ import {Download} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import BackButton from '../components/BackButton';
+import Heatmap, {HeatmapLegend} from '../components/Heatmap';
 import BarChart from '../components/insights/BarChart';
 import CountGrid, {TRAP_ICONS} from '../components/insights/CountGrid';
 import CycleChart from '../components/insights/CycleChart';
@@ -16,11 +17,16 @@ import QuestionnaireForm from '../components/insights/QuestionnaireForm';
 import TrendChart from '../components/insights/TrendChart';
 import {JOURNAL_TITLES} from '../api/entries';
 import {listArticles} from '../api/library';
+import {STREAK as SHARED} from '../savoring/content';
+import {twelveWeeks} from '../savoring/screens/SavoringHome';
 import {
   CountRow,
   ExposureGroup,
   getInsights,
+  getJournalsHeatmap,
+  HeatmapJournal,
   Insights,
+  JournalsHeatmap,
   ItemTrend,
   Period,
   PERIODS,
@@ -42,6 +48,8 @@ type Props = {
   onOpenArticle: (slug: string) => void;
   // "Your Week in Reflection": the week read as a report rather than a dashboard.
   onOpenWeekly: () => void;
+  // The daily, weekly and monthly PDFs of all four journals.
+  onOpenReports: () => void;
   onBack: () => void;
 };
 
@@ -89,17 +97,73 @@ function NotEnough({needed, what, plural}: {needed: number; what: string; plural
   );
 }
 
+const USED: Record<HeatmapJournal, [string, string]> = {
+  check_in: ['check-in', 'check-ins'],
+  savoring: ['saving moment', 'saving moments'],
+  thought: ['thought record', 'thought records'],
+  exposure: ['exposure', 'exposures'],
+};
+
+function used(journals: Partial<Record<HeatmapJournal, number>>) {
+  const parts = (Object.keys(USED) as HeatmapJournal[])
+    .filter(j => journals[j])
+    .map(j => `${journals[j]} ${USED[j][journals[j] === 1 ? 0 : 1]}`);
+  return parts.length ? parts.join(' · ') : 'nothing written';
+}
+
+// The four journals in one heatmap, apart from the period control: a day is as
+// dark as the number of journals used on it, and a tap says what was in it.
+function JournalsCard() {
+  const [map, setMap] = useState<JournalsHeatmap | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+
+  useEffect(() => {
+    const {from, to} = twelveWeeks();
+    getJournalsHeatmap(from, to)
+      .then(setMap)
+      .catch(() => undefined);
+  }, []);
+
+  if (!map) {
+    return null;
+  }
+  const {current, best, total_days} = map.streak;
+  const day = map.days.find(d => d.date === picked);
+  return (
+    <Card title="All your journals" subtitle="The darker a day, the more of your journals you used on it.">
+      <Text style={type.label}>
+        {current
+          ? `${current} ${current === 1 ? 'day' : 'days'} in a row with an entry`
+          : total_days
+            ? `New start today. You've written on ${total_days} ${total_days === 1 ? 'day' : 'days'} so far.`
+            : 'Your first entry is waiting.'}
+      </Text>
+      <Text style={{...type.small, marginTop: 2, marginBottom: 12}}>
+        Best: {best} {best === 1 ? 'day' : 'days'}
+      </Text>
+      <Heatmap days={map.days} monthLabels onDayPress={setPicked} />
+      <View style={{marginTop: 8}}>
+        <HeatmapLegend less={SHARED.less} more={SHARED.more} />
+      </View>
+      {map.days.some(d => d.grace_day) ? <Text style={{...type.tiny, marginTop: 4}}>{SHARED.grace}</Text> : null}
+      {day ? (
+        <Text style={{...type.small, color: colors.ink, marginTop: 10}}>
+          {shortDate(day.date)}: {used(day.journals)}
+        </Text>
+      ) : null}
+    </Card>
+  );
+}
+
 // Module 4: days in a row, entries this month, and everything she has finished.
 // Facts only — nothing praises a streak or reproaches a broken one.
 function EntriesCard({streak, onStartEntry}: {streak: Streak; onStartEntry: () => void}) {
-  const goal = streak.weekly_goal;
+  const week = streak.days_this_week;
   return (
     <Card title="Total completed CBT entries">
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 18}}>
-        <ProgressRing
-          value={streak.total_entries}
-          fraction={goal ? Math.min(1, streak.days_this_week / goal) : 1}
-        />
+        {/* The ring fills with the days of this week, as on Home. */}
+        <ProgressRing value={streak.total_entries} fraction={week / 7} />
         <View style={{flex: 1, gap: 6}}>
           <Text style={type.body}>
             Entries this month: <Text style={{color: colors.ink}}>{streak.entries_this_month}</Text>
@@ -113,11 +177,9 @@ function EntriesCard({streak, onStartEntry}: {streak: Streak; onStartEntry: () =
           {streak.longest > streak.current ? (
             <Text style={type.small}>Your longest so far is {streak.longest} days.</Text>
           ) : null}
-          {goal ? (
-            <Text style={type.small}>
-              This week: {streak.days_this_week} of {goal} {goal === 1 ? 'day' : 'days'}
-            </Text>
-          ) : null}
+          <Text style={type.small}>
+            This week: {week} of 7 days
+          </Text>
         </View>
       </View>
 
@@ -335,7 +397,7 @@ function Exposure({group}: {group: ExposureGroup}) {
 
 // SRS 4.10: every view describes what she recorded — nothing here explains,
 // predicts, recommends, or compares her with anyone else (FR-INS-020, FR-INS-022).
-export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle, onOpenWeekly, onBack}: Props) {
+export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle, onOpenWeekly, onOpenReports, onBack}: Props) {
   const [period, setPeriod] = useState<Period>(rememberedPeriod());
   const [data, setData] = useState<Insights | null>(null);
   const [error, setError] = useState('');
@@ -406,6 +468,8 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
           not diagnose or judge.
         </Text>
 
+        <JournalsCard />
+
         {/* The week, read as a report. The views below stay as they are: this
             is a different way in, not a replacement for them. */}
         <Pressable
@@ -423,6 +487,23 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
             A little time to understand what your week was really like.
           </Text>
           <Text style={{...type.link, marginTop: 10}}>Open this week</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={onOpenReports}
+          accessibilityRole="button"
+          style={({pressed}) => ({
+            ...glass,
+            borderRadius: radius.card,
+            padding: 16,
+            marginBottom: 18,
+            opacity: pressed ? 0.85 : 1,
+          })}>
+          <Text style={type.heading}>Reports</Text>
+          <Text style={{...type.small, marginTop: 4}}>
+            A PDF of each day, week and month, with all four of your journals.
+          </Text>
+          <Text style={{...type.link, marginTop: 10}}>Open reports</Text>
         </Pressable>
 
         {/* FR-INS-001: one control, applied to every view below. */}

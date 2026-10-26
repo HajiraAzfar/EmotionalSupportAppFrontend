@@ -10,7 +10,6 @@ import DistressScreen from './src/screens/DistressScreen';
 import EntriesScreen from './src/screens/EntriesScreen';
 import FocusAreasScreen from './src/screens/FocusAreasScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
-import GoalScreen from './src/screens/GoalScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import IntroScreen from './src/screens/IntroScreen';
 import LifeVisionScreen from './src/screens/LifeVisionScreen';
@@ -66,7 +65,6 @@ type Screen =
   | 'workIssues'
   | 'lifeVision'
   | 'distress'
-  | 'goal'
   | 'tabs'
   | 'journal'
   | 'entries'
@@ -86,7 +84,7 @@ type Screen =
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
   'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
-  'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'goal', 'article',
+  'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'article',
   'appLockSetup', 'settings', 'calm', 'intro', 'name', 'editName', 'deleteAccount',
   'reminders',
 ];
@@ -130,6 +128,8 @@ function App(): React.JSX.Element {
   }
   // SRS 4.11: which article the reader screen is showing.
   const [articleSlug, setArticleSlug] = useState('');
+  // The reports open from the check-ins list and from Insights; back goes to whichever it was.
+  const [reportsBack, setReportsBack] = useState<Screen>('checkins');
   // Which of the four areas is showing. The tab bar is the only way between them.
   const [tab, setTab] = useState<Tab>('home');
   // Where Calm opens: its own list, or straight into an exercise (Home's quick tools).
@@ -361,10 +361,8 @@ function App(): React.JSX.Element {
       )}
 
       {screen === 'distress' && (
-        <DistressScreen onContinue={() => setScreen('goal')} />
+        <DistressScreen onContinue={() => setScreen('tabs')} />
       )}
-
-      {screen === 'goal' && <GoalScreen onContinue={() => setScreen('tabs')} />}
 
       {/* The four areas of the app, with the tab bar pinned under them. */}
       {screen === 'tabs' && (
@@ -430,6 +428,10 @@ function App(): React.JSX.Element {
                   setScreen('journal');
                 }}
                 onOpenWeekly={() => setScreen('weeklyReport')}
+                onOpenReports={() => {
+                  setReportsBack('tabs');
+                  setScreen('checkinReports');
+                }}
               />
             )}
 
@@ -551,15 +553,18 @@ function App(): React.JSX.Element {
               setJournal({journalType: 'check_in', entryId, readOnly: true, returnTo: 'checkins'});
               setScreen('journal');
             }}
-            onOpenReports={() => setScreen('checkinReports')}
+            onOpenReports={() => {
+              setReportsBack('checkins');
+              setScreen('checkinReports');
+            }}
           />
         </ErrorBoundary>
       )}
 
-      {/* The check-in reports: a finished day, week or month, as a PDF. */}
+      {/* The reports: a finished day, week or month of all four journals, as a PDF. */}
       {screen === 'checkinReports' && (
         <ErrorBoundary>
-          <CheckInReportsScreen onBack={() => setScreen('checkins')} />
+          <CheckInReportsScreen onBack={() => setScreen(reportsBack)} />
         </ErrorBoundary>
       )}
 

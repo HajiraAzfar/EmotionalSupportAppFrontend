@@ -69,7 +69,6 @@ export interface Streak {
   today: boolean;
   week_start: string;
   days_this_week: number;
-  weekly_goal: number | null;
   // Entries, not days: everything she has ever finished, and this month's share.
   total_entries: number;
   entries_this_month: number;
@@ -216,8 +215,31 @@ export function downloadReport(period: Period): Promise<string> {
   );
 }
 
-// The check-in reports: a day once it is over (05:00 the next morning), a
-// week (Monday to Sunday) the Monday after, a month on the 1st.
+// The four journals in one heatmap: a day's points are how many of them were
+// used on it, and `journals` says how many entries each had.
+export type HeatmapJournal = 'check_in' | 'savoring' | 'thought' | 'exposure';
+
+export interface JournalsHeatmap {
+  days: {
+    date: string;
+    points: number;
+    level: 0 | 1 | 2 | 3;
+    grace_day: boolean;
+    journals: Partial<Record<HeatmapJournal, number>>;
+  }[];
+  streak: {current: number; best: number; total_days: number; today_counted: boolean};
+}
+
+export async function getJournalsHeatmap(from: string, to: string): Promise<JournalsHeatmap> {
+  const token = await getAccessToken();
+  const tzOffset = -new Date().getTimezoneOffset();
+  return apiRequest(`/insights/heatmap?from=${from}&to=${to}&tz_offset=${tzOffset}`, {
+    token: token ?? undefined,
+  });
+}
+
+// The reports, all four journals in each: a day once it is over (05:00 the
+// next morning), a week (Monday to Sunday) the Monday after, a month on the 1st.
 export type CheckInReportKind = 'daily' | 'weekly' | 'monthly';
 
 export interface CheckInReportItem {
@@ -225,7 +247,8 @@ export interface CheckInReportItem {
   start: string;
   end: string;
   title: string;
-  check_ins: number;
+  // Finished entries across the four journals.
+  entries: number;
 }
 
 export interface CheckInReports {

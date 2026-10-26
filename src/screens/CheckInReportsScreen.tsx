@@ -19,12 +19,13 @@ type Props = {
 };
 
 const key = (item: CheckInReportItem) => `${item.kind}-${item.start}`;
-const counted = (n: number) => `${n} check-in${n === 1 ? '' : 's'}`;
+const counted = (n: number) => `${n} ${n === 1 ? 'entry' : 'entries'}`;
 
 /**
- * The check-in reports, each a PDF saved to Downloads: yesterday's on top
- * (until today is over), then every finished week, month and day. A report
- * appears only once its period is over, so it never changes afterwards.
+ * The reports, each a PDF of all four journals saved to Downloads:
+ * yesterday's on top (until today is over), then every finished week, month
+ * and day. A report appears only once its period is over, so it never changes
+ * afterwards.
  */
 export default function CheckInReportsScreen({onBack}: Props) {
   const [reports, setReports] = useState<CheckInReports | null>(null);
@@ -79,7 +80,7 @@ export default function CheckInReportsScreen({onBack}: Props) {
           })}>
           <View style={{flex: 1}}>
             <Text style={type.label}>{item.title}</Text>
-            <Text style={type.small}>{counted(item.check_ins)}</Text>
+            <Text style={type.small}>{counted(item.entries)}</Text>
           </View>
           {busy === id ? <ActivityIndicator color={colors.accent} /> : <Download size={18} color={colors.accent} />}
         </Pressable>
@@ -118,9 +119,9 @@ export default function CheckInReportsScreen({onBack}: Props) {
           Reports
         </Text>
         <Text style={{...type.body, marginTop: 6}}>
-          Your check-ins as a PDF, with charts and what stood out. A day's report is ready the
-          next morning at 5, a week's on Monday, a month's on the 1st. Each is saved to your
-          Downloads.
+          One PDF for all your journals: check-ins, good moments, thought records and exposures,
+          with charts and what stood out. A day's report is ready the next morning at 5, a week's
+          on Monday, a month's on the 1st. Each is saved to your Downloads.
         </Text>
 
         {error ? (
@@ -144,9 +145,9 @@ export default function CheckInReportsScreen({onBack}: Props) {
               }}>
               <Text style={type.tiny}>YESTERDAY</Text>
               <Text style={{...type.heading, marginTop: 4}}>{latest.title}</Text>
-              {latest.check_ins ? (
+              {latest.entries ? (
                 <>
-                  <Text style={{...type.small, marginTop: 4}}>{counted(latest.check_ins)}</Text>
+                  <Text style={{...type.small, marginTop: 4}}>{counted(latest.entries)}</Text>
                   <Pressable
                     onPress={() => save(latest)}
                     disabled={busy !== null}
@@ -179,24 +180,24 @@ export default function CheckInReportsScreen({onBack}: Props) {
                   ) : null}
                 </>
               ) : (
-                <Text style={{...type.small, marginTop: 4}}>No check-ins that day, so there is no report.</Text>
+                <Text style={{...type.small, marginTop: 4}}>Nothing was written that day, so there is no report.</Text>
               )}
             </View>
 
             {section(
               'Weekly',
               reports.weekly,
-              'The first one comes the Monday after a week with a check-in.',
+              'The first one comes the Monday after a week with an entry.',
             )}
             {section(
               'Monthly',
               reports.monthly,
-              'The first one comes on the 1st after a month with a check-in.',
+              'The first one comes on the 1st after a month with an entry.',
             )}
             {section(
               'Daily',
               reports.daily.filter(item => item.start !== latest.start),
-              'Earlier days with a check-in will be listed here.',
+              'Earlier days with an entry will be listed here.',
             )}
             <Text style={{...type.small, marginTop: 20}}>
               These are patterns in what you wrote, not a diagnosis.
