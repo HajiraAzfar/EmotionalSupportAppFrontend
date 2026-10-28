@@ -151,6 +151,28 @@ export default function ChatEntryScreen({
   // and leaving again leaves nothing behind.
   const blankChat = journalType === 'chat' && !entryId;
 
+  // AI Chat: ending closes the chat on the server (it stays in History, every
+  // message kept); the next time AI Chat opens, it starts blank.
+  const [endedByHer, setEndedByHer] = useState(false);
+  const endChat = () =>
+    Alert.alert('End this chat?', "It's saved in History. You can start a new chat any time.", [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'End & save',
+        onPress: async () => {
+          if (entry && (await run(() => chooseConversation(entry.id, 'end')))) {
+            setEndedByHer(true);
+          }
+        },
+      },
+    ]);
+  // A new chat ends this one first, so it is saved and never reopened by mistake.
+  const startNewChat = async () => {
+    if (entry && (await run(() => chooseConversation(entry.id, 'end')))) {
+      onNewChat?.();
+    }
+  };
+
   const load = useCallback(() => {
     if (blankChat) {
       return;
@@ -362,9 +384,15 @@ export default function ChatEntryScreen({
     }
 
     if (entry.conversation_status === 'active') {
-      // AI Chat: a plain chat. Voice messages go straight to Reframe, and a chat
-      // ends by starting a new one, so there is no End session control.
+      // AI Chat: a plain chat. Voice messages go straight to Reframe. Under the
+      // composer, where journals keep End session, two quiet links: start a new
+      // chat, or end this one. Either way every message stays saved in History.
       const chat = entry.journal_type === 'chat';
+      const link = (label: string, onPress: () => void) => (
+        <Pressable onPress={onPress} disabled={busy} hitSlop={10} style={{opacity: busy ? 0.5 : 1}}>
+          <Text style={{...type.link, textAlign: 'center'}}>{label}</Text>
+        </Pressable>
+      );
       return (
         <View>
           <TextComposer
@@ -375,13 +403,15 @@ export default function ChatEntryScreen({
             voice
             voiceSends={chat}
           />
-          {!chat && (
-            <Pressable
-              onPress={() => run(() => chooseConversation(entry.id, 'end'))}
-              disabled={busy}
-              style={{paddingTop: 12}}>
-              <Text style={{...type.link, textAlign: 'center'}}>End session</Text>
-            </Pressable>
+          {chat ? (
+            <View style={{flexDirection: 'row', justifyContent: 'center', gap: 28, paddingTop: 12}}>
+              {onNewChat && link('New chat', startNewChat)}
+              {link('End & save', endChat)}
+            </View>
+          ) : (
+            <View style={{paddingTop: 12}}>
+              {link('End session', () => run(() => chooseConversation(entry.id, 'end')))}
+            </View>
           )}
         </View>
       );
@@ -408,6 +438,11 @@ export default function ChatEntryScreen({
             })}>
             <Text style={{...type.label, color: colors.accent}}>Try this again</Text>
           </Pressable>
+        )}
+        {endedByHer && (
+          <Text style={{...type.small, color: colors.inkSoft, textAlign: 'center', marginBottom: 12}}>
+            This chat is saved in History.
+          </Text>
         )}
         <PrimaryButton
           label={
