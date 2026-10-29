@@ -116,3 +116,9 @@ test('End & save asks first, then closes the chat and says it is saved', async (
   expect(allText(root)).toContain('Start a new chat');
   alert.mockRestore();
 });
+
+test('the keyboard pushes the composer up on Android too (edge-to-edge stops adjustResize)', async () => {
+  const {KeyboardAvoidingView} = require('react-native');
+  const root = await openActive();
+  expect(root.findByType(KeyboardAvoidingView).props.behavior).toBe('padding');
+});

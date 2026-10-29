@@ -4,7 +4,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -406,7 +405,8 @@ function CheckIn({startMood, onExit, onOpenChat}: Props) {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* Padding on Android too: edge-to-edge stops adjustResize, so the keyboard would cover the note. */}
+      <KeyboardAvoidingView style={{flex: 1}} behavior="padding">
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{paddingHorizontal: space.screen, paddingTop: 16, paddingBottom: 24}}>

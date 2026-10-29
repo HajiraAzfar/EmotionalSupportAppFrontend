@@ -2,9 +2,9 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -146,6 +146,16 @@ export default function ChatEntryScreen({
     },
     [handleCrisisEvent, journalType],
   );
+
+  // The composer is the last thing in the thread: when the keyboard opens, scroll
+  // so she can see what she is typing.
+  useEffect(() => {
+    if (readOnly) {
+      return;
+    }
+    const shown = Keyboard.addListener('keyboardDidShow', () => scrollRef.current?.scrollToEnd({animated: true}));
+    return () => shown.remove();
+  }, [readOnly]);
 
   // A new AI Chat is only created with her first message, so opening the tab
   // and leaving again leaves nothing behind.
@@ -488,9 +498,9 @@ export default function ChatEntryScreen({
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* Padding on Android too: with edge-to-edge on, Android no longer shrinks the
+          window for the keyboard (adjustResize), so it would cover the composer. */}
+      <KeyboardAvoidingView style={{flex: 1}} behavior="padding">
         <ScrollView
           ref={scrollRef}
           onContentSizeChange={() => !readOnly && scrollRef.current?.scrollToEnd({animated: true})}
