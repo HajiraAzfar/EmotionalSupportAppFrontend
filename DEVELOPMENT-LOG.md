@@ -1,5 +1,7 @@
 # Development Log — Echo
 
+> A record of the auth and onboarding work up to mid-September 2026; not updated since. The current log is `DEVLOG.md`, one folder up.
+
 Implementation record for SRS-ESC-001 v0.9.
 
 Kept in the repository root and updated at the end of each working session. Its
