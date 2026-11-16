@@ -9,6 +9,7 @@ import {AppState, BackHandler, StyleSheet, Text} from 'react-native';
 import ReactTestRenderer, {ReactTestInstance} from 'react-test-renderer';
 
 import CalmModule from '../src/calm/CalmModule';
+import {petals} from '../src/calm/theme';
 import {
   initialState,
   PATTERNS,
@@ -246,9 +247,15 @@ describe('CalmModule', () => {
     });
     await act(async () => pressable(root.root, 'Breathing').props.onPress());
     expect(allText(root.root)).toContain('About 3 min');
-    // The circle fills its box; without that it has no size and never shows.
-    const circle = root.root.findAll(n => n.props.importantForAccessibility === 'no-hide-descendants')[0];
-    expect(StyleSheet.flatten(circle.props.style)).toMatchObject({position: 'absolute', top: 0, bottom: 0});
+    // The flower has a size of its own and six petals; without a size it never shows.
+    const flower = root.root.findAll(n => n.props.importantForAccessibility === 'no-hide-descendants')[0];
+    const box = StyleSheet.flatten(flower.props.style);
+    expect(box.width).toBeGreaterThan(0);
+    expect(box.height).toBeGreaterThan(0);
+    const petalViews = flower.findAll(
+      n => typeof n.type === 'string' && petals.includes(StyleSheet.flatten(n.props.style)?.backgroundColor),
+    );
+    expect(petalViews).toHaveLength(6);
 
     await act(async () => pressable(root.root, 'Start').props.onPress());
     expect(allText(root.root)).toContain('Breathe in');

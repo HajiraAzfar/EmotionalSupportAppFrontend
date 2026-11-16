@@ -4,7 +4,9 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Heart} from 'lucide-react-native';
 
 import BackButton from '../../components/BackButton';
+import Flashcard from '../../components/Flashcard';
 import PrimaryButton from '../../components/PrimaryButton';
+import SavedMark from '../../components/SavedMark';
 import ScreenBackground from '../../components/ScreenBackground';
 import Chip from '../../components/chat/Chip';
 import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
@@ -361,13 +363,14 @@ export default function CaptureFlow({
     const full = saved?.day?.at_cap;
     return (
       <SafeAreaView style={{flex: 1}}>
-        <ScreenBackground />
+        <ScreenBackground leaves />
         {header}
         <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}}>
           {refusal ? (
             <Text style={{...type.heading, marginTop: 20}}>{refusal}</Text>
           ) : (
             <>
+              <SavedMark />
               <Text accessibilityRole="header" style={{...type.title, marginTop: 12}}>
                 {DONE.title}
               </Text>
@@ -429,11 +432,12 @@ export default function CaptureFlow({
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       {header}
       <ScrollView
         contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}}
         keyboardShouldPersistTaps="handled">
+        <Flashcard journal="savouring" cardKey={step} first={step === 'what'}>
         {step === 'what' ? (
           <>
             {offer ? (
@@ -627,6 +631,8 @@ export default function CaptureFlow({
             ) : null}
           </>
         ) : null}
+
+        </Flashcard>
 
         {error ? <Text style={{...type.small, color: colors.alert, marginTop: 16}}>{error}</Text> : null}
 

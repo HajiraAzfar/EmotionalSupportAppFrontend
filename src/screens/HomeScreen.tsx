@@ -1,17 +1,17 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {Image, ImageSourcePropType, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ChevronRight, Footprints, LucideIcon, MessageCircle, Wind} from 'lucide-react-native';
+import {ChevronRight} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
 import {JOURNALS} from './JournalScreen';
-import {brandImages} from '../assets/brand';
+import {illustrations} from '../assets/brand';
 import {calm} from '../calm/content';
-import ProgressRing from '../components/insights/ProgressRing';
+import MoodFace from '../components/MoodFace';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
 import {Insights, getInsights} from '../api/insights';
 import {getAccessToken} from '../storage/tokens';
-import {cardTints, colors, glass, gradient, radius, shadow, space, type} from '../theme';
+import {colors, font, glass, gradient, moodColours, moodDeep, radius, shadow, space, type} from '../theme';
 
 type Props = {
   // What the user asked to be called, if anything.
@@ -19,29 +19,28 @@ type Props = {
   onSignedOut: () => void;
   onStartJournal: (journalType: JournalType) => void;
   onResumeDraft: (draft: EntrySummary) => void;
-  onOpenInsights: () => void;
+  // A face tapped on the mood card: start the check-in open now with that mood.
+  onCheckInMood: (mood: number) => void;
+  onOpenWeekly: () => void;
+  onOpenProfile: () => void;
+  onOpenLibrary: () => void;
   // Calm opens on its own list, or on its pick-by-need list.
   onOpenCalm: (start?: 'groundYourself') => void;
   onOpenChat: () => void;
 };
 
-// The brand brief's names for the four structured journals on Home. Free
-// write stays in the Journal tab.
+const MOODS = ['Very low', 'Low', 'Okay', 'Good', 'Very good'];
+
+// The brand brief's names for the three journals with their own tile. The
+// check-in starts from the mood card above them.
 const LABELS: Partial<Record<JournalType, string>> = {
-  check_in: 'Check-in',
-  savouring: 'Saving Journal',
   thought: 'Thought Journal',
+  savouring: 'Saving Journal',
   exposure: 'Exposure Journal',
 };
-const QUICK = JOURNALS.filter(journal => LABELS[journal.type]);
-
-// Each quick action's soft fill, as on the brand board.
-const TINTS: Partial<Record<JournalType, {bg: string; icon: string}>> = {
-  check_in: cardTints[3],
-  savouring: cardTints[2],
-  thought: cardTints[0],
-  exposure: cardTints[1],
-};
+const TILE_JOURNALS = (['thought', 'savouring', 'exposure'] as JournalType[]).map(
+  t => JOURNALS.find(j => j.type === t)!,
+);
 
 // One gentle line a day, the same all day. Written, not generated, so nothing
 // on Home pretends to know how the user is feeling.
@@ -67,6 +66,8 @@ function greeting(date: Date) {
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 }
 
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 function SectionTitle({children}: {children: string}) {
   return (
     <Text accessibilityRole="header" style={{...type.heading, marginTop: 26, marginBottom: 12}}>
@@ -75,36 +76,99 @@ function SectionTitle({children}: {children: string}) {
   );
 }
 
-function QuickTool({label, Icon, onPress}: {label: string; Icon: LucideIcon; onPress: () => void}) {
+function Tile({
+  label,
+  hint,
+  image,
+  onPress,
+}: {
+  label: string;
+  hint?: string;
+  image: ImageSourcePropType;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       style={({pressed}) => ({
         ...glass,
-        flex: 1,
+        width: '31.5%',
         alignItems: 'center',
         paddingVertical: 14,
-        paddingHorizontal: 4,
+        paddingHorizontal: 6,
         borderRadius: radius.card,
         backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
       })}>
-      <View
+      <Image source={image} resizeMode="contain" accessible={false} style={{width: 56, height: 56}} />
+      <Text
+        numberOfLines={2}
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: radius.pill,
-          backgroundColor: colors.sageWash,
-          alignItems: 'center',
-          justifyContent: 'center',
+          fontFamily: font.semibold,
+          fontSize: 12,
+          lineHeight: 16,
+          color: colors.ink,
+          marginTop: 8,
+          textAlign: 'center',
         }}>
-        <Icon size={20} color={colors.accent} />
-      </View>
-      <Text style={{...type.tiny, color: colors.ink, marginTop: 8, textAlign: 'center'}} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
+  );
+}
+
+// The last seven days as small bars: taller for more entries, in the day's mood colour.
+const TRACK = 46;
+
+// The last seven days, today on the right: a soft track per day, filled from
+// the bottom by how many entries it had (a third each, full at three), in the
+// day's mood colour. Today's letter is darker, so "T T S S" can't be misread.
+function WeekBars({days}: {days: {date: string; mood: number | null; entries: number}[]}) {
+  const today = days[days.length - 1]?.date;
+  return (
+    <View testID="week-bars" style={{flexDirection: 'row', alignItems: 'flex-end', gap: 6}} accessible={false}>
+      {days.map(day => {
+        const mood = day.mood ? Math.round(day.mood) - 1 : null;
+        const fill = Math.min(day.entries, 3) / 3;
+        const isToday = day.date === today;
+        return (
+          <View key={day.date} style={{alignItems: 'center', gap: 6}}>
+            <View
+              style={{
+                width: 11,
+                height: TRACK,
+                borderRadius: radius.pill,
+                backgroundColor: colors.accentWash,
+                justifyContent: 'flex-end',
+                overflow: 'hidden',
+              }}>
+              {fill ? (
+                <View
+                  style={{
+                    height: Math.max(TRACK * fill, 14),
+                    borderRadius: radius.pill,
+                    backgroundImage:
+                      mood === null
+                        ? `linear-gradient(180deg, ${colors.accentLight}, ${colors.sage})`
+                        : `linear-gradient(180deg, ${moodDeep[mood]}, ${moodColours[mood]})`,
+                  }}
+                />
+              ) : null}
+            </View>
+            <Text
+              style={{
+                ...type.tiny,
+                fontSize: 10,
+                ...(isToday ? {fontFamily: font.semibold, color: colors.ink} : null),
+              }}>
+              {new Date(`${day.date}T12:00`).toLocaleDateString(undefined, {weekday: 'narrow'})}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -113,32 +177,30 @@ export default function HomeScreen({
   onSignedOut,
   onStartJournal,
   onResumeDraft,
-  onOpenInsights,
+  onCheckInMood,
+  onOpenWeekly,
+  onOpenProfile,
+  onOpenLibrary,
   onOpenCalm,
   onOpenChat,
 }: Props) {
   const [draft, setDraft] = useState<EntrySummary | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
-  const [loading, setLoading] = useState(true);
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
   const load = useCallback(async () => {
-    try {
-      if (!(await getAccessToken())) {
-        onSignedOut();
-        return;
-      }
-      // FR-HOME-002: offer the most recent draft touched within 7 days.
-      const [drafts, summary] = await Promise.all([
-        listRecentDrafts().catch(() => []),
-        getInsights('7d').catch(() => null),
-      ]);
-      // A chat is carried on from the AI Chat tab, not offered as a draft here.
-      setDraft(drafts.find(d => d.journal_type !== 'chat') ?? null);
-      setInsights(summary);
-    } finally {
-      setLoading(false);
+    if (!(await getAccessToken())) {
+      onSignedOut();
+      return;
     }
+    // FR-HOME-002: offer the most recent draft touched within 7 days.
+    const [drafts, summary] = await Promise.all([
+      listRecentDrafts().catch(() => []),
+      getInsights('7d').catch(() => null),
+    ]);
+    // A chat is carried on from the AI Chat tab, not offered as a draft here.
+    setDraft(drafts.find(d => d.journal_type !== 'chat') ?? null);
+    setInsights(summary);
   }, [onSignedOut]);
 
   useEffect(() => {
@@ -148,55 +210,85 @@ export default function HomeScreen({
   const now = new Date();
   const message = DAILY_MESSAGES[dayOfYear(now) % DAILY_MESSAGES.length];
   const days = insights?.streak.days_this_week ?? 0;
+  // The server lists only days with an entry, so the seven days are laid out
+  // here and an empty day is a grey bar.
+  const byDate = new Map((insights?.calendar?.days ?? []).map(d => [d.date, d]));
+  const week = insights
+    ? Array.from({length: 7}, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6 + i);
+        const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return byDate.get(date) ?? {date, mood: null, entries: 0};
+      })
+    : [];
 
   return (
     <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 24}}>
-        {/* Greeting: the time of day, the user's chosen name (if any), and the
-            date; crisis resources beside it (FR-CRIS-009). */}
-        <View style={{flexDirection: 'row', alignItems: 'flex-start', marginTop: 16}}>
-          <View style={{flex: 1}}>
-            <Text style={{...type.title, fontSize: 27}}>
-              {greeting(now)}
-              {name ? `, ${name}` : ''}
-            </Text>
-            <Text style={{...type.small, marginTop: 4}}>
-              {now.toLocaleDateString(undefined, {weekday: 'long', day: 'numeric', month: 'long'})}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => setResourcesOpen(true)}
-            hitSlop={12}
-            accessibilityRole="button"
-            style={{paddingTop: 6, paddingLeft: 12}}>
+        {/* The date, with crisis resources beside it (FR-CRIS-009). */}
+        <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 14}}>
+          <Text style={{...type.tiny, letterSpacing: 1.2, flex: 1}}>
+            {now.toLocaleDateString(undefined, {weekday: 'long', day: 'numeric', month: 'long'}).toUpperCase()}
+          </Text>
+          <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12} accessibilityRole="button">
             <Text style={{...type.link, color: colors.alert}}>Get help</Text>
           </Pressable>
         </View>
 
-        {/* The day's gentle line, with the brand's sage sprig. */}
-        <View
-          style={{
-            marginTop: 18,
-            borderRadius: radius.card,
-            backgroundImage: gradient.lavender,
-            borderWidth: 1,
-            borderColor: colors.glassEdge,
-            paddingVertical: 20,
-            paddingLeft: 18,
-            paddingRight: 86,
-            overflow: 'hidden',
-            ...shadow.sm,
-          }}>
-          <Text style={{...type.tiny, letterSpacing: 1.5}}>FOR TODAY</Text>
-          <Text style={{...type.heading, fontSize: 18, lineHeight: 26, marginTop: 6}}>
-            “{message}”
-          </Text>
-          <Image
-            source={brandImages.lavender}
-            resizeMode="contain"
-            accessible={false}
-            style={{position: 'absolute', right: 10, bottom: -6, width: 64, height: 120}}
-          />
+        {/* Greeting: the time of day, the chosen name (if any), and the day's line. */}
+        <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 14}}>
+          <View style={{flex: 1}}>
+            <Text style={{...type.title, fontSize: 27}}>
+              {greeting(now)}
+              {name ? `, ${capitalise(name)}` : ''}
+            </Text>
+            <Text style={{...type.body, marginTop: 4}}>{message}</Text>
+          </View>
+          <Pressable
+            onPress={onOpenProfile}
+            accessibilityRole="button"
+            accessibilityLabel="Profile and settings"
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: radius.pill,
+              backgroundColor: colors.sageWash,
+              borderWidth: 2,
+              borderColor: colors.surface,
+              alignItems: 'center',
+              justifyContent: 'center',
+              ...shadow.sm,
+            }}>
+            <Text style={{fontFamily: font.serifBold, fontSize: 20, color: colors.accent}}>
+              {name ? capitalise(name).charAt(0) : '·'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* The check-in, one tap away: the face is its first answer. */}
+        <View style={{...glass, borderRadius: radius.card, padding: 16, marginTop: 20}}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text accessibilityRole="header" style={{...type.heading, fontSize: 17, flex: 1}}>
+              How are you feeling today?
+            </Text>
+            <Pressable onPress={() => onStartJournal('check_in')} hitSlop={10} accessibilityRole="button">
+              <Text style={type.link}>Check-ins</Text>
+            </Pressable>
+          </View>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 14}}>
+            {MOODS.map((label, i) => (
+              <Pressable
+                key={label}
+                onPress={() => onCheckInMood(i + 1)}
+                accessibilityRole="button"
+                accessibilityLabel={`Check in: ${label}`}
+                style={({pressed}) => ({alignItems: 'center', width: '19%', opacity: pressed ? 0.7 : 1})}>
+                <MoodFace level={i + 1} size={46} />
+                <Text style={{...type.tiny, marginTop: 6, textAlign: 'center'}} numberOfLines={1}>
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         {/* FR-HOME-002 */}
@@ -223,102 +315,92 @@ export default function HomeScreen({
           </View>
         ) : null}
 
-        <SectionTitle>Quick actions</SectionTitle>
-        <View
-          style={{
+        {/* Module 4: the week, stated and not celebrated. The count shows only
+            once it has loaded, so a slow network never reads as 0 days. */}
+        <Pressable
+          onPress={onOpenWeekly}
+          accessibilityRole="button"
+          accessibilityLabel={`Your week in reflection. ${days} of 7 days with an entry. Opens the report.`}
+          style={({pressed}) => ({
             flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            rowGap: 10,
-          }}>
-          {QUICK.map(journal => {
-            const tint = TINTS[journal.type];
-            return (
-              <Pressable
-                key={journal.type}
-                onPress={() => onStartJournal(journal.type)}
-                accessibilityRole="button"
-                accessibilityLabel={LABELS[journal.type]}
-                accessibilityHint={journal.blurb}
-                style={({pressed}) => ({
-                  width: '48.5%',
-                  minHeight: 96,
-                  borderRadius: radius.card,
-                  padding: 12,
-                  borderWidth: 1,
-                  borderColor: colors.glassEdge,
-                  backgroundColor: tint?.bg,
-                  opacity: pressed ? 0.85 : 1,
-                  ...shadow.sm,
-                })}>
-                {/* Icon and name on one line, the blurb under them at full
-                    width: beside the icon it had room for two words a line. */}
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: radius.pill,
-                      backgroundColor: tint?.icon,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    <journal.Icon size={17} color={colors.accent} />
-                  </View>
-                  <Text style={{...type.label, fontSize: 14, flex: 1}} numberOfLines={2}>
-                    {LABELS[journal.type]}
-                  </Text>
-                </View>
-                <Text style={{...type.tiny, fontSize: 12, marginTop: 8, lineHeight: 16}} numberOfLines={2}>
-                  {journal.blurb}
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 14,
+            padding: 16,
+            borderRadius: radius.card,
+            backgroundImage: gradient.lavender,
+            borderWidth: 1,
+            borderColor: colors.glassEdge,
+            opacity: pressed ? 0.85 : 1,
+            ...shadow.sm,
+          })}>
+          <View style={{flex: 1}}>
+            <Text style={{...type.heading, fontSize: 17}}>Your week in reflection</Text>
+            {insights ? (
+              <>
+                <Text style={{...type.label, fontSize: 14, marginTop: 6}}>
+                  {days === 0 ? 'A fresh week' : `${days} of 7 days with an entry`}
                 </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                <Text style={{...type.small, marginTop: 2}}>
+                  {days === 0 ? 'Whenever you are ready.' : 'Small steps, noticed.'}
+                </Text>
+              </>
+            ) : null}
+            <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 10}}>
+              <Text style={type.link}>View report</Text>
+              <ChevronRight size={14} color={colors.accent} />
+            </View>
+          </View>
+          {week.length ? <WeekBars days={week} /> : null}
+        </Pressable>
 
-        <SectionTitle>Quick tools</SectionTitle>
-        <View style={{flexDirection: 'row', gap: 10}}>
-          <QuickTool label={calm.entry.grounding} Icon={Wind} onPress={() => onOpenCalm()} />
-          <QuickTool
+        {/* AI Chat, with its own card: the companion is one tap from Home. */}
+        <Pressable
+          onPress={onOpenChat}
+          accessibilityRole="button"
+          accessibilityLabel="AI Chat"
+          accessibilityHint="Talk through what is on your mind."
+          style={({pressed}) => ({
+            ...glass,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 14,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            borderRadius: radius.card,
+            backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
+          })}>
+          <Image source={illustrations.robot} resizeMode="contain" accessible={false} style={{width: 104, height: 73}} />
+          <View style={{flex: 1}}>
+            <Text style={{...type.heading, fontSize: 17}}>AI Chat</Text>
+            <Text style={{...type.small, marginTop: 2}}>Talk through what is on your mind, at your pace.</Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 8}}>
+              <Text style={type.link}>Start a chat</Text>
+              <ChevronRight size={14} color={colors.accent} />
+            </View>
+          </View>
+        </Pressable>
+
+        <SectionTitle>Quick access</SectionTitle>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12}}>
+          {TILE_JOURNALS.map(journal => (
+            <Tile
+              key={journal.type}
+              label={LABELS[journal.type]!}
+              hint={journal.blurb}
+              image={journal.art}
+              onPress={() => onStartJournal(journal.type)}
+            />
+          ))}
+          <Tile label={calm.entry.title} image={illustrations.iconMeditate} onPress={() => onOpenCalm()} />
+          <Tile
             label={calm.entry.groundYourself}
-            Icon={Footprints}
+            image={illustrations.iconLotus}
             onPress={() => onOpenCalm('groundYourself')}
           />
-          <QuickTool label="AI Chat" Icon={MessageCircle} onPress={onOpenChat} />
+          <Tile label="Library" image={illustrations.books} onPress={onOpenLibrary} />
         </View>
-
-        {/* Module 4: the week, stated and not celebrated. Shown only once it
-            has loaded, so a slow network never reads as 0 days. */}
-        <SectionTitle>Your week</SectionTitle>
-        {loading ? (
-          <ActivityIndicator color={colors.accent} style={{marginVertical: 16}} />
-        ) : insights ? (
-          <Pressable
-            onPress={onOpenInsights}
-            accessibilityRole="button"
-            accessibilityLabel={`${days} of 7 days with an entry this week. Opens insights.`}
-            style={({pressed}) => ({
-              ...glass,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-              padding: 14,
-              borderRadius: radius.card,
-              backgroundColor: pressed ? colors.surfaceRaised : colors.glass,
-            })}>
-            <ProgressRing value={days} fraction={days / 7} size={56} compact />
-            <View style={{flex: 1}}>
-              <Text style={type.label}>
-                {days === 0 ? 'A fresh week' : `${days} of 7 days with an entry`}
-              </Text>
-              <Text style={{...type.small, marginTop: 2}}>
-                {days === 0 ? 'Whenever you are ready.' : 'See your insights'}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={colors.inkFaint} />
-          </Pressable>
-        ) : null}
       </ScrollView>
 
       <Modal

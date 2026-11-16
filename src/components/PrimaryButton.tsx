@@ -28,6 +28,9 @@ export default function PrimaryButton({label, onPress, busy, disabled}: Props) {
         opacity: pressed ? 0.85 : 1,
         borderRadius: radius.pill,
         paddingVertical: 16,
+        // Side padding for when it sits in a row (the weekly "Save") and is
+        // only as wide as its label; full-width buttons look the same.
+        paddingHorizontal: 28,
         minHeight: 52,
         alignItems: 'center',
         justifyContent: 'center',

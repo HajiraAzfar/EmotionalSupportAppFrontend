@@ -131,6 +131,31 @@ test('answering one card moves to the one the server sends next', async () => {
   expect(allText(tree.root)).toContain("Anything else you'd like to put down?");
 });
 
+test('a mood picked on Home answers the mood card once, and nothing past it', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(moodStep);
+  (submitCapture as jest.Mock).mockResolvedValue(noteStep);
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" startMood={4} onExit={jest.fn()} onContinueInThread={jest.fn()} />,
+    );
+  });
+
+  expect(submitCapture).toHaveBeenCalledTimes(1);
+  expect(submitCapture).toHaveBeenCalledWith('e1', 'mood', 4, false);
+  expect(allText(tree.root)).toContain("Anything else you'd like to put down?");
+});
+
+test('a check-in resumed past the mood question ignores the mood from Home', async () => {
+  (createEntry as jest.Mock).mockResolvedValue(noteStep);
+  await ReactTestRenderer.act(async () => {
+    ReactTestRenderer.create(
+      <DeckScreen journalType="check_in" startMood={2} onExit={jest.fn()} onContinueInThread={jest.fn()} />,
+    );
+  });
+  expect(submitCapture).not.toHaveBeenCalled();
+});
+
 test('nothing on a card has to be answered, and skipping is not a button', async () => {
   (createEntry as jest.Mock).mockResolvedValue(noteStep);
   (submitCapture as jest.Mock).mockResolvedValue(noteStep);

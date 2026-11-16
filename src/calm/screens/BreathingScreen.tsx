@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 
 import BreathingCircle from '../components/BreathingCircle';
 import CalmButton from '../components/CalmButton';
@@ -10,7 +10,7 @@ import PhaseLabel from '../components/PhaseLabel';
 import {calm} from '../content';
 import {DURATIONS, PATTERN_IDS, useBreathingSession} from '../hooks/useBreathingSession';
 import {useReducedMotion} from '../hooks/useReducedMotion';
-import {space} from '../theme';
+import {space, text} from '../theme';
 
 type Props = {
   onBack: () => void;
@@ -46,22 +46,30 @@ export default function BreathingScreen({onBack}: Props) {
 
   return (
     <CalmScreen title={c.title} backLabel={calm.common.back} onBack={onBack}>
-      <OptionRow
-        label={c.patternLabel}
-        options={PATTERN_IDS.map(id => ({key: id, label: c.patterns[id].name}))}
-        selected={session.patternId}
-        onSelect={session.choosePattern}
-        disabled={active}
-        note={c.patterns[session.patternId].detail}
-      />
-      <OptionRow
-        label={c.durationLabel}
-        options={DURATIONS.map(m => ({key: m, label: c.durations[m]}))}
-        selected={session.minutes}
-        onSelect={session.chooseMinutes}
-        disabled={active}
-        note={c.durationNote}
-      />
+      {/* The choices only matter before starting; while breathing, the
+          flower has the screen to itself. */}
+      {active ? (
+        <Text style={styles.summary}>
+          {c.patterns[session.patternId].name} · {c.durations[session.minutes]}
+        </Text>
+      ) : (
+        <>
+          <OptionRow
+            label={c.patternLabel}
+            options={PATTERN_IDS.map(id => ({key: id, label: c.patterns[id].name}))}
+            selected={session.patternId}
+            onSelect={session.choosePattern}
+            note={c.patterns[session.patternId].detail}
+          />
+          <OptionRow
+            label={c.durationLabel}
+            options={DURATIONS.map(m => ({key: m, label: c.durations[m]}))}
+            selected={session.minutes}
+            onSelect={session.chooseMinutes}
+            note={c.durationNote}
+          />
+        </>
+      )}
 
       <View style={styles.centre}>
         <BreathingCircle
@@ -71,6 +79,7 @@ export default function BreathingScreen({onBack}: Props) {
           reducedMotion={reducedMotion}
           countdown={active ? session.secondsLeft : null}
           countdownLabel={c.a11y.seconds(session.secondsLeft)}
+          elapsed={active ? 1 - session.remainingSeconds / (session.minutes * 60) : 0}
         />
         <PhaseLabel
           label={label}
@@ -107,5 +116,6 @@ export default function BreathingScreen({onBack}: Props) {
 
 const styles = StyleSheet.create({
   centre: {alignItems: 'center', marginVertical: space.lg},
+  summary: {...text.small, textAlign: 'center'},
   row: {flexDirection: 'row', gap: space.sm},
 });

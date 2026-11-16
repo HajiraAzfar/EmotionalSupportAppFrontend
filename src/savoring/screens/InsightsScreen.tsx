@@ -80,9 +80,9 @@ export default function InsightsScreen({onBack, onOpenMoment, onExport}: Props) 
               [INSIGHTS.perDay, String(s.avg_per_active_day)],
               [INSIGHTS.lift, s.avg_mood_lift !== null ? `${s.avg_mood_lift > 0 ? '+' : ''}${s.avg_mood_lift}` : INSIGHTS.liftNone],
             ].map(([label, value]) => (
-              <View key={label} style={{flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6}}>
-                <Text style={type.small}>{label}</Text>
-                <Text style={type.label}>{value}</Text>
+              <View key={label} style={{flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 6}}>
+                <Text style={{...type.small, flex: 1}}>{label}</Text>
+                <Text style={{...type.label, flexShrink: 1, maxWidth: '62%', textAlign: 'right'}}>{value}</Text>
               </View>
             ))}
           </Card>

@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {EyeOff} from 'lucide-react-native';
 
 import ErrorBoundary from '../components/ErrorBoundary';
 import PrimaryButton from '../components/PrimaryButton';
@@ -34,7 +33,6 @@ import {
   submitCheckIn,
 } from '../api/checkIn';
 import {addTerm, TERM_MAX_LENGTH} from '../api/libraries';
-import {quickExit} from '../storage/appLock';
 import {colors, radius, space, type} from '../theme';
 
 // Step 1 is app-owned, fixed text: no model, no network.
@@ -383,23 +381,12 @@ function CheckIn({startMood, onExit, onOpenChat}: Props) {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <View style={{flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.screen, paddingVertical: 12}}>
         <Pressable onPress={close} hitSlop={12} accessibilityRole="button">
           <Text style={{...type.link, color: colors.inkSoft}}>{step === 'mood' ? 'Not now' : 'Close'}</Text>
         </Pressable>
         <Text style={{...type.heading, flex: 1, textAlign: 'center'}}>Check-in</Text>
-        {/* Quick exit: one tap to a neutral page, the PIN on return. What she entered stays on the phone. */}
-        <Pressable
-          onPress={() => {
-            onExit();
-            quickExit();
-          }}
-          hitSlop={12}
-          accessibilityLabel="Quick exit"
-          style={{marginRight: 16}}>
-          <EyeOff size={18} color={colors.inkSoft} />
-        </Pressable>
         <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12}>
           <Text style={{...type.link, color: colors.alert}}>Get help</Text>
         </Pressable>

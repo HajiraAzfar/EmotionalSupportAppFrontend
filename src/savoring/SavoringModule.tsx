@@ -99,7 +99,7 @@ export default function SavoringModule({onExit, sourceEntryId, entryId}: Props) 
   if (!view) {
     return (
       <View style={{flex: 1}}>
-        <ScreenBackground />
+        <ScreenBackground leaves />
         <ActivityIndicator color={colors.accent} style={{marginTop: 80}} />
       </View>
     );

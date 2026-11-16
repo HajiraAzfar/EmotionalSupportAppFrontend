@@ -481,8 +481,7 @@ export default function ChatEntryScreen({
           paddingVertical: 12,
         }}>
         {/* FR-JRN-009: leaving is a single action; everything recorded so far is kept.
-            Exit goes back where she came from (no quick exit here: she found
-            it jumping out of the app). The two chats, both called AI Chat,
+            Exit goes back where she came from. The two chats, both called AI Chat,
             carry no title: only Exit and Get help. */}
         <Pressable onPress={onExit} hitSlop={12}>
           <Text style={{...type.link, color: colors.inkSoft}}>{readOnly ? 'Back' : 'Exit'}</Text>

@@ -4,6 +4,7 @@ import {ChevronRight} from 'lucide-react-native';
 
 import Heatmap, {HeatmapLegend} from '../../components/Heatmap';
 import Screen, {Card, LinkRow} from '../../components/ModuleScreen';
+import {illustrations} from '../../assets/brand';
 import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
 import {colors, radius, type} from '../../theme';
 import {RecordMode, ThoughtHome as HomeData, ThoughtRecord, getHeatmap, getHome} from '../api';
@@ -94,7 +95,7 @@ export default function ThoughtHome({onBack, onStart, onContinue, onOpenRecord, 
   const serverDrafts = (home?.drafts ?? []).filter(d => !d.client_id || !local.has(d.client_id));
 
   return (
-    <Screen title={TITLE} onBack={onBack}>
+    <Screen title={TITLE} art={illustrations.iconHeadHeart} onBack={onBack}>
       <Text style={type.body}>{HOME.intro}</Text>
 
       <Card>

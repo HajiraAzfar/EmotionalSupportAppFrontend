@@ -114,7 +114,7 @@ export default function ThoughtModule({onExit, sourceEntryId, entryId, onOpenSav
   if (!view) {
     return (
       <View style={{flex: 1}}>
-        <ScreenBackground />
+        <ScreenBackground leaves />
         <ActivityIndicator color={colors.accent} style={{marginTop: 80}} />
       </View>
     );

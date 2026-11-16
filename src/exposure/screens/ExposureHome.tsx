@@ -5,6 +5,7 @@ import {ChevronRight} from 'lucide-react-native';
 import Heatmap, {HeatmapLegend} from '../../components/Heatmap';
 import PrimaryButton from '../../components/PrimaryButton';
 import Screen, {Card, LinkRow} from '../../components/ModuleScreen';
+import {illustrations} from '../../assets/brand';
 import CrisisResourcesScreen from '../../screens/CrisisResourcesScreen';
 import {colors, radius, type} from '../../theme';
 import {Heatmap as HeatmapData} from '../../savoring/api';
@@ -81,7 +82,7 @@ export default function ExposureHome({onBack, onPlan, onContinue, onOpenLadder, 
   const waiting = [...(home?.planned ?? []), ...(home?.drafts ?? [])].filter(r => !r.client_id || !local.has(r.client_id));
 
   return (
-    <Screen title={TITLE} onBack={onBack}>
+    <Screen title={TITLE} art={illustrations.stones} onBack={onBack}>
       <Text style={type.body}>{HOME.intro}</Text>
       <Text style={{...type.small, marginTop: 6}}>{HOME.week}</Text>
 

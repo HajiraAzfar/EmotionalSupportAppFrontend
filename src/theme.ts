@@ -80,6 +80,8 @@ export const gradient = {
 // Light enough for ink text to sit on them.
 // Each point's face is drawn by components/MoodFace in the same colour.
 export const moodColours = ['#F5C4BC', '#D9CCEE', '#FBE1B6', '#F4D2DC', '#C6DABD'];
+// The same five hues, deep enough to read as a bar on a pale card.
+export const moodDeep = ['#E0907F', '#A994D6', '#E2B260', '#DB8EA7', '#82AA74'];
 
 // The learning library's cards: soft pastels on the page (lavender, peach,
 // sage, warm yellow). Tints cycle, so a library of any length keeps its rhythm.

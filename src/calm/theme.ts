@@ -4,7 +4,7 @@
 //
 // Colours and fonts map to the app's shared theme in this file only; the sizes
 // and timings are neutral placeholders until the module has its own design.
-import {colors as app, font as appFont} from '../theme';
+import {cardTints, colors as app, font as appFont, gradient as appGradient, shadow as appShadow} from '../theme';
 
 export const colors = {
   bg: app.bg,
@@ -55,6 +55,29 @@ export const touch = {
 export const icon = {
   size: 20,
 };
+
+// The exercise tiles: a soft circle behind each icon (lavender, peach, sage,
+// warm yellow, cycling) and the app's soft card shadow.
+export const tints = [cardTints[2].icon, cardTints[0].icon, cardTints[1].icon, cardTints[3].icon];
+export const tileShadow = appShadow.sm;
+
+// The primary button's soft gradient and lift, and the step card's shadow.
+export const gradient = {primary: appGradient.primary};
+export const buttonShadow = appShadow.button;
+export const cardShadow = appShadow.md;
+
+// The breathing flower: six petals in the brand's soft tones, see-through so
+// where they overlap reads deeper; and the halo behind them.
+export const petals = [
+  'rgba(139, 163, 141, 0.55)',
+  'rgba(205, 188, 230, 0.55)',
+  'rgba(247, 201, 170, 0.55)',
+  'rgba(139, 163, 141, 0.55)',
+  'rgba(205, 188, 230, 0.55)',
+  'rgba(247, 201, 170, 0.55)',
+];
+export const halo = app.sageWash;
+export const ringTrack = app.line;
 
 // The breathing circle's diameter at the bottom and top of a breath.
 export const circle = {

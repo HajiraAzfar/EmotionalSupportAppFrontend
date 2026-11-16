@@ -99,7 +99,7 @@ export default function EntriesScreen({onOpen, onBack}: Props) {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <View
         style={{
           flexDirection: 'row',

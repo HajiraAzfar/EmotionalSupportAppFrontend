@@ -81,6 +81,30 @@ export interface CalendarDay {
   entries: number;
 }
 
+export interface MonthMood {
+  month: string; // "2026-11"
+  value: number;
+  entries: number;
+}
+
+// The average mood of each calendar month she checked in, worked out from the
+// period's own points (already in her local dates). Months with no mood are
+// left out, as weeks are: she did not write, she was not at zero.
+export function monthlyMood(points: MoodPoint[]): MonthMood[] {
+  const months = new Map<string, number[]>();
+  for (const point of points) {
+    const key = point.date.slice(0, 7);
+    months.set(key, [...(months.get(key) ?? []), point.value]);
+  }
+  return [...months]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, values]) => ({
+      month,
+      value: values.reduce((sum, v) => sum + v, 0) / values.length,
+      entries: values.length,
+    }));
+}
+
 // The weekly average of a scale: day-to-day mood is noise, a week is a trend.
 export interface TrendPoint {
   week_start: string;

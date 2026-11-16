@@ -18,6 +18,8 @@ type Props = {
 
 const PADDING = {top: 26, right: 8, bottom: 26, left: 34};
 const DOT = 5;
+// Each date label is 44 wide, centred on its point; this keeps a gap between two.
+const TICK_GAP = 52;
 
 function dayNumber(iso: string) {
   return Math.floor(new Date(`${iso}T00:00:00`).getTime() / 86400000);
@@ -83,8 +85,16 @@ export default function MoodAreaChart({points, min, max, labels, height = 210, o
     : '';
 
   const steps = Array.from({length: range + 1}, (_, i) => min + i);
-  // Six dates along the bottom at most, or they collide.
-  const ticks = points.filter((_, index) => index % Math.ceil(points.length / 6) === 0);
+  // A date only where there is room for it: at least TICK_GAP from the last one
+  // drawn, and never the same day twice. Entries bunch up in time (two on one
+  // day, three on consecutive days), so picking every nth point let them collide.
+  const ticks: MoodPoint[] = [];
+  for (const point of points) {
+    const last = ticks[ticks.length - 1];
+    if (!last || (point.date !== last.date && xOf(point) - xOf(last) >= TICK_GAP)) {
+      ticks.push(point);
+    }
+  }
 
   return (
     <View onLayout={onLayout}>

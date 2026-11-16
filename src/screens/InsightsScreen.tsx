@@ -12,6 +12,7 @@ import CycleChart from '../components/insights/CycleChart';
 import LineChart from '../components/insights/LineChart';
 import MoodAreaChart from '../components/insights/MoodAreaChart';
 import MoodCalendar from '../components/insights/MoodCalendar';
+import MonthBars from '../components/insights/MonthBars';
 import ProgressRing from '../components/insights/ProgressRing';
 import QuestionnaireForm from '../components/insights/QuestionnaireForm';
 import TrendChart from '../components/insights/TrendChart';
@@ -28,6 +29,7 @@ import {
   Insights,
   JournalsHeatmap,
   ItemTrend,
+  monthlyMood,
   Period,
   PERIODS,
   QuestionnaireState,
@@ -452,6 +454,8 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
     }
   }
 
+  const months = data ? monthlyMood(data.mood.points) : [];
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View
@@ -659,6 +663,18 @@ export default function InsightsScreen({onOpenEntry, onStartEntry, onOpenArticle
                       lowLabel={MOOD_LABELS[data.mood_trend.min]}
                       highLabel={MOOD_LABELS[data.mood_trend.max]}
                     />
+                  )}
+                </Card>
+
+                <Card title="Mood, month by month" subtitle="The average mood of each month you checked in.">
+                  {months.length >= 2 ? (
+                    <MonthBars months={months} min={data.mood.min} max={data.mood.max} labels={MOOD_LABELS.slice(1)} />
+                  ) : (
+                    <Text style={type.body}>
+                      {period === '7d' || period === '30d'
+                        ? 'Choose 3 months or All to compare your months.'
+                        : 'Another month of check-ins will show this.'}
+                    </Text>
                   )}
                 </Card>
 

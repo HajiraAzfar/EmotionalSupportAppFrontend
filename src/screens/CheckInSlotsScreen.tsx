@@ -1,8 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Check, ChevronRight, CloudSun, FileText, Moon, Sun} from 'lucide-react-native';
 
+import {illustrations} from '../assets/brand';
 import BackButton from '../components/BackButton';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
@@ -91,7 +92,7 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry, onOpen
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <View
         style={{flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.screen, paddingVertical: 12}}>
         <BackButton onPress={onBack} />
@@ -103,9 +104,12 @@ export default function CheckInSlotsScreen({onBack, onStart, onOpenEntry, onOpen
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}}>
-        <Text accessibilityRole="header" style={type.title}>
-          Check-ins
-        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+          <Text accessibilityRole="header" style={{...type.title, flex: 1}}>
+            Check-ins
+          </Text>
+          <Image source={illustrations.calendar} resizeMode="contain" accessible={false} style={{width: 104, height: 82}} />
+        </View>
         <Text style={{...type.body, marginTop: 6}}>
           Three short check-ins a day, a minute or two each. Each one can be done while it is open;
           do the ones that suit you.

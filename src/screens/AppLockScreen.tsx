@@ -79,7 +79,7 @@ export default function AppLockScreen({onUnlocked, onForgot}: Props) {
       <ScreenBackground />
       <View style={{flex: 1, paddingHorizontal: space.screen, justifyContent: 'center'}}>
         <View style={{alignItems: 'center', marginBottom: 12}}>
-          <Logo size={56} />
+          <Logo size={64} />
         </View>
         <Text style={{...type.title, textAlign: 'center'}}>Reframe</Text>
         <Text style={{...type.body, textAlign: 'center', marginTop: 8, marginBottom: 30}}>

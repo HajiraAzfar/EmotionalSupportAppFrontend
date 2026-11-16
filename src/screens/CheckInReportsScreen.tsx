@@ -103,7 +103,7 @@ export default function CheckInReportsScreen({onBack}: Props) {
   const latest = reports?.latest_daily;
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <View
         style={{flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.screen, paddingVertical: 12}}>
         <BackButton onPress={onBack} />

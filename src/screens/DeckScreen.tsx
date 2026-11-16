@@ -11,13 +11,14 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ChevronLeft, EyeOff, Plus, Sparkles} from 'lucide-react-native';
+import {ChevronLeft, Plus, Sparkles} from 'lucide-react-native';
 
 import {brandImages} from '../assets/brand';
 import Flashcard from '../components/Flashcard';
 import Illustration from '../components/illustrations/Illustration';
 import {IllustrationName} from '../components/illustrations/art';
 import PrimaryButton from '../components/PrimaryButton';
+import SavedMark from '../components/SavedMark';
 import ScreenBackground from '../components/ScreenBackground';
 import LibraryPicker from '../components/chat/LibraryPicker';
 import MoodScaleControl from '../components/chat/MoodScaleControl';
@@ -39,7 +40,6 @@ import {
   reviseCapture,
   submitCapture,
 } from '../api/entries';
-import {quickExit} from '../storage/appLock';
 import {markSlotDone} from '../storage/reminders';
 import {colors, font, radius, shadow, space, type} from '../theme';
 
@@ -61,6 +61,8 @@ type Props = {
   sourceEntryId?: string;
   // Cross-links from an evening check-in's review.
   onOpenJournal?: (journalType: 'thought' | 'savouring' | 'exposure', sourceEntryId: string) => void;
+  // A face tapped on Home: the answer to the mood question, given once it is asked.
+  startMood?: number;
 };
 
 // What an evening's Yes opens, from the review (cross-links).
@@ -159,6 +161,7 @@ export default function DeckScreen({
   localDate,
   sourceEntryId,
   onOpenJournal,
+  startMood,
 }: Props) {
   const [entry, setEntry] = useState<EntryState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -221,6 +224,18 @@ export default function DeckScreen({
         : createEntry(journalType),
     );
   }, [journalType, slot, localDate, sourceEntryId, run]);
+
+  // The mood picked on Home answers the mood card as soon as it comes up, once.
+  // A check-in resumed past that question is left as it is.
+  const moodSent = useRef(false);
+  useEffect(() => {
+    if (startMood === undefined || moodSent.current || busy || !entry || entry.next_capture?.value_id !== 'mood') {
+      return;
+    }
+    moodSent.current = true;
+    given.current.mood = startMood;
+    run(() => submitCapture(entry.id, 'mood', startMood, false));
+  }, [entry, startMood, busy, run]);
 
   const answered = (entry?.messages ?? []).filter(m => m.kind === 'capture_answer');
   // Her latest version of each answer: a revision is appended rather than
@@ -334,7 +349,7 @@ export default function DeckScreen({
 
     if (crisisMessage) {
       return (
-        <Flashcard cardKey={`crisis-${crisisMessage.id}`}>
+        <Flashcard journal={journalType} cardKey={`crisis-${crisisMessage.id}`}>
           <Text style={{...type.body, color: colors.ink}}>{crisisMessage.content}</Text>
           <View style={{marginTop: 18}}>
             <PrimaryButton label="Continue" onPress={() => moveOnFromCrisis(crisisMessage.id)} />
@@ -349,7 +364,7 @@ export default function DeckScreen({
         .find(m => m.kind === 'capture_prompt' && m.value_id === spec.value_id);
 
       return (
-        <Flashcard cardKey={`${editing ? 'edit-' : ''}${spec.value_id}`} first={answered.length === 0}>
+        <Flashcard journal={journalType} cardKey={`${editing ? 'edit-' : ''}${spec.value_id}`} first={answered.length === 0}>
           <Text style={{...type.tiny, letterSpacing: 0.3}}>
             {editing ? 'CHANGING — ' : ''}
             {LABELS[spec.value_id]?.toUpperCase() ?? 'NEXT'}
@@ -476,7 +491,9 @@ export default function DeckScreen({
         : linked
       : [];
     return (
-      <Flashcard cardKey="review">
+      <>
+      <SavedMark />
+      <Flashcard journal={journalType} cardKey="review">
         <Text style={{...type.heading, fontSize: 21}}>Here is what you put down</Text>
         <Text style={{...type.small, marginTop: 4}}>
           {entry.slot ? 'Saved as you went, and kept as it is.' : 'Already saved, as you went.'}
@@ -560,12 +577,14 @@ export default function DeckScreen({
           )}
         </View>
       </Flashcard>
+      </>
     );
   }
 
   // How far she has come, not how far is left. The server counts the steps this
   // entry will ask; where it cannot (a branch still open), the dots stand alone.
-  const doneSteps = latest.size;
+  // At most 13 dots, so "Step 24 of 30" still fits beside them; the label carries the count.
+  const doneSteps = Math.min(latest.size, 13);
   const step = entry?.next_capture?.step ?? null;
   const total = entry?.next_capture?.total ?? null;
   const listStep = !editing && entry?.next_capture?.control === 'multi_select'
@@ -576,7 +595,7 @@ export default function DeckScreen({
 
   return (
     <View style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <SafeAreaView style={{flex: 1}} edges={['top']}>
         <View
           style={{
@@ -614,13 +633,6 @@ export default function DeckScreen({
             {slot ? SLOT_TITLES[slot] : TITLES[journalType]}
           </Text>
           <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 16}}>
-            <Pressable
-              onPress={quickExit}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Close the app quickly">
-              <EyeOff size={18} color={colors.inkSoft} />
-            </Pressable>
             {/* FR-CRIS-009: crisis resources one tap away, here as everywhere. */}
             <Pressable onPress={() => setResourcesOpen(true)} hitSlop={10} accessibilityRole="button">
               <Text style={{...type.link, color: colors.alert}}>Get help</Text>

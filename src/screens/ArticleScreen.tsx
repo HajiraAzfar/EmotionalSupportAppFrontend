@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Heart} from 'lucide-react-native';
 
+import CrisisResourcesScreen from './CrisisResourcesScreen';
 import BackButton from '../components/BackButton';
 import ScreenBackground from '../components/ScreenBackground';
 import Illustration from '../components/illustrations/Illustration';
@@ -64,6 +65,7 @@ function Body({text}: {text: string}) {
 export default function ArticleScreen({slug, onBack}: Props) {
   const [article, setArticle] = useState<Article | null>(null);
   const [error, setError] = useState('');
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
   useEffect(() => {
     setError('');
@@ -107,7 +109,18 @@ export default function ArticleScreen({slug, onBack}: Props) {
             <Heart size={22} color={heart} fill={article.favourite ? heart : 'transparent'} />
           </Pressable>
         ) : null}
+        {/* FR-CRIS-009: Get help beside the heart, not floating over it. */}
+        <Pressable
+          onPress={() => setResourcesOpen(true)}
+          hitSlop={12}
+          accessibilityRole="button"
+          style={{marginLeft: 20}}>
+          <Text style={{...type.link, color: colors.alert}}>Get help</Text>
+        </Pressable>
       </View>
+      <Modal visible={resourcesOpen} animationType="slide" onRequestClose={() => setResourcesOpen(false)}>
+        <CrisisResourcesScreen onClose={() => setResourcesOpen(false)} />
+      </Modal>
 
       {error ? (
         <Text style={{...type.small, color: colors.alert, padding: space.screen}}>{error}</Text>

@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {Image, ImageSourcePropType, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   Bell,
@@ -12,13 +12,14 @@ import {
   UserRound,
 } from 'lucide-react-native';
 
-import Logo from '../components/Logo';
+import {illustrations} from '../assets/brand';
 import Wordmark from '../components/Wordmark';
 import CrisisResourcesScreen from './CrisisResourcesScreen';
+import {getBadges} from '../api/weekly';
 import {isLockSet} from '../storage/appLock';
 import {getReminders, remindersAvailable} from '../storage/reminders';
 import {clearTokens} from '../storage/tokens';
-import {colors, font, radius, shadow, space, type} from '../theme';
+import {colors, font, gradient, radius, shadow, space, type} from '../theme';
 
 type Props = {
   name: string | null;
@@ -26,6 +27,7 @@ type Props = {
   onOpenAppLock: () => void;
   onOpenReminders: () => void;
   onOpenDeleteAccount: () => void;
+  onOpenBadges: () => void;
   onSignedOut: () => void;
 };
 
@@ -42,13 +44,15 @@ function Row({
   description,
   value,
   Icon,
+  image,
   onPress,
   danger = false,
 }: {
   label: string;
   description: string;
   value?: string;
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
+  image?: ImageSourcePropType;
   onPress: () => void;
   danger?: boolean;
 }) {
@@ -71,17 +75,21 @@ function Row({
         marginBottom: 10,
         ...shadow.sm,
       })}>
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: radius.pill,
-          backgroundColor: danger ? colors.blush : colors.sageWash,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <Icon size={19} color={tint} />
-      </View>
+      {image ? (
+        <Image source={image} resizeMode="contain" accessible={false} style={{width: 42, height: 42}} />
+      ) : Icon ? (
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: radius.pill,
+            backgroundColor: danger ? colors.blush : colors.sageWash,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Icon size={19} color={tint} />
+        </View>
+      ) : null}
       <View style={{flex: 1}}>
         <Text style={{...type.label, color: danger ? colors.alert : colors.ink}}>{label}</Text>
         <Text style={{...type.small, marginTop: 2}}>{description}</Text>
@@ -103,18 +111,24 @@ export default function SettingsScreen({
   onOpenAppLock,
   onOpenReminders,
   onOpenDeleteAccount,
+  onOpenBadges,
   onSignedOut,
 }: Props) {
   const [locked, setLocked] = useState<boolean | null>(null);
   // How many of the three check-in reminders are on; undefined while loading.
   const [remindersOn, setRemindersOn] = useState<number | undefined>(undefined);
   const [resourcesOpen, setResourcesOpen] = useState(false);
+  // Badges earned, and how many there are; null until loaded (or offline).
+  const [badges, setBadges] = useState<{earned: number; total: number} | null>(null);
 
   const refresh = useCallback(() => {
     isLockSet().then(setLocked);
     getReminders()
       .then(all => setRemindersOn(Object.values(all).filter(minutes => minutes !== null).length))
       .catch(() => setRemindersOn(0));
+    getBadges()
+      .then(r => setBadges({earned: r.badges.filter(b => b.earned).length, total: r.badges.length}))
+      .catch(() => setBadges(null));
   }, []);
 
   useEffect(() => {
@@ -129,29 +143,61 @@ export default function SettingsScreen({
   return (
     <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingTop: 12, paddingBottom: 30}}>
-        <Text accessibilityRole="header" style={{...type.title, marginBottom: 14}}>
-          Settings
-        </Text>
+        {/* FR-CRIS-009: this tab's own Get help, so nothing floats over the list. */}
+        <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 14}}>
+          <Text accessibilityRole="header" style={{...type.title, flex: 1}}>
+            Settings
+          </Text>
+          <Pressable onPress={() => setResourcesOpen(true)} hitSlop={12} accessibilityRole="button">
+            <Text style={{...type.link, color: colors.alert}}>Get help</Text>
+          </Pressable>
+        </View>
 
-        {/* Who the app greets: her initial in a sage circle, and her name. */}
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 14}}>
+        {/* Who the app greets: her initial in a ringed circle, her name, and her badges. */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+            padding: 18,
+            borderRadius: radius.card,
+            backgroundImage: gradient.lavender,
+            borderWidth: 1,
+            borderColor: colors.glassEdge,
+            ...shadow.sm,
+          }}>
           <View
             style={{
-              width: 56,
-              height: 56,
+              width: 68,
+              height: 68,
               borderRadius: radius.pill,
-              backgroundColor: colors.sageWash,
+              backgroundColor: colors.surface,
+              borderWidth: 3,
+              borderColor: colors.surface,
               alignItems: 'center',
               justifyContent: 'center',
+              ...shadow.md,
             }}>
-            {name ? (
-              <Text style={{...type.title, color: colors.accent}}>{name.charAt(0).toUpperCase()}</Text>
-            ) : (
-              <UserRound size={26} color={colors.accent} />
-            )}
+            <View
+              style={{
+                width: 62,
+                height: 62,
+                borderRadius: radius.pill,
+                backgroundColor: colors.sageWash,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              {name ? (
+                <Text style={{...type.title, color: colors.accent}}>{name.charAt(0).toUpperCase()}</Text>
+              ) : (
+                <UserRound size={28} color={colors.accent} />
+              )}
+            </View>
           </View>
           <View style={{flex: 1}}>
-            <Text style={type.heading}>{name ?? 'Your profile'}</Text>
+            <Text style={{...type.title, fontSize: 22}}>
+              {name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Your profile'}
+            </Text>
             <Text style={{...type.small, marginTop: 2}}>Mindful today, brighter days.</Text>
           </View>
         </View>
@@ -163,6 +209,15 @@ export default function SettingsScreen({
           value={name ?? 'Not set'}
           Icon={UserRound}
           onPress={onOpenName}
+        />
+
+        <Section>Your progress</Section>
+        <Row
+          label="Your badges"
+          description="Small steps you have taken, noticed."
+          value={badges ? `${badges.earned} of ${badges.total}` : ''}
+          image={illustrations.iconTrophy}
+          onPress={onOpenBadges}
         />
 
         <Section>Privacy on this phone</Section>
@@ -213,10 +268,7 @@ export default function SettingsScreen({
 
         {/* About: what the app is, and what it is not. */}
         <View style={{alignItems: 'center', marginTop: 34}}>
-          <Logo size={64} badge />
-          <View style={{marginTop: 10}}>
-            <Wordmark />
-          </View>
+          <Wordmark />
           <Text style={{...type.small, textAlign: 'center', marginTop: 14, lineHeight: 19, maxWidth: 300}}>
             Reframe is a space for reflection and self-help. Its AI companion is not a therapist
             and cannot diagnose. If you need care, please reach out to a qualified

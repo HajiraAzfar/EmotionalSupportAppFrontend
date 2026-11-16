@@ -2,7 +2,6 @@ import React, {useEffect} from 'react';
 import {Text, View} from 'react-native';
 
 import FadeIn from '../components/FadeIn';
-import Logo from '../components/Logo';
 import ScreenBackground from '../components/ScreenBackground';
 import Wordmark from '../components/Wordmark';
 import {colors, type} from '../theme';
@@ -27,12 +26,9 @@ export default function SplashScreen({onDone}: Props) {
       <ScreenBackground intensity="full" />
       <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32}}>
         <FadeIn order={0} distance={18}>
-          <Logo size={120} badge />
+          <Wordmark size="large" withLogo />
         </FadeIn>
-        <FadeIn order={1} style={{marginTop: 18}}>
-          <Wordmark size="large" />
-        </FadeIn>
-        <FadeIn order={2}>
+        <FadeIn order={1}>
           <Text style={{...type.body, textAlign: 'center', marginTop: 18, color: colors.inkSoft}}>
             A safe space to pause, reflect and reframe your mindset.
           </Text>

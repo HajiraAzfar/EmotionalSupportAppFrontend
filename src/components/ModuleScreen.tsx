@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {Image, ImageSourcePropType, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import BackButton from './BackButton';
@@ -11,15 +11,17 @@ type Props = {
   title?: string;
   onBack: () => void;
   right?: React.ReactNode;
+  // An illustration from the brand sheet, beside the title.
+  art?: ImageSourcePropType;
   children: React.ReactNode;
 };
 
 /** A journal module's screen: back, Get help (FR-CRIS-009), a title and a scrolling body. */
-export default function Screen({title, onBack, right, children}: Props) {
+export default function Screen({title, onBack, right, art, children}: Props) {
   const [resourcesOpen, setResourcesOpen] = useState(false);
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: space.screen, paddingVertical: 12}}>
         <BackButton onPress={onBack} />
         <View style={{flex: 1}} />
@@ -30,9 +32,12 @@ export default function Screen({title, onBack, right, children}: Props) {
       </View>
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}} keyboardShouldPersistTaps="handled">
         {title ? (
-          <Text accessibilityRole="header" style={{...type.title, marginBottom: 6}}>
-            {title}
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6}}>
+            <Text accessibilityRole="header" style={{...type.title, flex: 1}}>
+              {title}
+            </Text>
+            {art ? <Image source={art} resizeMode="contain" accessible={false} style={{width: 92, height: 84}} /> : null}
+          </View>
         ) : null}
         {children}
       </ScrollView>

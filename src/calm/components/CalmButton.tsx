@@ -1,7 +1,7 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text} from 'react-native';
 
-import {colors, motion, radius, space, text, touch} from '../theme';
+import {buttonShadow, colors, gradient, motion, radius, space, text, touch} from '../theme';
 
 type Props = {
   label: string;
@@ -34,14 +34,14 @@ export default function CalmButton({label, onPress, variant = 'primary', accessi
 const styles = StyleSheet.create({
   base: {
     flex: 1,
-    minHeight: touch.minHeight,
+    minHeight: touch.minHeight + 4,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.lg,
   },
-  primary: {backgroundColor: colors.primary},
-  secondary: {backgroundColor: colors.selected},
+  primary: {backgroundImage: gradient.primary, ...buttonShadow},
+  secondary: {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line},
   pressed: {opacity: motion.pressedOpacity},
   primaryLabel: {color: colors.onPrimary},
   secondaryLabel: {color: colors.primary},

@@ -13,6 +13,7 @@ import Heatmap, {HeatmapLegend} from '../../components/Heatmap';
 import MomentCard, {shortDate} from '../components/MomentCard';
 import ScoreScale from '../../components/ScoreScale';
 import Screen, {Card, LinkRow} from '../../components/ModuleScreen';
+import {illustrations} from '../../assets/brand';
 
 type Props = {
   onBack: () => void;
@@ -74,7 +75,7 @@ export default function SavoringHome({
 
   if (!home || !heat) {
     return (
-      <Screen title={TITLE} onBack={onBack}>
+      <Screen title={TITLE} art={illustrations.mug} onBack={onBack}>
         {error ? (
           <Pressable onPress={load} style={{marginTop: 20}}>
             <Text style={{...type.small, color: colors.alert}}>{error} — tap to retry</Text>
@@ -94,7 +95,7 @@ export default function SavoringHome({
 
   return (
     <Screen
-      title={TITLE}
+      title={TITLE} art={illustrations.mug}
       onBack={onBack}
       right={
         <Pressable onPress={onOpenSettings} hitSlop={12} accessibilityRole="button" accessibilityLabel={HOME.settings}>

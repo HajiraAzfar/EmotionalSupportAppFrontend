@@ -2,12 +2,15 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import Svg, {Circle, Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop} from 'react-native-svg';
 
+import Leaves from './Leaves';
 import {colors} from '../theme';
 
 type Props = {
   // The welcome and splash screens carry a stronger wash than a working
   // screen, where it has to sit behind text all day.
   intensity?: 'quiet' | 'full';
+  // The journals' sage sprigs in the bottom corners.
+  leaves?: boolean;
 };
 
 /**
@@ -17,9 +20,9 @@ type Props = {
  * day.
  *
  * Drawn once, behind everything, and it never re-renders: no animation, no
- * state, nothing for a slow phone to keep up with.
+ * state, and memoised, so nothing for a slow phone to keep up with.
  */
-export default function ScreenBackground({intensity = 'quiet'}: Props) {
+function ScreenBackground({intensity = 'quiet', leaves = false}: Props) {
   const full = intensity === 'full';
   const k = full ? 1.7 : 1;
 
@@ -62,6 +65,11 @@ export default function ScreenBackground({intensity = 'quiet'}: Props) {
           </>
         ) : null}
       </Svg>
+      {leaves ? <Leaves /> : null}
     </View>
   );
 }
+
+// Memoised: its props never change on a screen, so a parent's re-render (every
+// keystroke, every chip) skips the SVG.
+export default React.memo(ScreenBackground);

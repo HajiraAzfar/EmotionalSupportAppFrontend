@@ -3,8 +3,10 @@ import {AppState, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import BackButton from '../../components/BackButton';
+import Flashcard from '../../components/Flashcard';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScoreScale from '../../components/ScoreScale';
+import SavedMark from '../../components/SavedMark';
 import ScreenBackground from '../../components/ScreenBackground';
 import VoiceField from '../../components/VoiceField';
 import Chip from '../../components/chat/Chip';
@@ -289,7 +291,7 @@ export default function ExposureFlow({
 
   const frame = (body: React.ReactNode) => (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       {header}
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}} keyboardShouldPersistTaps="handled">
         {body}
@@ -316,6 +318,7 @@ export default function ExposureFlow({
       : result.status === 'skipped' ? DONE.skipped : DONE.planned;
     return frame(
       <>
+        <SavedMark />
         <Text accessibilityRole="header" style={{...type.title, marginTop: 10}}>{title}</Text>
         {result.saved === 'kept' ? <Text style={{...type.body, marginTop: 8}}>Saved on this phone; it will be sent when you're online.</Text> : null}
         {content.predicted_likelihood !== null && content.outcome_occurred ? (
@@ -404,6 +407,7 @@ export default function ExposureFlow({
         ))}
       </View>
 
+      <Flashcard journal="exposure" cardKey={step} first={index === 0}>
       {step === 'step' ? (
         <>
           <Text accessibilityRole="header" style={type.title}>{PLAN.step}</Text>
@@ -609,6 +613,8 @@ export default function ExposureFlow({
           </View>
         </>
       ) : null}
+
+      </Flashcard>
 
       {step !== 'when' ? (
         <View style={{marginTop: 26}}>

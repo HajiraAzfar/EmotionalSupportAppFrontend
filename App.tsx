@@ -21,8 +21,8 @@ import VerifySignupCodeScreen from './src/screens/VerifySignupCodeScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import WorkIssuesScreen from './src/screens/WorkIssuesScreen';
 import {resetPasswordWithCode, setPassword as setPasswordApi} from './src/api/auth';
-import {apiRequest} from './src/api/client';
-import {CheckInSlot, JournalType} from './src/api/entries';
+import {ApiError, NetworkError, apiRequest} from './src/api/client';
+import {CheckInSlot, JournalType, getCheckInSlots} from './src/api/entries';
 import {clearTokens, getAccessToken} from './src/storage/tokens';
 import {colors} from './src/theme';
 import ArticleScreen from './src/screens/ArticleScreen';
@@ -37,6 +37,8 @@ import {AppState} from 'react-native';
 import AppLockScreen from './src/screens/AppLockScreen';
 import SetAppLockScreen from './src/screens/SetAppLockScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import BadgesScreen from './src/screens/BadgesScreen';
+import OfflineScreen from './src/screens/OfflineScreen';
 import NameScreen from './src/screens/NameScreen';
 import DeleteAccountScreen from './src/screens/DeleteAccountScreen';
 import RemindersScreen from './src/screens/RemindersScreen';
@@ -48,7 +50,7 @@ import ExposureModule from './src/exposure/ExposureModule';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
-import {LOCK_AFTER_MS, clearLock, isLockSet, takeLockOnReturn} from './src/storage/appLock';
+import {LOCK_AFTER_MS, clearLock, isLockSet} from './src/storage/appLock';
 
 type Screen =
   | 'loading'
@@ -78,16 +80,18 @@ type Screen =
   | 'deleteAccount'
   | 'reminders'
   | 'checkins'
-  | 'checkinReports';
+  | 'checkinReports'
+  | 'badges'
+  | 'offline';
 
 // Screens whose own header has no Get help link (FR-CRIS-009).
 const SCREENS_WITHOUT_HELP: Screen[] = [
   'welcome', 'login', 'signup', 'verifySignupCode', 'setPassword', 'forgot', 'verifyResetCode',
-  'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress', 'article',
-  'appLockSetup', 'calm', 'intro', 'name', 'editName', 'deleteAccount', 'reminders',
+  'resetPassword', 'consent', 'focus', 'workIssues', 'lifeVision', 'distress',
+  'appLockSetup', 'calm', 'intro', 'name', 'editName', 'deleteAccount', 'reminders', 'offline',
 ];
 // Tabs whose screen has no Get help link of its own.
-const TABS_WITHOUT_HELP: Tab[] = ['library', 'profile'];
+const TABS_WITHOUT_HELP: Tab[] = ['library'];
 
 // Short enough to answer a card at a time. Thought and exposure keep the
 // thread: they are long, and a pause, a resume and a conversation all live there.
@@ -126,6 +130,26 @@ function App(): React.JSX.Element {
     setJournal({journalType});
     setScreen('journal');
   }
+
+  // A face tapped on Home: straight into the check-in open now, with that mood
+  // as its first answer. A slot already done (or no network) shows the list.
+  async function checkInWithMood(mood: number) {
+    setStartMood(mood);
+    try {
+      const board = await getCheckInSlots();
+      const now = board.slots.find(
+        row => row.slot === board.current.slot && row.local_date === board.current.local_date,
+      );
+      if (now && (now.state === 'open' || now.state === 'started')) {
+        setJournal({journalType: 'check_in', slot: now.slot, localDate: now.local_date});
+        setScreen('journal');
+        return;
+      }
+    } catch {
+      // The list loads the slots itself and shows its own error.
+    }
+    setScreen('checkins');
+  }
   // SRS 4.11: which article the reader screen is showing.
   const [articleSlug, setArticleSlug] = useState('');
   // The reports open from the check-ins list and from Insights; back goes to whichever it was.
@@ -162,10 +186,9 @@ function App(): React.JSX.Element {
       }
       const away = Date.now() - backgroundedAt.current;
       backgroundedAt.current = null;
-      const forced = takeLockOnReturn();
       // A few seconds in another app should not cost her the PIN; a real
-      // absence should, and so does a quick exit.
-      if ((away >= LOCK_AFTER_MS || forced) && (await isLockSet())) {
+      // absence should.
+      if (away >= LOCK_AFTER_MS && (await isLockSet())) {
         setLocked(true);
       }
     });
@@ -190,8 +213,11 @@ function App(): React.JSX.Element {
       } else {
         setScreen('tabs');
       }
-    } catch {
-      setScreen('welcome');
+    } catch (e) {
+      // No connection, or the server down: she is still signed in, so offer a
+      // retry. Only a refused sign-in (an expired session) goes back to Welcome.
+      const unreachable = e instanceof NetworkError || (e instanceof ApiError && e.status >= 500);
+      setScreen(unreachable ? 'offline' : 'welcome');
     }
   }
 
@@ -381,7 +407,10 @@ function App(): React.JSX.Element {
                   setJournal({journalType: draft.journal_type, entryId: draft.id});
                   setScreen('journal');
                 }}
-                onOpenInsights={() => setTab('insights')}
+                onCheckInMood={checkInWithMood}
+                onOpenWeekly={() => setScreen('weeklyReport')}
+                onOpenProfile={() => setTab('profile')}
+                onOpenLibrary={() => setTab('library')}
                 onOpenCalm={start => {
                   setCalmStart(start ?? 'home');
                   setScreen('calm');
@@ -473,6 +502,7 @@ function App(): React.JSX.Element {
                 onOpenAppLock={() => setScreen('appLockSetup')}
                 onOpenReminders={() => setScreen('reminders')}
                 onOpenDeleteAccount={() => setScreen('deleteAccount')}
+                onOpenBadges={() => setScreen('badges')}
                 onSignedOut={() => {
                   setUserName(null);
                   setTab('home');
@@ -498,6 +528,7 @@ function App(): React.JSX.Element {
             slot={journal.slot}
             localDate={journal.localDate}
             sourceEntryId={journal.sourceEntryId}
+            startMood={startMood ?? undefined}
             onExit={() => {
               setStartMood(null);
               setScreen(journal.returnTo ?? 'tabs');
@@ -580,7 +611,10 @@ function App(): React.JSX.Element {
       {screen === 'checkins' && (
         <ErrorBoundary>
           <CheckInSlotsScreen
-            onBack={() => setScreen('tabs')}
+            onBack={() => {
+              setStartMood(null);
+              setScreen('tabs');
+            }}
             onStart={(slot, localDate) => {
               setJournal({journalType: 'check_in', slot, localDate, returnTo: 'checkins'});
               setScreen('journal');
@@ -658,6 +692,10 @@ function App(): React.JSX.Element {
       {screen === 'appLockSetup' && (
         <SetAppLockScreen onDone={() => setScreen('tabs')} />
       )}
+
+      {screen === 'badges' && <BadgesScreen onBack={() => setScreen('tabs')} />}
+
+      {screen === 'offline' && <OfflineScreen onRetry={routeSignedInUser} />}
 
       {screen === 'weeklyReport' && (
         <WeeklyReportScreen

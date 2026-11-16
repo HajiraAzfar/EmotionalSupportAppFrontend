@@ -14,7 +14,6 @@ export const calm = {
   entry: {
     title: 'Calm',
     blurb: 'Breathing and grounding, a few minutes at a time.',
-    grounding: 'Grounding',
     groundYourself: 'Ground yourself',
   },
   common: {

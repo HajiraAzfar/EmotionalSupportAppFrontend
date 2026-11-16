@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, Image, ImageSourcePropType, Modal, Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Brain, ChevronRight, CloudSun, History, Leaf, LucideIcon, Mountain} from 'lucide-react-native';
 
 import CrisisResourcesScreen from './CrisisResourcesScreen';
-import {brandImages} from '../assets/brand';
+import {illustrations} from '../assets/brand';
 import {EntrySummary, JOURNAL_TITLES, JournalType, listRecentDrafts} from '../api/entries';
-import {cardTints, colors, glass, radius, shadow, space, type} from '../theme';
+import {cardTints, colors, glass, gradient, radius, shadow, space, type} from '../theme';
 
 type Props = {
   onStartJournal: (journalType: JournalType) => void;
@@ -17,20 +17,15 @@ type Props = {
 // The four structured journals, also Home's grid. Free write is no longer
 // offered (her choice, 26 Oct); old free write entries stay in History.
 // Ordered by expected completion time, shortest first (FR-HOME-001).
-export const JOURNALS: {type: JournalType; blurb: string; minutes: string; Icon: LucideIcon}[] = [
-  {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', Icon: CloudSun},
-  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Leaf},
-  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: Brain},
-  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: Mountain},
+// `Icon` is the small line icon (History's rows); `art` is the illustrated one
+// from the brand sheet (Home's tiles and this list).
+// `tint` is the soft wash at the top of its flashcards.
+export const JOURNALS: {type: JournalType; blurb: string; minutes: string; Icon: LucideIcon; art: ImageSourcePropType; tint: string}[] = [
+  {type: 'check_in', blurb: 'How are you feeling right now?', minutes: '2 min', Icon: CloudSun, art: illustrations.iconLeaf, tint: cardTints[2].bg},
+  {type: 'savouring', blurb: 'Hold on to something good that happened.', minutes: '3 min', Icon: Leaf, art: illustrations.iconHeart, tint: '#F8EAF3'},
+  {type: 'thought', blurb: 'Work through a thought that keeps coming back.', minutes: '10 min', Icon: Brain, art: illustrations.iconHeadHeart, tint: cardTints[0].bg},
+  {type: 'exposure', blurb: 'Plan one thing you have been avoiding.', minutes: '2 min + later', Icon: Mountain, art: illustrations.iconStar, tint: cardTints[3].bg},
 ];
-
-// Each journal's icon sits on its own soft tint, matching its card on Home.
-const ICON_TINTS: Partial<Record<JournalType, string>> = {
-  check_in: colors.sageWash,
-  savouring: cardTints[2].icon,
-  thought: cardTints[0].icon,
-  exposure: cardTints[1].icon,
-};
 
 export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntries}: Props) {
   const [draft, setDraft] = useState<EntrySummary | null>(null);
@@ -55,7 +50,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
         }}>
         <View style={{flex: 1}}>
           <Text style={type.title}>Journals</Text>
-          <Text style={{...type.small, marginTop: 2}}>Small steps. Big shifts.</Text>
+          <Text style={{...type.small, marginTop: 2}}>Explore your thoughts, one small step at a time.</Text>
         </View>
         {/* Everything she has written: the History list. */}
         <Pressable
@@ -84,24 +79,28 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
       </View>
 
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 24}}>
-        {/* A woman writing at a window, from the brand artwork. */}
+        {/* The journal and a sprig of lavender, from the brand sheet. */}
         <View
           style={{
             marginTop: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingVertical: 14,
+            paddingLeft: 18,
+            paddingRight: 10,
             borderRadius: radius.card,
-            overflow: 'hidden',
-            backgroundColor: colors.surface,
+            backgroundImage: gradient.lavender,
+            borderWidth: 1,
+            borderColor: colors.glassEdge,
             ...shadow.sm,
           }}>
-          <Image
-            source={brandImages.journalingWide}
-            resizeMode="cover"
-            accessible={false}
-            style={{width: '100%', height: 150}}
-          />
-          <Text style={{...type.small, color: colors.inkSoft, textAlign: 'center', paddingVertical: 10}}>
-            Pick the one that fits the time you have.
-          </Text>
+          <View style={{flex: 1}}>
+            <Text style={{...type.heading, fontSize: 18}}>Write it down, gently</Text>
+            <Text style={{...type.small, marginTop: 4}}>Pick the one that fits the time you have.</Text>
+          </View>
+          <Image source={illustrations.lavender} resizeMode="contain" accessible={false} style={{width: 44, height: 60}} />
+          <Image source={illustrations.journal} resizeMode="contain" accessible={false} style={{width: 96, height: 100}} />
         </View>
         <View style={{height: 18}} />
 
@@ -137,17 +136,7 @@ export default function JournalScreen({onStartJournal, onResumeDraft, onOpenEntr
               alignItems: 'center',
               gap: 14,
             })}>
-            <View
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: radius.pill,
-                backgroundColor: ICON_TINTS[journal.type] ?? colors.accentWash,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <journal.Icon size={22} color={colors.accent} />
-            </View>
+            <Image source={journal.art} resizeMode="contain" accessible={false} style={{width: 56, height: 56}} />
             <View style={{flex: 1}}>
               <Text style={type.label}>{JOURNAL_TITLES[journal.type]}</Text>
               <Text style={{...type.body, fontSize: 14, lineHeight: 20, marginTop: 2}}>{journal.blurb}</Text>

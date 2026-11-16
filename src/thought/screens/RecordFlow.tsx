@@ -4,8 +4,10 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Heart} from 'lucide-react-native';
 
 import BackButton from '../../components/BackButton';
+import Flashcard from '../../components/Flashcard';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScoreScale from '../../components/ScoreScale';
+import SavedMark from '../../components/SavedMark';
 import ScreenBackground from '../../components/ScreenBackground';
 import Chip from '../../components/chat/Chip';
 import VoiceField from '../../components/VoiceField';
@@ -299,9 +301,10 @@ export default function RecordFlow({
     const rated = content.emotions.filter(e => e.before !== null && e.after !== null);
     return (
       <SafeAreaView style={{flex: 1}}>
-        <ScreenBackground />
+        <ScreenBackground leaves />
         {header}
         <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}}>
+          <SavedMark />
           <Text accessibilityRole="header" style={{...type.title, marginTop: 10}}>
             {DONE.title}
           </Text>
@@ -374,9 +377,10 @@ export default function RecordFlow({
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <ScreenBackground />
+      <ScreenBackground leaves />
       {header}
       <ScrollView contentContainerStyle={{paddingHorizontal: space.screen, paddingBottom: 32}} keyboardShouldPersistTaps="handled">
+        <Flashcard journal="thought" cardKey={step} first={step === 'situation'}>
         {step === 'situation' ? (
           <>
             <Text accessibilityRole="header" style={type.title}>{STEPS.situation.title}</Text>
@@ -548,6 +552,8 @@ export default function RecordFlow({
               placeholder={STEPS.next.placeholder} maxLength={500} />
           </>
         ) : null}
+
+        </Flashcard>
 
         {error ? <Text style={{...type.small, color: colors.alert, marginTop: 16}}>{error}</Text> : null}
         <View style={{marginTop: 26}}>

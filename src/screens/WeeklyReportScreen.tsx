@@ -42,7 +42,7 @@ type Props = {
 };
 
 // The badge icons, by the name stored in content/badges.json.
-const BADGE_ICONS: Record<string, LucideIcon> = {
+export const BADGE_ICONS: Record<string, LucideIcon> = {
   Footprints,
   CalendarCheck,
   LayoutGrid,
@@ -478,6 +478,7 @@ export default function WeeklyReportScreen({onBack, onOpenEntry}: Props) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            style={{flexGrow: 0, flexShrink: 0}}
             contentContainerStyle={{paddingHorizontal: space.screen, gap: 8, paddingVertical: 12}}>
             {weeks.map(summary => {
               const open = summary.week_start === report?.week_start;

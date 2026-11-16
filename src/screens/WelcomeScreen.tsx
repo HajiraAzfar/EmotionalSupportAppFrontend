@@ -2,9 +2,8 @@ import React from 'react';
 import {Image, Pressable, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import {brandImages} from '../assets/brand';
+import {illustrations} from '../assets/brand';
 import FadeIn from '../components/FadeIn';
-import Logo from '../components/Logo';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenBackground from '../components/ScreenBackground';
 import Wordmark from '../components/Wordmark';
@@ -23,7 +22,8 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
       <View style={{flex: 1, paddingHorizontal: space.screen, alignItems: 'center'}}>
         <View style={{flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'}}>
           <FadeIn order={0} distance={18}>
-            <Logo size={92} badge />
+            {/* The brand's hero: a moment of calm with a warm drink. */}
+            <Image source={illustrations.hero} resizeMode="contain" accessible={false} style={{width: 290, height: 281}} />
           </FadeIn>
 
           <FadeIn order={1} style={{marginTop: 14}}>
@@ -34,22 +34,6 @@ export default function WelcomeScreen({onGoToSignup, onGoToLogin}: Props) {
             <Text style={{...type.body, textAlign: 'center', marginTop: 12, maxWidth: 290}}>
               Your safe space for a calmer mind and a stronger you.
             </Text>
-          </FadeIn>
-
-          {/* Dawn over lavender hills, from the brand artwork. */}
-          <FadeIn order={2} style={{width: '100%'}}>
-            <Image
-              source={brandImages.landscape}
-              resizeMode="cover"
-              accessible={false}
-              style={{
-                width: '100%',
-                height: 200,
-                marginTop: 28,
-                borderRadius: radius.image,
-                ...shadow.md,
-              }}
-            />
           </FadeIn>
         </View>
 
