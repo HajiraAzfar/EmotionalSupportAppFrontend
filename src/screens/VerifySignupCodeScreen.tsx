@@ -77,6 +77,7 @@ export default function VerifySignupCodeScreen({email, onVerified, onBack}: Prop
             value={code}
             onChangeText={setCode}
             placeholder="000000"
+            code
           />
 
           {error ? (

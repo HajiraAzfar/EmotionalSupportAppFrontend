@@ -63,6 +63,7 @@ export default function SetPasswordScreen({title, submit, onDone}: Props) {
             onChangeText={setPassword}
             placeholder="At least 8 characters"
             secure
+            newPassword
           />
 
           {error ? (

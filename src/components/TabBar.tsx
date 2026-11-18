@@ -1,6 +1,7 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 import {BookOpen, Brain, ChartLine, House, NotebookPen, UserRound} from 'lucide-react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {colors, font, radius, shadow, type} from '../theme';
 
@@ -27,6 +28,9 @@ const TABS: {key: Tab; label: string; Icon: typeof House}[] = [
 // style: thin icons, the current tab in the primary sage on a pale sage pill.
 // It is the only way between the six areas, so nothing here ever disappears.
 export default function TabBar({current, onChange}: Props) {
+  // The app draws edge to edge, so on gesture-navigation phones the home
+  // indicator sits over the bottom of the screen: the labels stay above it.
+  const {bottom} = useSafeAreaInsets();
   return (
     <View
       accessibilityRole="tablist"
@@ -34,7 +38,7 @@ export default function TabBar({current, onChange}: Props) {
         flexDirection: 'row',
         paddingHorizontal: 4,
         paddingTop: 8,
-        paddingBottom: 8,
+        paddingBottom: Math.max(8, bottom),
         backgroundColor: colors.surface,
         borderTopLeftRadius: radius.image,
         borderTopRightRadius: radius.image,

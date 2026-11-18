@@ -60,6 +60,7 @@ export default function VerifyResetCodeScreen({email, onVerified}: Props) {
             value={code}
             onChangeText={setCode}
             placeholder="000000"
+            code
           />
 
           {error ? (

@@ -1,6 +1,7 @@
-import React from 'react';
-import {Pressable, Text, View} from 'react-native';
+import React, {useEffect, useRef} from 'react';
+import {Animated, Pressable, Text, View} from 'react-native';
 
+import {useReducedMotion} from '../calm/hooks/useReducedMotion';
 import {colors, radius, shadow, type} from '../theme';
 
 type Props = {
@@ -24,6 +25,22 @@ export default function PinPad({
   onChange,
   onComplete,
 }: Props) {
+  // A wrong PIN gives the dots a short shake, the way a lock screen says no
+  // without words. Not with the phone's reduce-motion setting on.
+  const shake = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (!error || reduced) {
+      return;
+    }
+    shake.setValue(0);
+    Animated.sequence(
+      [10, -10, 7, -7, 3, 0].map(toValue =>
+        Animated.timing(shake, {toValue, duration: 50, useNativeDriver: true}),
+      ),
+    ).start();
+  }, [error, reduced, shake]);
+
   function press(key: string) {
     if (disabled) {
       return;
@@ -41,7 +58,15 @@ export default function PinPad({
 
   return (
     <View>
-      <View style={{flexDirection: 'row', justifyContent: 'center', gap: 14}}>
+      <Animated.View
+        accessible
+        accessibilityLabel={`${value.length} of ${length} digits entered`}
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 14,
+          transform: [{translateX: shake}],
+        }}>
         {Array.from({length}, (_, index) => (
           <View
             key={index}
@@ -56,7 +81,7 @@ export default function PinPad({
             }}
           />
         ))}
-      </View>
+      </Animated.View>
 
       <View
         style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 24}}>
@@ -65,6 +90,10 @@ export default function PinPad({
             key={`${key}-${index}`}
             onPress={() => key && press(key)}
             disabled={!key || disabled}
+            // A screen reader would read "⌫" as a symbol name, and the gap as nothing.
+            accessible={!!key}
+            accessibilityRole="button"
+            accessibilityLabel={key === '⌫' ? 'Delete' : key}
             style={({pressed}) => ({
               width: '30%',
               alignItems: 'center',
