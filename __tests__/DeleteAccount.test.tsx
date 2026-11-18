@@ -9,11 +9,11 @@ import ReactTestRenderer, {ReactTestInstance} from 'react-test-renderer';
 
 import DeleteAccountScreen from '../src/screens/DeleteAccountScreen';
 import {deleteAccount} from '../src/api/auth';
-import {clearLock} from '../src/storage/appLock';
+import {forgetLock} from '../src/storage/appLock';
 import {clearTokens} from '../src/storage/tokens';
 
 jest.mock('../src/api/auth', () => ({deleteAccount: jest.fn()}));
-jest.mock('../src/storage/appLock', () => ({clearLock: jest.fn(async () => {})}));
+jest.mock('../src/storage/appLock', () => ({forgetLock: jest.fn(async () => {})}));
 jest.mock('../src/storage/tokens', () => ({clearTokens: jest.fn(async () => {})}));
 
 const flatten = (c: any): string =>
@@ -62,7 +62,7 @@ test('deletes only after the last confirmation, then clears this phone', async (
 
   await confirmInAlert();
   expect(deleteAccount).toHaveBeenCalledWith('secret');
-  expect(clearLock).toHaveBeenCalled();
+  expect(forgetLock).toHaveBeenCalled();
   expect(clearTokens).toHaveBeenCalled();
   expect(onDeleted).toHaveBeenCalled();
 });

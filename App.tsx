@@ -50,7 +50,7 @@ import ExposureModule from './src/exposure/ExposureModule';
 import SplashScreen from './src/screens/SplashScreen';
 import ScreenBackground from './src/components/ScreenBackground';
 import CalmModule, {CalmView} from './src/calm/CalmModule';
-import {LOCK_AFTER_MS, clearLock, isLockSet} from './src/storage/appLock';
+import {LOCK_AFTER_MS, clearLock, forgetLock, isLockSet, syncLock} from './src/storage/appLock';
 
 type Screen =
   | 'loading'
@@ -202,6 +202,9 @@ function App(): React.JSX.Element {
         setScreen('welcome');
         return;
       }
+      // The app lock follows the account: pick up a PIN set or changed on
+      // another phone. In the background, so it never holds up the app.
+      syncLock();
 
       const status = await apiRequest('/onboarding/status', {token});
       setUserName(status.preferred_name ?? null);
@@ -254,8 +257,10 @@ function App(): React.JSX.Element {
         <AppLockScreen
           onUnlocked={() => setLocked(false)}
           onForgot={async () => {
-            // The PIN only exists here, so forgetting it means signing in again.
-            await clearLock();
+            // A PIN can't be recovered, so forgetting it means signing in again.
+            // It is cleared for the account, or that sign-in would bring it
+            // back; offline, at least this phone lets go of it.
+            await clearLock().catch(() => forgetLock());
             await clearTokens();
             setLocked(false);
             setScreen('welcome');

@@ -102,9 +102,8 @@ function Row({
   );
 }
 
-// The Profile tab: who she is, then the settings that belong to this phone.
-// The app lock is the main one: it is device-only by design (FR-AUTH-009), so
-// it has nowhere else to be.
+// The Profile tab: who she is, then the settings. The app lock follows the
+// account since 18 Nov 2026 (FR-AUTH-009), but it is still set from here.
 export default function SettingsScreen({
   name,
   onOpenName,
@@ -220,7 +219,7 @@ export default function SettingsScreen({
           onPress={onOpenBadges}
         />
 
-        <Section>Privacy on this phone</Section>
+        <Section>Privacy</Section>
         <Row
           label="App lock"
           description={

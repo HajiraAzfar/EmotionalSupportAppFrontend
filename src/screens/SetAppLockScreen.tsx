@@ -25,8 +25,9 @@ const TITLES: Record<Phase, string> = {
   confirm: 'Enter it once more',
 };
 
-// FR-AUTH-009: setting, changing and removing the lock all happen on the
-// device. Nothing about the PIN is sent to the server at any point.
+// FR-AUTH-009 (changed 18 Nov 2026): the lock follows the account. Setting,
+// changing and removing it reach every phone, so each needs the internet; the
+// PIN itself never leaves this phone, only its salted hash does.
 export default function SetAppLockScreen({onDone}: Props) {
   const [locked, setLocked] = useState<boolean | null>(null);
   const [phase, setPhase] = useState<Phase>('new');
@@ -61,7 +62,13 @@ export default function SetAppLockScreen({onDone}: Props) {
         return;
       }
       if (intent === 'remove') {
-        await clearLock();
+        try {
+          await clearLock();
+        } catch (e) {
+          setEntry('');
+          setMessage((e as Error).message);
+          return;
+        }
         onDone();
         return;
       }
@@ -85,7 +92,16 @@ export default function SetAppLockScreen({onDone}: Props) {
       setPhase('new');
       return;
     }
-    await setPin(value);
+    try {
+      await setPin(value);
+    } catch (e) {
+      // Offline: nothing was saved, so she chooses it again once connected.
+      setEntry('');
+      setFirstPin('');
+      setMessage((e as Error).message);
+      setPhase('new');
+      return;
+    }
     onDone();
   }
 
@@ -133,8 +149,9 @@ export default function SetAppLockScreen({onDone}: Props) {
         {phase === 'menu' ? (
           <View style={{marginTop: 12}}>
             <Text style={{...type.body, marginBottom: 20}}>
-              Your PIN is kept on this phone only. It is never sent anywhere, and it cannot be
-              recovered — if you forget it you will sign in again.
+              Your PIN belongs to your account, so it works on any phone you sign in on. It is
+              never stored as itself, and it cannot be recovered — if you forget it you will sign
+              in again.
             </Text>
             {option('Change PIN', 'Enter the current one, then choose a new one.', () =>
               restart('current', 'change'),
